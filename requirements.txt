@@ -1,5 +1,5 @@
 # Vanir direct dependencies
-requests==2.27.1
+requests==2.32.2
 absl-py==1.4.0
 mmh3==3.0.0
 unidiff==0.7.4

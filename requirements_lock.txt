@@ -20,7 +20,7 @@ mmh3==3.0.0
     # via -r requirements.txt
 python-dateutil==2.9.0.post0
     # via -r requirements.txt
-requests==2.27.1
+requests==2.32.2
     # via -r requirements.txt
 six==1.16.0
     # via python-dateutil

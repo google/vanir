@@ -1,0 +1,35 @@
+# Copyright 2023 Google LLC
+#
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file or at
+# https://developers.google.com/open-source/licenses/bsd
+
+# Integration tests for Vanir
+
+load("@rules_python//python:defs.bzl", "py_test")
+load("@vanir_deps//:requirements.bzl", "requirement")
+
+package(default_visibility = ["//visibility:public"])
+
+py_test(
+    name = "missing_patch_detection_hermetic_test",
+    srcs = ["missing_patch_detection_hermetic_test.py"],
+    data = [
+        "//testdata:test_gitiles_data",
+        "//testdata:test_vulnerabilities",
+        "//testdata:vanir_test_source_simplified",
+    ],
+    deps = [
+        "//:osv_client",
+        "//:reporter",
+        "//:signature",
+        "//:vanir_test_base",
+        "//:vulnerability",
+        "//:vulnerability_manager",
+        "//scanners:scanner_base",
+        "//scanners:target_selection_strategy",
+        "//testdata:test_signatures",
+        requirement("absl-py"),
+        requirement("requests"),
+    ],
+)

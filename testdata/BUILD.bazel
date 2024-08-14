@@ -1,0 +1,57 @@
+# Copyright 2023 Google LLC
+#
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file or at
+# https://developers.google.com/open-source/licenses/bsd
+
+# Package for Vanir test data.
+load("@rules_python//python:defs.bzl", "py_library")
+
+package(default_visibility = [
+    "//visibility:public",
+])
+
+filegroup(
+    name = "vanir_test_source_simplified",
+    srcs = [
+        "test_frameworks_base.tar.gz",
+    ],
+)
+
+filegroup(
+    name = "test_vulnerabilities",
+    srcs = [
+        "test_vulnerabilities_platform.json",
+    ],
+)
+
+filegroup(
+    name = "test_signatures_json",
+    srcs = [
+        "test_signatures.json",
+        "test_signatures.zip",
+    ],
+)
+
+filegroup(
+    name = "test_gitiles_data",
+    srcs = glob(["gitiles/**"]),
+)
+
+filegroup(
+    name = "test_patch_set",
+    srcs = [
+        "test_patch_file",
+        "test_patched_file",
+        "test_unpatched_file",
+        "test_unrelated_file",
+    ],
+)
+
+py_library(
+    name = "test_signatures",
+    srcs = ["test_signatures.py"],
+    deps = [
+        "//:signature",
+    ],
+)

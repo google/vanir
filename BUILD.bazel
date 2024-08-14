@@ -1,0 +1,423 @@
+# Copyright 2023 Google LLC
+#
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file or at
+# https://developers.google.com/open-source/licenses/bsd
+
+# Bazel build rules for Vanir.
+load("@rules_python//python:defs.bzl", "py_library", "py_test")
+load("@vanir_deps//:requirements.bzl", "requirement")
+
+package(default_visibility = [
+    "//visibility:public",
+])
+
+licenses(["notice"])
+
+exports_files(["LICENSE"])
+
+py_library(
+    name = "osv_client",
+    srcs = ["osv_client.py"],
+    deps = [
+        requirement("absl-py"),
+        requirement("requests"),
+    ],
+)
+
+py_library(
+    name = "parser",
+    srcs = ["parser.py"],
+    deps = [
+        ":signature",
+        requirement("absl-py"),
+        "//language_parsers",
+    ],
+)
+
+py_library(
+    name = "normalizer",
+    srcs = ["normalizer.py"],
+    deps = [
+        "//language_parsers:common",
+    ],
+)
+
+py_library(
+    name = "hasher",
+    srcs = ["hasher.py"],
+    deps = [
+        requirement("absl-py"),
+        requirement("mmh3"),
+    ],
+)
+
+py_library(
+    name = "refiner",
+    srcs = ["refiner.py"],
+    data = ["@pybind11_abseil//pybind11_abseil:status.so"],
+    deps = [
+        ":parser",
+        ":signature",
+        "//code_extractors:code_extractor_base",
+        requirement("absl-py"),
+    ],
+)
+
+py_library(
+    name = "signature",
+    srcs = ["signature.py"],
+    deps = [
+        ":hasher",
+        ":normalizer",
+        "//language_parsers:common",
+        requirement("absl-py"),
+        requirement("typing_extensions"),
+    ],
+)
+
+py_library(
+    name = "version_extractor",
+    srcs = ["version_extractor.py"],
+    deps = [
+        requirement("absl-py"),
+    ],
+)
+
+py_library(
+    name = "vulnerability",
+    srcs = ["vulnerability.py"],
+    deps = [
+        ":signature",
+        "@com_google_osv//:vulnerability_py_pb2",
+        "@com_google_protobuf//:protobuf_python",
+    ],
+)
+
+py_library(
+    name = "vulnerability_manager",
+    srcs = ["vulnerability_manager.py"],
+    deps = [
+        ":osv_client",
+        ":refiner",
+        ":signature",
+        ":sign_generator",
+        ":vulnerability",
+        "//code_extractors:code_extractor",
+        requirement("absl-py"),
+        requirement("python-dateutil"),
+        requirement("requests"),
+    ],
+)
+
+py_library(
+    name = "sign_generator",
+    srcs = ["sign_generator.py"],
+    data = ["@pybind11_abseil//pybind11_abseil:status.so"],
+    deps = [
+        ":osv_client",
+        ":parser",
+        ":signature",
+        ":truncated_path",
+        "//code_extractors:code_extractor_base",
+        requirement("absl-py"),
+        requirement("requests"),
+    ],
+)
+
+py_binary(
+    name = "sign_generator_runner",
+    srcs = [
+        "sign_generator_runner.py",
+    ],
+    deps = [
+        ":file_list_manager",
+        ":sign_generator",
+        ":vulnerability",
+        ":vulnerability_manager",
+        requirement("absl-py"),
+        requirement("requests"),
+    ],
+)
+
+py_library(
+    name = "sign_generator_runner.testonly_lib",
+    testonly = True,
+    srcs = [
+        "sign_generator_runner.py",
+    ],
+    deps = [
+        ":sign_generator",
+        ":vulnerability",
+        ":vulnerability_manager",
+        requirement("absl-py"),
+        requirement("requests"),
+    ],
+)
+
+py_library(
+    name = "detector_common_flags",
+    srcs = ["detector_common_flags.py"],
+    deps = [
+        ":vulnerability_manager",
+        "//scanners:scanner_base",
+        "//scanners:target_selection_strategy",
+        requirement("absl-py"),
+    ],
+)
+
+py_library(
+    name = "reporter",
+    srcs = ["reporter.py"],
+    deps = [
+        ":vulnerability_manager",
+        "//scanners:scanner_base",
+        requirement("absl-py"),
+    ],
+)
+
+py_library(
+    name = "truncated_path",
+    srcs = ["truncated_path.py"],
+)
+
+py_library(
+    name = "file_list_manager",
+    srcs = ["file_list_manager.py"],
+    data = [
+        "//cache:ecosystem_file_lists",
+        "@pybind11_abseil//pybind11_abseil:status.so",
+    ],
+    deps = [
+        ":parser",
+    ],
+)
+
+py_binary(
+    name = "detector_runner",
+    srcs = ["detector_runner.py"],
+    deps = [
+        ":detector_common_flags",
+        ":osv_client",
+        ":reporter",
+        ":vulnerability_manager",
+        "//scanners:android_kernel_scanner",
+        "//scanners:offline_directory_scanner",
+        "//scanners:package_scanner",
+        "//scanners:repo_scanner",
+        "//scanners:scanner_base",
+        requirement("absl-py"),
+        requirement("jinja2"),
+        requirement("requests"),
+    ],
+)
+
+py_library(
+    name = "detector_runner.testonly_lib",
+    testonly = True,
+    srcs = ["detector_runner.py"],
+    deps = [
+        ":detector_common_flags",
+        ":osv_client",
+        ":reporter",
+        ":vulnerability_manager",
+        "//scanners:android_kernel_scanner",
+        "//scanners:offline_directory_scanner",
+        "//scanners:package_scanner",
+        "//scanners:repo_scanner",
+        "//scanners:scanner_base",
+        requirement("absl-py"),
+        requirement("jinja2"),
+        requirement("requests"),
+    ],
+)
+
+py_library(
+    name = "vanir_test_base",
+    testonly = True,
+    srcs = ["vanir_test_base.py"],
+    deps = [
+        requirement("absl-py"),
+    ],
+)
+
+py_test(
+    name = "parser_test",
+    size = "small",
+    srcs = ["parser_test.py"],
+    data = ["@pybind11_abseil//pybind11_abseil:status.so"],
+    deps = [
+        ":parser",
+        requirement("absl-py"),
+    ],
+)
+
+py_test(
+    name = "normalizer_test",
+    size = "small",
+    srcs = ["normalizer_test.py"],
+    deps = [
+        ":normalizer",
+        "//language_parsers:common",
+        requirement("absl-py"),
+    ],
+)
+
+py_test(
+    name = "hasher_test",
+    size = "small",
+    srcs = ["hasher_test.py"],
+    deps = [
+        ":hasher",
+        requirement("absl-py"),
+        requirement("mmh3"),
+    ],
+)
+
+py_test(
+    name = "signature_test",
+    size = "small",
+    srcs = ["signature_test.py"],
+    deps = [
+        ":signature",
+        requirement("absl-py"),
+    ],
+)
+
+py_test(
+    name = "version_extractor_test",
+    srcs = ["version_extractor_test.py"],
+    deps = [
+        ":version_extractor",
+    ],
+)
+
+py_test(
+    name = "vulnerability_test",
+    size = "small",
+    srcs = ["vulnerability_test.py"],
+    deps = [
+        ":vulnerability",
+        requirement("absl-py"),
+    ],
+)
+
+py_test(
+    name = "vulnerability_manager_test",
+    size = "small",
+    srcs = ["vulnerability_manager_test.py"],
+    deps = [
+        ":osv_client",
+        ":refiner",
+        ":sign_generator",
+        ":signature",
+        ":vulnerability",
+        ":vulnerability_manager",
+        "//code_extractors:code_extractor",
+        "//code_extractors:code_extractor_base",
+        requirement("absl-py"),
+    ],
+)
+
+py_test(
+    name = "sign_generator_test",
+    size = "small",
+    srcs = ["sign_generator_test.py"],
+    data = ["@pybind11_abseil//pybind11_abseil:status.so"],
+    deps = [
+        ":parser",
+        ":sign_generator",
+        ":signature",
+        "//code_extractors:code_extractor_base",
+        requirement("absl-py"),
+    ],
+)
+
+py_test(
+    name = "sign_generator_runner_test",
+    size = "small",
+    srcs = ["sign_generator_runner_test.py"],
+    deps = [
+        ":file_list_manager",
+        ":osv_client",
+        ":sign_generator_runner.testonly_lib",
+        ":signature",
+        ":vulnerability",
+        ":vulnerability_manager",
+        requirement("absl-py"),
+    ],
+)
+
+py_test(
+    name = "detector_common_flags_test",
+    size = "small",
+    srcs = ["detector_common_flags_test.py"],
+    deps = [
+        ":detector_common_flags",
+        ":vulnerability_manager",
+        "//scanners:scanner_base",
+        "//scanners:target_selection_strategy",
+        requirement("absl-py"),
+    ],
+)
+
+py_test(
+    name = "reporter_test",
+    size = "small",
+    srcs = ["reporter_test.py"],
+    deps = [
+        ":reporter",
+        ":vulnerability_manager",
+        requirement("absl-py"),
+    ],
+)
+
+py_test(
+    name = "detector_runner_test",
+    size = "small",
+    srcs = ["detector_runner_test.py"],
+    deps = [
+        ":detector_runner.testonly_lib",
+        ":osv_client",
+        ":signature",
+        ":vulnerability_manager",
+        "//language_parsers:common",
+        "//scanners:scanner_base",
+        "//scanners:target_selection_strategy",
+        requirement("absl-py"),
+    ],
+)
+
+py_test(
+    name = "refiner_test",
+    size = "small",
+    srcs = ["refiner_test.py"],
+    data = ["@pybind11_abseil//pybind11_abseil:status.so"],
+    deps = [
+        ":parser",
+        ":refiner",
+        ":signature",
+        "//code_extractors:code_extractor_base",
+        requirement("absl-py"),
+        requirement("mmh3"),
+    ],
+)
+
+py_test(
+    name = "truncated_path_test",
+    srcs = ["truncated_path_test.py"],
+    deps = [
+        ":truncated_path",
+        requirement("absl-py"),
+    ],
+)
+
+py_test(
+    name = "file_list_manager_test",
+    srcs = ["file_list_manager_test.py"],
+    data = ["@pybind11_abseil//pybind11_abseil:status.so"],
+    deps = [
+        ":file_list_manager",
+        requirement("absl-py"),
+    ],
+)

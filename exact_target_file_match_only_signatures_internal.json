@@ -1,0 +1,23 @@
+[
+    {
+        "reason": "277333746: patched files were copied to multiple locations that are unrelated",
+        "patch_urls": [
+            "https://android.googlesource.com/platform/packages/apps/Settings/+/f57e52a64d3235a6bdb53396caca5f74e222cfd6",
+            "https://android.googlesource.com/platform/packages/apps/Settings/+/edd4023805bc7fa54ae31de222cde02b9012bbc4",
+            "https://android.googlesource.com/platform/packages/apps/Settings/+/7591fff234886e79c5d0210a2cf3282a69de9be9"
+        ]
+    },
+    {
+        "reason": "271845008, 271846393: We don't have patches for S and earlier. CentralSurfacesImpl.java was named StatusBar.java back then and thus refiner did not catch this.",
+        "patch_urls": [
+            "https://android.googlesource.com/platform/frameworks/base/+/3ee3b7a20a109063cdc2233a1429f78ad8c5ab79"
+        ]
+    },
+    {
+        "reason": "205570663, 195410559: system/bt got moved to packages/modules/Bluetooth; thus non-target files are not handled by refiner",
+        "patch_urls": [
+            "https://android.googlesource.com/platform/packages/modules/Bluetooth/+/62e29ee6f52d995cdace2d1ef8880c11831135fc",
+            "https://android.googlesource.com/platform/packages/modules/Bluetooth/+/f4aa35adf8ed2e06a3d1273c18d3a3561644e0a4"
+        ]
+    }
+]

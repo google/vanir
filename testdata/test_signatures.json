@@ -1,0 +1,123 @@
+[
+  {
+    "id": "ASB-A-281018094",
+    "modified": "2023-08-10T00:29:25Z",
+    "aliases": ["CVE-2023-21277"],
+    "affected": [
+      {
+        "package": {
+          "ecosystem": "Android",
+          "name": "platform/frameworks/base"
+        },
+        "ecosystem_specific": {
+          "spl": "2023-08-01",
+          "vanir_signatures": [
+            {
+              "id": "ASB-A-281018094-2d96898e",
+              "signature_type": "Line",
+              "signature_version": "v1",
+              "source": "sourceurl1",
+              "target": {
+                "file": "core/tests/coretests/src/android/widget/RemoteViewsTest.java"
+              },
+              "deprecated": false,
+              "digest": {
+                "line_hashes": [
+                  334131876326018032544521194211819459045,
+                  121761277599204750374848752368714155334,
+                  259240847050637455583249007782337036423,
+                  134254861871231063659248509086353379703
+                ],
+                "threshold": 0.9
+              }
+            }
+          ]
+        }
+      },
+      {
+        "package": {
+          "ecosystem": "Android",
+          "name": "platform/packages/apps/Bluetooth"
+        },
+        "ecosystem_specific": {
+          "spl": "2023-08-01",
+          "vanir_signatures": [
+            {
+              "id": "ASB-A-281018094-97ec235e",
+              "signature_type": "Line",
+              "signature_version": "v1",
+              "source": "sourceurl2",
+              "target": {
+                "file": "core/java/android/widget/RemoteViews.java"
+              },
+              "deprecated": false,
+              "digest": {
+                "line_hashes": [
+                  329665021611362043020227002656192683749,
+                  33777507542537233731901269949093178718,
+                  124601394975036829142918177453582828532,
+                  284236484958232671673872160266776287285,
+                  213586894066632749964895258528904068608,
+                  175496572067704317475568725408983891312,
+                  283390899376001510600988390542171144052,
+                  83283854559210764264479836884934600211
+                ],
+                "threshold": 0.9
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "ASB-A-111893654",
+    "modified": "2023-07-27T21:43:08Z",
+    "aliases": ["CVE-2020-0404"],
+    "affected": [
+      {
+        "package": {
+          "ecosystem": "Android",
+          "name": ":linux_kernel:Qualcomm"
+        },
+        "ecosystem_specific": {
+          "spl": "2020-09-05",
+          "vanir_signatures": [
+            {
+              "id": "ASB-A-111893654-8ead4b9c",
+              "signature_type": "Function",
+              "signature_version": "v1",
+              "source": "https://android.googlesource.com/kernel/common/+/68035c80e129",
+              "target": {
+                "file": "drivers/media/usb/uvc/uvc_driver.c",
+                "function": "uvc_scan_chain_forward",
+                "truncated_path_level": 1
+              },
+              "deprecated": false,
+              "digest": {
+                "function_hash": 194215759102333248697385159289433439026,
+                "length": 1173
+              }
+            },
+            {
+              "id": "ASB-A-111893654-2d607d27",
+              "signature_type": "Function",
+              "signature_version": "v1",
+              "source": "https://android.googlesource.com/kernel/common/+/68035c80e129",
+              "target": {
+                "file": "drivers/media/usb/uvc/uvc_driver.c",
+                "function": "uvc_scan_chain_backward",
+                "truncated_path_level": 3
+              },
+              "deprecated": false,
+              "digest": {
+                "function_hash": 60626479737422533824532741070373279186,
+                "length": 1549
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+]

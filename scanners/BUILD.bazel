@@ -1,0 +1,198 @@
+# Copyright 2023 Google LLC
+#
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file or at
+# https://developers.google.com/open-source/licenses/bsd
+
+# This package contains code related to Vanir scanners, which scans some code
+# against some vulnerability patch signatures, and report the findings.
+
+load("@rules_python//python:defs.bzl", "py_library", "py_test")
+load("@vanir_deps//:requirements.bzl", "requirement")
+
+package(default_visibility = ["//visibility:public"])
+
+py_library(
+    name = "scanner_base",
+    srcs = ["scanner_base.py"],
+    deps = [
+        ":target_selection_strategy",
+        "//:parser",
+        "//:signature",
+        "//:vulnerability",
+        "//:vulnerability_manager",
+        requirement("absl-py"),
+    ],
+)
+
+py_library(
+    name = "package_scanner",
+    srcs = ["package_scanner.py"],
+    deps = [
+        ":offline_directory_scanner",
+        ":scanner_base",
+        ":target_selection_strategy",
+        "//:vulnerability",
+        "//:vulnerability_manager",
+    ],
+)
+
+py_library(
+    name = "android_kernel_scanner",
+    srcs = ["android_kernel_scanner.py"],
+    deps = [
+        ":package_scanner",
+        ":scanner_base",
+        ":target_selection_strategy",
+        "//:version_extractor",
+        "//:vulnerability",
+        "//:vulnerability_manager",
+    ],
+)
+
+py_library(
+    name = "offline_directory_scanner",
+    srcs = ["offline_directory_scanner.py"],
+    deps = [
+        ":scanner_base",
+        ":target_selection_strategy",
+        "//:vulnerability_manager",
+    ],
+)
+
+py_library(
+    name = "repo_scanner",
+    srcs = ["repo_scanner.py"],
+    deps = [
+        ":package_identifier",
+        ":scanner_base",
+        ":target_selection_strategy",
+        "//:signature",
+        "//:vulnerability",
+        "//:vulnerability_manager",
+    ],
+)
+
+py_library(
+    name = "target_selection_strategy",
+    srcs = ["target_selection_strategy.py"],
+    deps = [
+        ":package_identifier",
+        "//:parser",
+        "//:signature",
+        "//:truncated_path",
+    ],
+)
+
+py_library(
+    name = "package_identifier",
+    srcs = ["package_identifier.py"],
+    deps = [
+        "//:truncated_path",
+        "//:vulnerability",
+        "//:vulnerability_manager",
+        requirement("absl-py"),
+    ],
+)
+
+py_test(
+    name = "scanner_base_test",
+    srcs = ["scanner_base_test.py"],
+    deps = [
+        ":scanner_base",
+        ":target_selection_strategy",
+        "//:parser",
+        "//:reporter",
+        "//:signature",
+        "//language_parsers:common",
+        requirement("absl-py"),
+    ],
+)
+
+py_test(
+    name = "offline_directory_scanner_test",
+    srcs = ["offline_directory_scanner_test.py"],
+    data = [
+        "//testdata:test_signatures_json",
+    ],
+    deps = [
+        ":offline_directory_scanner",
+        ":scanner_base",
+        "//:vulnerability_manager",
+        requirement("absl-py"),
+    ],
+)
+
+py_test(
+    name = "android_kernel_scanner_test",
+    srcs = ["android_kernel_scanner_test.py"],
+    data = [
+        "//testdata:test_signatures_json",
+    ],
+    deps = [
+        ":android_kernel_scanner",
+        ":scanner_base",
+        "//:vulnerability_manager",
+        requirement("absl-py"),
+        requirement("requests"),
+    ],
+)
+
+py_test(
+    name = "package_scanner_test",
+    srcs = ["package_scanner_test.py"],
+    data = [
+        "//testdata:test_signatures_json",
+    ],
+    deps = [
+        ":package_scanner",
+        ":scanner_base",
+        "//:vulnerability",
+        "//:vulnerability_manager",
+        requirement("absl-py"),
+        requirement("requests"),
+    ],
+)
+
+py_test(
+    name = "repo_scanner_test",
+    srcs = ["repo_scanner_test.py"],
+    data = [
+        "//testdata:test_signatures_json",
+    ],
+    deps = [
+        ":package_identifier",
+        ":repo_scanner",
+        ":scanner_base",
+        ":target_selection_strategy",
+        "//:signature",
+        "//:vulnerability_manager",
+        requirement("absl-py"),
+        requirement("requests"),
+    ],
+)
+
+py_test(
+    name = "target_selection_strategy_test",
+    srcs = ["target_selection_strategy_test.py"],
+    deps = [
+        ":target_selection_strategy",
+        "//:signature",
+        requirement("absl-py"),
+    ],
+)
+
+py_test(
+    name = "package_identifier_test",
+    srcs = ["package_identifier_test.py"],
+    data = [
+        "//testdata:test_signatures_json",
+    ],
+    deps = [
+        ":package_identifier",
+        "//:truncated_path",
+        "//:vulnerability",
+        "//:vulnerability_manager",
+        requirement("absl-py"),
+    ],
+)

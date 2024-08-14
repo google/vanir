@@ -1,0 +1,190 @@
+# Copyright 2023 Google LLC
+#
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file or at
+# https://developers.google.com/open-source/licenses/bsd
+
+# Bazel workspace file for Vanir.
+
+workspace(name = "vanir")
+
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file")
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_repository")
+
+# Install Vanir python dependencies through PIP.
+http_archive(
+    name = "rules_python",
+    sha256 = "8c15896f6686beb5c631a4459a3aa8392daccaab805ea899c9d14215074b60ef",
+    strip_prefix = "rules_python-0.17.3",
+    url = "https://github.com/bazelbuild/rules_python/archive/refs/tags/0.17.3.tar.gz",
+)
+
+load("@rules_python//python:repositories.bzl", "py_repositories", "python_register_toolchains")
+
+py_repositories()
+
+
+python_register_toolchains(
+    name = "python3_9",
+    python_version = "3.9",
+)
+
+load("@rules_python//python:pip.bzl", "pip_parse")
+load("@python3_9//:defs.bzl", "interpreter")
+
+pip_parse(
+    name = "vanir_deps",
+    python_interpreter_target = interpreter,
+    requirements_lock = "//:requirements_lock.txt",
+)
+
+load("@vanir_deps//:requirements.bzl", "install_deps")
+
+install_deps()
+
+# Install Fuzzyc and its transitive dependencies.
+git_repository(
+    name = "fuzzyc",
+    commit = "0f00ba6804c56f5b6d91bc214a91bb05fd17fcda",
+    remote = "https://third-party-mirror.googlesource.com/fuzzyc",
+)
+
+# Install antlr4 tools
+pip_parse(
+    name = "antlr4_deps",
+    python_interpreter_target = interpreter,
+    requirements_lock = "//:requirements_antlr4_lock.txt",
+)
+
+load("@antlr4_deps//:requirements.bzl", install_antlr4_deps = "install_deps")
+install_antlr4_deps()
+
+# Download Antlr4 Java grammar
+ANTLR4_JAVA_REV = "c85ec510bd7cfba4649aec1ac2cf66bebd8ce2ed"
+http_file(
+    name = "antlr4_grammar_java_lexer_g4",
+    url = "https://github.com/antlr/grammars-v4/raw/%s/java/java/JavaLexer.g4" % ANTLR4_JAVA_REV,
+    downloaded_file_path = "JavaLexer.g4",
+    sha256 = "9a812eea62aeddc7bd54f8ba9dac4615d0f3f6b98328cf46b4143fdf75ba2c92",
+)
+http_file(
+    name = "antlr4_grammar_java_parser_g4",
+    url = "https://github.com/antlr/grammars-v4/raw/%s/java/java/JavaParser.g4" % ANTLR4_JAVA_REV,
+    downloaded_file_path = "JavaParser.g4",
+    sha256 = "0555bd978b2a7e47ec373ee0671cd13f6ba576ca8c26d127fa0b7467dd6df8ce",
+)
+
+# Antlr4 CC Runtime Library.
+http_archive(
+    name = "antlr4_runtimes",
+    build_file_content = """
+package(default_visibility = ["//visibility:public"])
+cc_library(
+    name = "cpp",
+    srcs = glob(["runtime/Cpp/runtime/src/**/*.cpp"]),
+    hdrs = glob(["runtime/Cpp/runtime/src/**/*.h"]),
+    includes = ["runtime/Cpp/runtime/src"],
+)
+    """,
+    sha256 = "50e87636a61daabd424d884c60f804387430920072f585a9fee2b90e2043fdcc",
+    strip_prefix = "antlr4-4.11.1",
+    urls = ["https://github.com/antlr/antlr4/archive/v4.11.1.tar.gz"],
+)
+
+# Google absl
+http_archive(
+    name = "com_google_absl",
+    sha256 = "3ea49a7d97421b88a8c48a0de16c16048e17725c7ec0f1d3ea2683a2a75adc21",
+    strip_prefix = "abseil-cpp-20230125.0",
+    urls = ["https://github.com/abseil/abseil-cpp/archive/refs/tags/20230125.0.tar.gz"],
+)
+
+# GoogleTest
+http_archive(
+    name = "com_google_googletest",
+    sha256 = "ad7fdba11ea011c1d925b3289cf4af2c66a352e18d4c7264392fead75e919363",
+    strip_prefix = "googletest-1.13.0",
+    urls = ["https://github.com/google/googletest/archive/refs/tags/v1.13.0.tar.gz"],
+)
+
+# Pybind11 Bazel extension
+git_repository(
+    name = "pybind11_bazel",
+    commit = "5f458fa53870223a0de7eeb60480dd278b442698",
+    remote = "https://github.com/pybind/pybind11_bazel.git",
+)
+
+# Pybind11
+new_git_repository(
+    name = "pybind11",
+    build_file = "@pybind11_bazel//:pybind11.BUILD",
+    remote = "https://github.com/pybind/pybind11.git",
+    tag = "v2.10.4",
+)
+
+load("@pybind11_bazel//:python_configure.bzl", "python_configure")
+
+python_configure(
+    name = "local_config_python",
+    python_interpreter_target = interpreter,
+)
+
+# Pybind11 Abseil. Don't use master - it can be unstable.
+git_repository(
+    name = "pybind11_abseil",
+    commit = "13d4f99d5309df3d5afa80fe2ae332d7a2a64c6b",
+    remote = "https://github.com/pybind/pybind11_abseil.git",
+)
+
+http_archive(
+    name = "com_google_protobuf",
+    urls = ["https://github.com/google/protobuf/archive/v3.10.0.zip"],
+    strip_prefix = "protobuf-3.10.0",
+)
+
+# OSV
+OSV_REV = "bbb8ab4f0491bf367f8e1406d8ddf9e9dbf5de86"
+http_archive(
+    name = "com_google_osv",
+    strip_prefix = "osv.dev-%s" % OSV_REV,
+    build_file_content = """
+load("@com_google_protobuf//:protobuf.bzl", "py_proto_library")
+load("@rules_proto//proto:defs.bzl", "proto_library")
+
+package(default_visibility = ["//visibility:public"])
+
+PROTO_FILES = [
+"osv/vulnerability.proto",
+]
+
+filegroup(
+  name = "protobuf_files",
+  srcs = PROTO_FILES,
+  visibility = ["//visibility:public"],
+)
+
+proto_library(
+    name = 'vulnerability_proto',
+    srcs = PROTO_FILES,
+    deps = [
+        '@com_google_protobuf//:struct_proto',
+        '@com_google_protobuf//:timestamp_proto',
+    ],
+    visibility = ['//visibility:public'],
+)
+
+py_proto_library(
+    name = "vulnerability_py_pb2",
+    visibility = ["//visibility:public"],
+    srcs = PROTO_FILES,
+    deps = [
+        "@com_google_protobuf//:protobuf_python",
+    ],
+)
+""",
+    urls = ["https://github.com/google/osv.dev/archive/%s.tar.gz" % OSV_REV],
+)
+
+load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
+
+protobuf_deps()

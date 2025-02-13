@@ -103,6 +103,7 @@ py_library(
         ":signature",
         ":sign_generator",
         ":vulnerability",
+        ":vulnerability_overwriter",
         "//code_extractors:code_extractor",
         requirement("absl-py"),
         requirement("python-dateutil"),
@@ -160,6 +161,7 @@ py_library(
     srcs = ["detector_common_flags.py"],
     deps = [
         ":vulnerability_manager",
+        ":vulnerability_overwriter",
         "//scanners:scanner_base",
         "//scanners:target_selection_strategy",
         requirement("absl-py"),
@@ -229,6 +231,14 @@ py_library(
         requirement("absl-py"),
         requirement("jinja2"),
         requirement("requests"),
+    ],
+)
+
+py_library(
+    name = "vulnerability_overwriter",
+    srcs = ["vulnerability_overwriter.py"],
+    deps = [
+        "@jsonpath-rw-git//:jsonpath_rw",
     ],
 )
 
@@ -352,6 +362,9 @@ py_test(
     name = "detector_common_flags_test",
     size = "small",
     srcs = ["detector_common_flags_test.py"],
+    data = [
+        "//testdata:test_overwrite_specs.json",
+    ],
     deps = [
         ":detector_common_flags",
         ":vulnerability_manager",
@@ -418,6 +431,37 @@ py_test(
     data = ["@pybind11_abseil//pybind11_abseil:status.so"],
     deps = [
         ":file_list_manager",
+        requirement("absl-py"),
+    ],
+)
+
+py_test(
+    name = "vulnerability_overwriter_test",
+    srcs = ["vulnerability_overwriter_test.py"],
+    data = [
+        "//testdata:test_overwrite_specs.json",
+    ],
+    deps = [
+        ":vulnerability_overwriter",
+        requirement("absl-py"),
+    ],
+)
+
+# This is an example test demonstrating how to validate overwrite specs.
+# To use this test, you'll need to provide your own overwrite specs file and signature files.
+py_test(
+    name = "overwrite_specs_validity_test",
+    srcs = ["//:overwrite_specs_validity_test.py"],
+    args = [
+        "--overwrite_specs=testdata/test_overwrite_specs.json",
+        # "--signature_files=testdata/test_vulnerabilities_platform.json",
+    ],
+    data = [
+        "//testdata:test_overwrite_specs.json",
+        "//testdata:test_vulnerabilities",
+    ],
+    deps = [
+        "//:vulnerability_overwriter",
         requirement("absl-py"),
     ],
 )

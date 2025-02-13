@@ -22,6 +22,7 @@ from vanir import detector_runner
 from vanir import osv_client
 from vanir import signature
 from vanir import vulnerability_manager
+from vanir import vulnerability_overwriter
 from vanir.language_parsers import common as language_parsers_common
 from vanir.scanners import scanner_base
 from vanir.scanners import target_selection_strategy
@@ -100,6 +101,9 @@ class TestScanner(scanner_base.ScannerBase):
       extra_vulnerability_filters: Optional[
           Sequence[vulnerability_manager.VulnerabilityFilter]
       ] = None,
+      vulnerability_overwrite_specs: Optional[
+          Sequence[vulnerability_overwriter.OverwriteSpec]
+      ] = None
   ) -> Tuple[
       scanner_base.Findings,
       scanner_base.ScannedFileStats,
@@ -138,6 +142,9 @@ class TestScanner2(scanner_base.ScannerBase):
       extra_vulnerability_filters: Optional[
           Sequence[vulnerability_manager.VulnerabilityFilter]
       ] = None,
+      vulnerability_overwrite_specs: Optional[
+          Sequence[vulnerability_overwriter.OverwriteSpec]
+      ] = None
   ) -> Tuple[
       scanner_base.Findings,
       scanner_base.ScannedFileStats,

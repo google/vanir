@@ -21,6 +21,7 @@ filegroup(
 filegroup(
     name = "test_vulnerabilities",
     srcs = [
+        "test_vulnerabilities_kernel.json",
         "test_vulnerabilities_platform.json",
     ],
 )
@@ -47,6 +48,10 @@ filegroup(
         "test_unrelated_file",
     ],
 )
+
+exports_files([
+    "test_overwrite_specs.json",
+])
 
 py_library(
     name = "test_signatures",

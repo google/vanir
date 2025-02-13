@@ -136,7 +136,7 @@ class AndroidCommit(code_extractor_base.Commit):
       web.
     Returns:
       A file path map where a key is a relative path of the target file in the
-      target system and the value is the absoulte path to the extracted
+      target source tree and the value is the absoulte path to the extracted
       patched version of the file.
     """
     # Removed files are not included since they do not exist in the child.
@@ -165,7 +165,7 @@ class AndroidCommit(code_extractor_base.Commit):
       web.
     Returns:
       A file path map where a key is a relative path of the target file in the
-      target system and the value is the absoulte path to the extracted
+      target source tree and the value is the absoulte path to the extracted
       unpatched version of the file.
     """
     # Added files are not included since they do not exist in the parent.
@@ -193,7 +193,6 @@ class AndroidCommit(code_extractor_base.Commit):
         self._get_text(file_url),
         suffix=f'_{os.path.basename(file_path)}',
     )
-    self._other_files.update({file_path: tempfile})
     return tempfile
 
 
@@ -332,7 +331,7 @@ class QualcommCommit(code_extractor_base.Commit):
 
     Returns:
       A file path map where a key is a relative path of the target file in the
-      target system and the value is the absoulte path to the extracted
+      target source tree and the value is the absoulte path to the extracted
       patched version of the file.
     """
     # Removed files are not included since they do not exist in the child.
@@ -356,7 +355,7 @@ class QualcommCommit(code_extractor_base.Commit):
 
     Returns:
       A file path map where a key is a relative path of the target file in the
-      target system and the value is the absoulte path to the extracted
+      target source tree and the value is the absoulte path to the extracted
       unpatched version of the file.
 
     Raises:
@@ -386,7 +385,6 @@ class QualcommCommit(code_extractor_base.Commit):
         self._get_text(file_url),
         suffix=f'_{os.path.basename(file_path)}',
     )
-    self._other_files.update({file_path: tempfile})
     return tempfile
 
 
@@ -494,10 +492,13 @@ def _generate_commit(
 
 class AndroidCodeExtractor(code_extractor_base.AbstractCodeExtractor):
   """Code extractor for Android affected packages."""
+  
   KNOWN_BRANCHES = {
-      '14-next': 'main',
+      '15-next': 'main',
+      '15': 'android15-security-release',
       '14': 'android14-security-release',
       '13': 'android13-security-release',
+      '12L': 'android12L-security-release',
       '12': 'android12-security-release',
   }
 

@@ -188,3 +188,32 @@ py_proto_library(
 load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 
 protobuf_deps()
+
+
+# jsonpath_rw
+git_repository(
+    name = "jsonpath-rw-git",
+    build_file_content = """
+load("@rules_python//python:defs.bzl", "py_library")
+load("@vanir_deps//:requirements.bzl", "requirement")
+
+py_library(
+    name = "jsonpath_rw",
+    visibility = ["//visibility:public"],
+    srcs = [
+        "jsonpath_rw/__init__.py",
+        "jsonpath_rw/jsonpath.py",
+        "jsonpath_rw/lexer.py",
+        "jsonpath_rw/parser.py"
+    ],
+    srcs_version = "PY3",
+    deps = [
+       requirement("six"),
+       requirement("ply"),
+       requirement("decorator"),
+    ],
+)
+""",
+    commit = "6f5647bb3ad2395c20f0191fef07a1df51c9fed8",
+    remote = "https://github.com/kennknowles/python-jsonpath-rw.git",
+)

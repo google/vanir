@@ -6,3 +6,8 @@ unidiff
 jinja2
 typing_extensions>=4,<5
 python-dateutil
+
+# jsonpath_rw dependencies
+six
+ply
+decorator

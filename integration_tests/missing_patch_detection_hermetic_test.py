@@ -144,11 +144,11 @@ class MissingPatchDetectionHermeticTest(
       expected_signatures: Collection[signature.Signature],
   ):
     cleaned_sigs = {
-        dataclasses.replace(sig, signature_id_prefix='', signature_hash='')
+        dataclasses.replace(sig, signature_id='')
         for sig in signatures
     }
     cleaned_expected_sigs = {
-        dataclasses.replace(sig, signature_id_prefix='', signature_hash='')
+        dataclasses.replace(sig, signature_id='')
         for sig in expected_signatures
     }
     self.assertSetEqual(cleaned_sigs, cleaned_expected_sigs)

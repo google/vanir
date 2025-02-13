@@ -1,0 +1,142 @@
+[
+  {
+    "id": "ASB-A-210498909",
+    "modified": "2022-06-01T00:00:00Z",
+    "published": "2022-06-01T00:00:00Z",
+    "aliases": ["CVE-2018-25020"],
+    "summary": "",
+    "references": [
+      {
+        "type": "ADVISORY",
+        "url": "https://source.android.com/security/bulletin/2022-06-01#2022-06-05-security-patch-level-vulnerability-details"
+      },
+      {
+        "type": "FIX",
+        "url": "https://android.googlesource.com/kernel/common/+/050fad7c4534c13c8eb1d9c2ba66012e014773cb"
+      },
+      {
+        "type": "FIX",
+        "url": "https://android.googlesource.com/kernel/common/+/99253eb750fda6a644d5188fb26c43bad8d5a745"
+      }
+    ],
+    "affected": [
+      {
+        "package": {
+          "ecosystem": "Android",
+          "name": ":linux_kernel:"
+        },
+        "ecosystem_specific": {
+          "type": "EoP",
+          "severity": "Moderate",
+          "spl": "2022-06-05",
+          "fixes": [
+            "https://android.googlesource.com/kernel/common/+/050fad7c4534c13c8eb1d9c2ba66012e014773cb",
+            "https://android.googlesource.com/kernel/common/+/99253eb750fda6a644d5188fb26c43bad8d5a745"
+          ]
+        },
+        "ranges": [
+          {
+            "type": "ECOSYSTEM",
+            "events": [
+              {
+                "introduced": ":0"
+              },
+              {
+                "fixed": ":2022-06-05"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ASB-A-172999675",
+    "modified": "2023-03-11T02:15:13Z",
+    "published": "2021-02-01T00:00:00Z",
+    "aliases": ["CVE-2017-18509"],
+    "summary": "In ip6_mroute_setsockopt and related functions of ip6mr.c, there is a possible out of bounds write due to a logic error in the code. This could lead to local escalation of privilege with no additional execution privileges needed. User interaction is not needed for exploitation.",
+    "references": [
+      {
+        "type": "ADVISORY",
+        "url": "https://source.android.com/security/bulletin/2021-02-01#2021-02-05-security-patch-level-vulnerability-details"
+      },
+      {
+        "type": "FIX",
+        "url": "https://android.googlesource.com/kernel/common/+/99253eb750fda6a644d5188fb26c43bad8d5a745"
+      }
+    ],
+    "affected": [
+      {
+        "package": { "ecosystem": "Android", "name": "kernel/common" },
+        "versions": ["Kernel"],
+        "ecosystem_specific": {
+          "type": "EoP",
+          "severity": "High",
+          "spl": "2021-02-05",
+          "fixes": [
+            "https://android.googlesource.com/kernel/common/+/99253eb750fda6a644d5188fb26c43bad8d5a745"
+          ]
+        },
+        "ranges": [
+          {
+            "type": "ECOSYSTEM",
+            "events": [{ "introduced": ":0" }, { "fixed": ":2021-02-05" }]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "PUB-A-160818461",
+    "modified": "2023-04-12T18:19:28Z",
+    "published": "2022-12-01T00:00:00Z",
+    "aliases": [
+      "CVE-2020-0465"
+    ],
+    "summary": "USB device causing OOB write in hid_output_report",
+    "details": "In hid_output_report of hid-core.c, there is a possible out of bounds write due to a missing bounds check. This could lead to local escalation of privilege with no additional execution privileges needed. User interaction is needed for exploitation.",
+    "references": [
+      {
+        "type": "ADVISORY",
+        "url": "https://source.android.com/security/bulletin/2022-12-01"
+      },
+      {
+        "type": "FIX",
+        "url": "https://android.googlesource.com/kernel/common/+/bce1305c0ece3"
+      }
+    ],
+    "affected": [
+      {
+        "package": {
+          "ecosystem": "Android",
+          "name": ":linux_kernel:"
+        },
+        "versions": [
+          "Kernel"
+        ],
+        "ecosystem_specific": {
+          "type": "EoP",
+          "severity": "Moderate",
+          "spl": "2022-12-05",
+          "fixes": [
+            "https://android.googlesource.com/kernel/common/+/bce1305c0ece3"
+          ]
+        },
+        "ranges": [
+          {
+            "type": "ECOSYSTEM",
+            "events": [
+              {
+                "introduced": ":0"
+              },
+              {
+                "fixed": ":2022-12-05"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -4,8 +4,6 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
-"""Tests for sign_generator_runner."""
-
 import builtins
 import datetime
 import json
@@ -34,8 +32,7 @@ _TEST_SIGN_ID_1 = 'ASB-A-1234-test-sign-1'
 _TEST_SIGN_ID_2 = 'ASB-A-1234-test-sign-2'
 
 _TEST_SIGN1 = signature.LineSignature(
-    signature_hash=_TEST_SIGN_HASH_1,
-    signature_id_prefix=_TEST_OSV_ID,
+    signature_id=f'{_TEST_OSV_ID}-{_TEST_SIGN_HASH_1}',
     signature_version='v0',
     source='patch1',
     target_file='f1',
@@ -47,8 +44,7 @@ _TEST_SIGN1 = signature.LineSignature(
     threshold=0,
 )
 _TEST_SIGN2 = signature.FunctionSignature(
-    signature_hash=_TEST_SIGN_HASH_2,
-    signature_id_prefix=_TEST_OSV_ID,
+    signature_id=f'{_TEST_OSV_ID}-{_TEST_SIGN_HASH_2}',
     signature_version='v0',
     source='patch2',
     target_file='f2',
@@ -140,7 +136,7 @@ class SignGeneratorRunnerTest(absltest.TestCase):
         {'vulnerability_file_name': None, 'osv_ecosystem': None,
          'osv_package': None, 'use_osv_android_kernel_vulns': False}
     ))
-    self.assertFalse(sign_generator_runner._validate_vuln_source_flags(
+    self.assertTrue(sign_generator_runner._validate_vuln_source_flags(
         {'vulnerability_file_name': None, 'osv_ecosystem': 'eco',
          'osv_package': None, 'use_osv_android_kernel_vulns': False}
     ))

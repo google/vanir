@@ -4,14 +4,15 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
-"""Tests for signature."""
-
+import dataclasses
+from typing import Union
 from unittest import mock
 
 from absl import logging
 from vanir import signature
 
 from absl.testing import absltest
+from absl.testing import parameterized
 
 _TEST_NORMALIZED_FUNCTION_CODE = 'norm_code'
 _TEST_NORMALIZED_LINE_CODE = {10: 'hello world'}
@@ -19,7 +20,36 @@ _TEST_FUNCTION_HASH = 1234
 _TEST_LINE_HASHES = [5678, 6789]
 
 
-class SignatureTest(absltest.TestCase):
+class SignatureTest(parameterized.TestCase):
+
+  def setUp(self):
+    super().setUp()
+    self.addCleanup(mock.patch.stopall)
+    self.test_line_signature = signature.LineSignature(
+        signature_id='line-sig-id',
+        signature_version=signature._VANIR_SIGNATURE_VERSION,
+        source='patch_url',
+        target_file='file1',
+        deprecated=False,
+        exact_target_file_match_only=False,
+        match_only_versions=None,
+        truncated_path_level=None,
+        line_hashes=[123, 456],
+        threshold=0.9,
+    )
+    self.test_function_signature = signature.FunctionSignature(
+        signature_id='func-sig-id',
+        signature_version=signature._VANIR_SIGNATURE_VERSION,
+        source='patch_url',
+        target_file='file1',
+        deprecated=False,
+        exact_target_file_match_only=False,
+        match_only_versions=None,
+        truncated_path_level=None,
+        function_hash=11111,
+        length=5,
+        target_function='',
+    )
 
   @mock.patch(
       'vanir.normalizer.normalize_function_chunk',
@@ -112,17 +142,15 @@ class SignatureTest(absltest.TestCase):
                                                   test_normalized_code,
                                                   test_function_hash)
 
-    signature_factory = signature.SignatureFactory()
+    signature_factory = signature.SignatureFactory('TESTPREFIX')
     func_sign = signature_factory.create_from_function_chunk(
         test_function_chunk,
         test_source,
         test_truncated_path_level,
     )
 
-    expected_siganture_hash_pattern = '[0-9a-f]{8}$'
-    self.assertRegex(func_sign.signature_hash, expected_siganture_hash_pattern)
-    with self.assertRaises(ValueError):
-      _ = func_sign.signature_id
+    expected_siganture_id_pattern = 'TESTPREFIX-[0-9a-f]{8}$'
+    self.assertRegex(func_sign.signature_id, expected_siganture_id_pattern)
     self.assertEqual(func_sign.signature_version,
                      signature._VANIR_SIGNATURE_VERSION)
     self.assertEqual(func_sign.source, test_source)
@@ -146,7 +174,7 @@ class SignatureTest(absltest.TestCase):
     test_threshold = 0.456
     test_truncated_path_level = 2
 
-    signature_factory = signature.SignatureFactory()
+    signature_factory = signature.SignatureFactory('TESTPREFIX')
     line_sign = signature_factory.create_from_line_chunk(
         test_line_chunk,
         test_source,
@@ -154,10 +182,8 @@ class SignatureTest(absltest.TestCase):
         test_truncated_path_level,
     )
 
-    expected_siganture_hash_pattern = '[0-9a-f]{8}$'
-    self.assertRegex(line_sign.signature_hash, expected_siganture_hash_pattern)
-    with self.assertRaises(ValueError):
-      _ = line_sign.signature_id
+    expected_siganture_id_pattern = 'TESTPREFIX-[0-9a-f]{8}$'
+    self.assertRegex(line_sign.signature_id, expected_siganture_id_pattern)
     self.assertEqual(line_sign.signature_version,
                      signature._VANIR_SIGNATURE_VERSION)
     self.assertEqual(line_sign.source, test_source)
@@ -170,14 +196,14 @@ class SignatureTest(absltest.TestCase):
     self.assertEqual(line_sign.truncated_path_level, test_truncated_path_level)
 
   @mock.patch(
-      'vanir.signature.SignatureFactory._generate_signature_hash',
+      'vanir.signature.SignatureFactory._generate_signature_id',
       return_value='ASB-A-SIGNATURE-ID',
   )
   def test_line_signature_creation_fails_with_invalid_threshold(
       self, gen_sig_hash):
     test_threshold = 5000
 
-    signature_factory = signature.SignatureFactory()
+    signature_factory = signature.SignatureFactory('TESTPREFIX')
     with self.assertRaisesRegex(
         ValueError, 'Invalid line signature threshold: (-)*[0-9]*[.][0-9]*[.]'
         ' Line signature threshold must be between 0 and 1.'):
@@ -186,7 +212,7 @@ class SignatureTest(absltest.TestCase):
       )
     gen_sig_hash.assert_called_once()
 
-  def test_signature_hash_generation_adds_salt_if_hash_already_exits(self):
+  def test_signature_id_generation_adds_salt_if_id_already_exits(self):
     test_function_chunk_base = mock.Mock()
     test_function_name = 'test_func1'
     test_function_chunk_base.name = test_function_name
@@ -200,14 +226,22 @@ class SignatureTest(absltest.TestCase):
                                                   test_normalized_code,
                                                   test_function_hash)
 
-    signature_factory = signature.SignatureFactory()
+    signature_factory = signature.SignatureFactory('TESTPREFIX')
     func_sign1 = signature_factory.create_from_function_chunk(
         test_function_chunk, test_source)
     func_sign2 = signature_factory.create_from_function_chunk(
         test_function_chunk, test_source)
-    self.assertNotEqual(func_sign1.signature_hash, func_sign2.signature_hash)
+    self.assertStartsWith(func_sign1.signature_id, 'TESTPREFIX')
+    self.assertStartsWith(func_sign2.signature_id, 'TESTPREFIX')
+    self.assertNotEqual(func_sign1.signature_id, func_sign2.signature_id)
 
-  def test_function_signature_creation_from_osv_sign(self):
+  @parameterized.named_parameters(
+      ('with_int_hash', _TEST_FUNCTION_HASH, False),
+      ('with_string_hash', str(_TEST_FUNCTION_HASH), True),
+  )
+  def test_function_signature_creation_from_osv_sign(
+      self, test_function_hash: Union[int, str], use_string_hashes: bool
+  ):
     test_signature_id = 'ASB-A-12345-TEST-SIGN-ID-12345678'
     test_signature_version = 'v1234'
     test_source = 'http://android.googlesource.com/test_source'
@@ -216,7 +250,6 @@ class SignatureTest(absltest.TestCase):
     test_deprecated = True
     test_match_only_versions = ['11', '12L']
     test_exact_target_file_match_only = True
-    test_function_hash = _TEST_FUNCTION_HASH
     test_length = 100
     test_osv_sign = {
         'id': test_signature_id,
@@ -230,11 +263,13 @@ class SignatureTest(absltest.TestCase):
         'deprecated': test_deprecated,
         'match_only_versions': test_match_only_versions,
         'exact_target_file_match_only': test_exact_target_file_match_only,
-        'digest': {'function_hash': test_function_hash, 'length': test_length},
+        'digest': {
+            'function_hash': test_function_hash,
+            'length': test_length,
+        },
     }
 
-    signature_factory = signature.SignatureFactory()
-    func_sign = signature_factory.create_from_osv_sign(test_osv_sign)
+    func_sign = signature.Signature.from_osv_dict(test_osv_sign)
 
     self.assertEqual(func_sign.signature_id, test_signature_id)
     self.assertEqual(func_sign.signature_version, test_signature_version)
@@ -249,20 +284,25 @@ class SignatureTest(absltest.TestCase):
         func_sign.exact_target_file_match_only,
         test_exact_target_file_match_only,
     )
-    self.assertEqual(func_sign.function_hash, test_function_hash)
+    self.assertEqual(func_sign.function_hash, int(test_function_hash))
     self.assertEqual(func_sign.length, test_length)
     self.assertEqual(func_sign.target_function, test_function_name)
     self.assertIsNone(func_sign.truncated_path_level)
 
-    self.assertEqual(func_sign.to_osv_dict(), test_osv_sign)
+    self.assertEqual(func_sign.to_osv_dict(use_string_hashes), test_osv_sign)
 
-  def test_line_signature_creation_from_osv_sign(self):
+  @parameterized.named_parameters(
+      ('with_int_hashes', _TEST_LINE_HASHES, False),
+      ('with_string_hashes', [str(h) for h in _TEST_LINE_HASHES], True),
+  )
+  def test_line_signature_creation_from_osv_sign(
+      self, test_line_hashes: list[Union[str, int]], use_string_hashes: bool
+  ):
     test_signature_id = 'ASB-A-12345-TEST-SIGN-ID-12345678-1'
     test_signature_version = 'v1234'
     test_source = 'http://android.googlesource.com/test_source'
     test_target_file = 'foo/bar/test_lib.c'
     test_deprecated = True
-    test_line_hashes = _TEST_LINE_HASHES
     test_threshold = 0.789
     test_tp_level = 1
     test_osv_sign = {
@@ -281,8 +321,7 @@ class SignatureTest(absltest.TestCase):
         },
     }
 
-    signature_factory = signature.SignatureFactory()
-    line_sign = signature_factory.create_from_osv_sign(test_osv_sign)
+    line_sign = signature.Signature.from_osv_dict(test_osv_sign)
 
     self.assertEqual(line_sign.signature_id, test_signature_id)
     self.assertEqual(line_sign.signature_version, test_signature_version)
@@ -291,13 +330,19 @@ class SignatureTest(absltest.TestCase):
     self.assertEqual(line_sign.deprecated, test_deprecated)
     self.assertEqual(line_sign.exact_target_file_match_only, False)
     self.assertIsNone(line_sign.match_only_versions)
-    self.assertEqual(line_sign.line_hashes, test_line_hashes)
+    self.assertEqual(line_sign.line_hashes, [int(h) for h in test_line_hashes])
     self.assertEqual(line_sign.threshold, test_threshold)
     self.assertEqual(line_sign.truncated_path_level, test_tp_level)
 
-    self.assertEqual(line_sign.to_osv_dict(), test_osv_sign)
+    self.assertEqual(line_sign.to_osv_dict(use_string_hashes), test_osv_sign)
 
-  def test_line_signature_creation_from_osv_sign_with_floats(self):
+  @parameterized.named_parameters(
+      ('with_int_hashes', _TEST_LINE_HASHES, False),
+      ('with_string_hashes', [str(h) for h in _TEST_LINE_HASHES], True),
+  )
+  def test_line_signature_creation_from_osv_sign_with_floats(
+      self, test_line_hashes: list[Union[str, int]], use_string_hashes: bool
+  ):
     test_signature_id = 'ASB-A-12345-TEST-SIGN-ID-12345678-1-1'
     test_tp_level = 1.0
     test_osv_sign = {
@@ -311,18 +356,23 @@ class SignatureTest(absltest.TestCase):
         },
         'deprecated': False,
         'digest': {
-            'line_hashes': _TEST_LINE_HASHES,
+            'line_hashes': test_line_hashes,
             'threshold': 0.789,
         },
     }
-    signature_factory = signature.SignatureFactory()
-    line_sign = signature_factory.create_from_osv_sign(test_osv_sign)
+    line_sign = signature.Signature.from_osv_dict(test_osv_sign)
 
     self.assertEqual(line_sign.signature_id, test_signature_id)
     self.assertEqual(line_sign.truncated_path_level, 1)
-    self.assertEqual(line_sign.to_osv_dict(), test_osv_sign)
+    self.assertEqual(line_sign.to_osv_dict(use_string_hashes), test_osv_sign)
 
-  def test_function_signature_creation_from_osv_sign_with_floats(self):
+  @parameterized.named_parameters(
+      ('with_int_hash', _TEST_FUNCTION_HASH, False),
+      ('with_string_hash', str(_TEST_FUNCTION_HASH), True),
+  )
+  def test_function_signature_creation_from_osv_sign_with_floats(
+      self, test_function_hash: Union[int, str], use_string_hashes: bool
+  ):
     test_signature_id = 'ASB-A-12345-TEST-SIGN-ID-12345678-1-2'
     test_length = 100.0
     test_osv_sign = {
@@ -336,16 +386,15 @@ class SignatureTest(absltest.TestCase):
         },
         'deprecated': False,
         'digest': {
-            'function_hash': _TEST_FUNCTION_HASH,
+            'function_hash': test_function_hash,
             'length': test_length,
         },
     }
-    signature_factory = signature.SignatureFactory()
-    line_sign = signature_factory.create_from_osv_sign(test_osv_sign)
+    line_sign = signature.Signature.from_osv_dict(test_osv_sign)
 
     self.assertEqual(line_sign.signature_id, test_signature_id)
     self.assertEqual(line_sign.length, 100)
-    self.assertEqual(line_sign.to_osv_dict(), test_osv_sign)
+    self.assertEqual(line_sign.to_osv_dict(use_string_hashes), test_osv_sign)
 
   def test_signature_creation_from_osv_sign_fails_with_unknown_sign_type(self):
     test_signature_id = 'ASB-A-12345-TEST-SIGN-ID-12345678-2'
@@ -354,51 +403,15 @@ class SignatureTest(absltest.TestCase):
         'id': test_signature_id
     }
 
-    signature_factory = signature.SignatureFactory()
     # Unknown signature type will be caught by SignatureType enum.
     with self.assertRaises(ValueError):
-      signature_factory.create_from_osv_sign(test_osv_sign)
+      signature.Signature.from_osv_dict(test_osv_sign)
 
     # Even if new signature type is added to SignatureType, the type must be
-    # also handled in create_from_osv_sign().
+    # also handled in from_osv_dict().
     with mock.patch('vanir.signature.SignatureType'):
       with self.assertRaisesRegex(ValueError, 'Signature type .* is unknown'):
-        signature_factory.create_from_osv_sign(test_osv_sign)
-
-  def test_signature_creation_from_osv_sign_fails_with_duplicate_sign_id(self):
-    test_signature_id = 'ASB-A-12345-TEST-SIGN-ID-12345678-3'
-    test_osv_sign = {
-        'id': test_signature_id,
-        'signature_type': 'Function',
-        'signature_version': 'v1',
-        'source': 'foo',
-        'target': {
-            'file': 'foo',
-            'function': 'foo'
-        },
-        'deprecated': False,
-        'digest': {
-            'function_hash': 1234,
-            'length': 5
-        }
-    }
-
-    signature_factory = signature.SignatureFactory([test_signature_id])
-    with self.assertRaisesRegex(
-        ValueError, 'The signature ID %s is already assigned to another '
-        'signature.' % test_signature_id):
-      signature_factory.create_from_osv_sign(test_osv_sign)
-
-    signature_factory = signature.SignatureFactory()
-    signature_factory.add_used_signature_id(test_signature_id)
-    with self.assertRaisesRegex(
-        ValueError, 'The signature ID %s is already assigned to another '
-        'signature.' % test_signature_id):
-      signature_factory.create_from_osv_sign(test_osv_sign)
-
-    # Should pass after removal of the duplicated signature ID.
-    signature_factory.remove_used_signature_id(test_signature_id)
-    signature_factory.create_from_osv_sign(test_osv_sign)
+        signature.Signature.from_osv_dict(test_osv_sign)
 
   def test_signature_bundle_match_for_function_chunks(self):
     # Prepare a test function chunk.
@@ -430,8 +443,7 @@ class SignatureTest(absltest.TestCase):
             'length': len(test_normalized_code)
         }
     }
-    test_signature = signature.SignatureFactory().create_from_osv_sign(
-        test_osv_sign)
+    test_signature = signature.Signature.from_osv_dict(test_osv_sign)
 
     # Test signature bundle match for function chunks.
     sign_bundle = signature.SignatureBundle([test_signature])
@@ -465,8 +477,7 @@ class SignatureTest(absltest.TestCase):
             'threshold': test_threshold
         }
     }
-    test_signature = signature.SignatureFactory().create_from_osv_sign(
-        test_osv_sign)
+    test_signature = signature.Signature.from_osv_dict(test_osv_sign)
 
     # Test signature bundle match for line chunks.
     sign_bundle = signature.SignatureBundle([test_signature])
@@ -478,28 +489,22 @@ class SignatureTest(absltest.TestCase):
     test_osv_sign['id'] = new_test_signature_id
     test_osv_sign['digest']['threshold'] = 0.76
 
-    test_signature = signature.SignatureFactory().create_from_osv_sign(
-        test_osv_sign)
+    test_signature = signature.Signature.from_osv_dict(test_osv_sign)
     sign_bundle = signature.SignatureBundle([test_signature])
     matched_signs = sign_bundle.match(test_line_chunk)
     self.assertEmpty(matched_signs)
 
   def test_signature_bundle_match_fails_with_unknown_chunk_type(self):
-    test_signature = mock.Mock(
-        signature_version=signature._VANIR_SIGNATURE_VERSION,
-        signature_type=signature.SignatureType.LINE_SIGNATURE)
-
-    sign_bundle = signature.SignatureBundle([test_signature])
+    sign_bundle = signature.SignatureBundle([self.test_line_signature])
     with self.assertRaisesRegex(TypeError,
                                 'The type of given chunk .* is unknown.'):
       sign_bundle.match(chunk=mock.Mock())
 
   def test_signature_bundle_filters_out_uncompatible_signatures(self):
-    test_signature = mock.Mock(
+    test_signature = dataclasses.replace(
+        self.test_line_signature,
         signature_version='v1234',
-        signature_type=signature.SignatureType.LINE_SIGNATURE,
-        signature_id='ASB-A-12345-TEST-SIGN-ID-12345678')
-
+    )
     with self.assertLogs(level=logging.WARNING) as logs:
       sign_bundle = signature.SignatureBundle([test_signature])
     self.assertIn(
@@ -510,11 +515,12 @@ class SignatureTest(absltest.TestCase):
     self.assertEmpty(sign_bundle.signatures)
 
   def test_signature_bundle_filters_out_unrecognized_signatures(self):
-    test_signature = mock.Mock(
+    test_signature = mock.create_autospec(
+        signature.Signature, instance=True,
         signature_version=signature._VANIR_SIGNATURE_VERSION,
         signature_type='some_unknown_type',
-        signature_id='ASB-A-12345-TEST-SIGN-ID-12345678')
-
+        signature_id='ASB-A-12345-TEST-SIGN-ID-12345678',
+    )
     with self.assertLogs(level=logging.ERROR) as logs:
       sign_bundle = signature.SignatureBundle([test_signature])
     self.assertIn(
@@ -524,25 +530,19 @@ class SignatureTest(absltest.TestCase):
     self.assertEmpty(sign_bundle.signatures)
 
   def test_signature_bundle_function_signature_hash_collisions(self):
-    test_digest = {'function_hash': 11111, 'length': 500}
-    test_signature_hash1 = 'TEST-SIGN-ID-12345678'
-    test_signature1 = mock.Mock(
-        signature_version=signature._VANIR_SIGNATURE_VERSION,
-        signature_type='Function',
-        signature_hash=test_signature_hash1,
-        digest=test_digest)
-    test_signature_hash2 = 'TEST-SIGN-ID-87654321'
-    test_signature2 = mock.Mock(
-        signature_version=signature._VANIR_SIGNATURE_VERSION,
-        signature_type='Function',
-        signature_hash=test_signature_hash2,
-        digest=test_digest)
-
+    test_signature1 = dataclasses.replace(
+        self.test_function_signature,
+        signature_id='test-sig-id-1',
+    )
+    test_signature2 = dataclasses.replace(
+        self.test_function_signature,
+        signature_id='test-sig-id-2',
+    )
     sign_bundle = signature.SignatureBundle(
         [test_signature1, test_signature2])
     self.assertEqual(
         sign_bundle.function_signature_hash_collisions(),
-        [[test_signature_hash1, test_signature_hash2]])
+        [['test-sig-id-1', 'test-sig-id-2']])
     self.assertEqual(sign_bundle.signatures, [test_signature1, test_signature2])
 
 

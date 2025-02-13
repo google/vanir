@@ -68,11 +68,11 @@ _REPORT_FILE_NAME_PREFIX = flags.DEFINE_string(
 _MINIMUM_NUMBER_OF_FILES = flags.DEFINE_integer(
     'minimum_number_of_files',
     10,
-    'The minimum number of files expected to exist in the target system. If the'
-    ' target system contains less files than this theshold, detector will fail.'
-    ' This is just a safety knob for preventing mistakes of scanning a wrong'
-    ' target. If you intend to scan directory containing few files, please'
-    ' update this flag.',
+    'The minimum number of files expected to exist in the target source tree. '
+    'If the target source tree contains less files than this theshold, '
+    'detector will fail. This is just a safety knob for preventing mistakes of '
+    'scanning a wrong target. If you intend to scan directory containing few '
+    'files, please update this flag.',
 )
 
 _HTML_REPORT_TEMPLATE = """
@@ -470,6 +470,7 @@ def main(argv: Sequence[str]) -> None:
       extra_vulnerability_filters=(
           detector_common_flags.generate_vulnerability_filters_from_flags()
       ),
+      vulnerability_overwrite_specs=detector_common_flags.generate_overwrite_specs_from_flags(),
   )
   finding_filters = (
       [scanner_base.ShortFunctionFilter()]

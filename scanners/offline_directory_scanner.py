@@ -12,8 +12,8 @@ This scanner requires signatures to be given in vul_file_path.
 from typing import Optional, Sequence, Tuple
 
 from absl import logging
-
 from vanir import vulnerability_manager
+from vanir import vulnerability_overwriter
 from vanir.scanners import scanner_base
 from vanir.scanners import target_selection_strategy
 
@@ -52,6 +52,9 @@ class OfflineDirectoryScanner(scanner_base.ScannerBase):
       ] = None,
       extra_vulnerability_filters: Optional[
           Sequence[vulnerability_manager.VulnerabilityFilter]
+      ] = None,
+      vulnerability_overwrite_specs: Optional[
+          Sequence[vulnerability_overwriter.OverwriteSpec]
       ] = None,
   ) -> Tuple[
       scanner_base.Findings,

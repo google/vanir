@@ -41,8 +41,8 @@ class FunctionChunk:
 
   Attributes:
     base: FunctionChunkBase object extracted by the language parser.
-    target_file: relative path of the target file in the target system. E.g.,
-      arch/x86/pci/irq.c in Linux Kernel.
+    target_file: path of the signature's target file, relative to the root of
+      the target source tree. E.g., arch/x86/pci/irq.c in Linux Kernel.
     normalized_code: normalized version of the target function code.
     function_hash: hash of the normalized function code.
   """
@@ -58,8 +58,8 @@ class LineChunk:
 
   Attributes:
     base: LineChunkBase object extracted by the language parser.
-    target_file: relative path of the target file in the target system. E.g.,
-      arch/x86/pci/irq.c in Linux Kernel.
+    target_file: path of the signature's target file, relative to the root of
+      the target source tree. E.g., arch/x86/pci/irq.c in Linux Kernel.
     normalized_code: dictionary of normalized version of the target code lines.
       Each key is a line number, and the value is normalized line in string.
     line_hashes: hash of the normalized code lines.
@@ -80,7 +80,8 @@ def create_function_chunk(chunk_base: common.FunctionChunkBase,
 
   Args:
     chunk_base: the function chunk base object created by language_parsers.
-    target_file: relative path of the target file in the target system.
+    target_file: path of the signature's target file, relative to the root of
+      the target source tree. E.g., arch/x86/pci/irq.c in Linux Kernel.
 
   Returns:
     A function chunk containing the normalized code and the signature hashes.
@@ -99,7 +100,8 @@ def create_line_chunk(chunk_base: common.LineChunkBase,
     chunk_base: the line chunk base object created by language_parsers.
     affected_line_ranges: list of the ranges indicating the lines changed by the
       patch. The line numbers are based on the unpatched file. Inclusive.
-    target_file: relative path of the target file in the target system.
+    target_file: path of the signature's target file, relative to the root of
+      the target source tree. E.g., arch/x86/pci/irq.c in Linux Kernel.
 
   Returns:
     A line chunk containing the normalized code and the signature hashes.
@@ -126,27 +128,27 @@ class Signature(metaclass=abc.ABCMeta):
   """Class for managing signature import and export.
 
   Attributes:
-    signature_hash: unique hash for the signature, calculated from the
-      parameters used during signature generation. Lowercase hex string, usually
-      of length 8. Cannot contain a dash (-).
+    signature_id: unique ID for the signature, contains a hash for the signature
+      prepended with a prefix; the hash is calculated from the parameters used
+      during signature generation. Lowercase hex string, usually of length 8.
+      Cannot contain a dash (-).
     signature_version: the Vanir algorithm version used for this signature.
     source: the source of the patch. This can be either a full URL to the source
       or an unique source label (especially, when closed-sourced).
-    target_file: relative path of the target file in the target system. E.g.,
-      arch/x86/pci/irq.c in Linux Kernel.
+    target_file: path of the signature's target file, relative to the root of
+      the target source tree. E.g., arch/x86/pci/irq.c in Linux Kernel.
     deprecated: true if the signature is deprecated in OSV.
     exact_target_file_match_only: indicating whether this signature should only
       match with the identified target file and not others.
-    match_only_versions: indicating whether this signature should only
-      match with the listed package versions of the target file and not other
-      package versions. If None, this signature can match with any package
-      version.
+    match_only_versions: indicating whether this signature should only match
+      with the listed package versions of the target file and not other package
+      versions. If None, this signature can match with any package version.
     truncated_path_level: (optional) empirically known good Truncated Path level
       to identify the target file. See the Truncated Path module for details.
     signature_id_prefix: Prepended to the signature hash to create the globally
       unique ID of the signature. If not given, signature_id will be invalid.
   """
-  signature_hash: str
+  signature_id: str
   signature_version: str
   source: str
   target_file: str
@@ -154,32 +156,6 @@ class Signature(metaclass=abc.ABCMeta):
   exact_target_file_match_only: bool
   match_only_versions: Optional[FrozenSet[str]]
   truncated_path_level: Optional[int]
-  signature_id_prefix: Optional[str]
-
-  
-  # vuln it belongs to. We have a need for the ID to be universally unique, and
-  # stable (i.e. the same signature sets should have the same ID across
-  # signature generation runs), yet relatively short. The current implementation
-  # of ID generation requires an incrementing salt checked against a set of used
-  # IDs. This prevents parallelism during generation, and makes signature
-  # generation logic unwieldy. The current implementation involves a
-  # signature_hash, which is guaranteed to be unique per each run of
-  # sign_generator as long as there's no forking of the process holding
-  # self._used_signature_ids object. To ensure no collision across runs (e.g.
-  # when generating Android vs Pixel vulns), a signature_id_prefix is prepended
-  # to the hash to make a signature_id some time after generation, and saved
-  # to OSV. Signatures in OSV (or the JSON files) should already have this
-  # prefix, and can be extracted.
-  def with_id_prefix(self, prefix: str) -> Self:
-    """Returns a copy of the signature with the given ID prefix."""
-    return dataclasses.replace(self, signature_id_prefix=prefix)
-
-  @property
-  def signature_id(self) -> str:
-    """Returns signature ID property."""
-    if not hasattr(self, 'signature_id_prefix') or not self.signature_id_prefix:
-      raise ValueError('Signature ID prefix is not set.')
-    return f'{self.signature_id_prefix}-{self.signature_hash}'
 
   @property
   @abc.abstractmethod
@@ -196,7 +172,7 @@ class Signature(metaclass=abc.ABCMeta):
     """Returns dictionary type signature target information."""
     return {'file': self.target_file}
 
-  def to_osv_dict(self, use_string_hashes=False) -> dict[str, Any]:
+  def to_osv_dict(self, use_string_hashes=True) -> dict[str, Any]:
     """Returns dictionary signature based on OSV Vanir Signature Schema.
 
     Args:
@@ -225,15 +201,9 @@ class Signature(metaclass=abc.ABCMeta):
   def from_osv_dict(cls, osv_dict: dict[str, Any]) -> Self:
     """Returns signature from an OSV Vanir signature entry."""
     sig_type = SignatureType(osv_dict.get('signature_type'))
-    sig_id = osv_dict['id']
-    prefix, signature_hash = sig_id.rsplit('-', 1)
-    if not prefix or not signature_hash:
-      raise ValueError(
-          f'Signature ID {sig_id} is not in the expected format (prefix-hash).'
-      )
     if sig_type is SignatureType.FUNCTION_SIGNATURE:
       sign = FunctionSignature(
-          signature_hash=signature_hash,
+          signature_id=osv_dict['id'],
           signature_version=osv_dict['signature_version'],
           source=osv_dict['source'],
           target_file=osv_dict['target']['file'],
@@ -250,11 +220,10 @@ class Signature(metaclass=abc.ABCMeta):
           function_hash=int(osv_dict['digest']['function_hash']),
           length=int(osv_dict['digest']['length']),
           target_function=osv_dict['target']['function'],
-          signature_id_prefix=prefix,
       )
     elif sig_type is SignatureType.LINE_SIGNATURE:
       sign = LineSignature(
-          signature_hash=signature_hash,
+          signature_id=osv_dict['id'],
           signature_version=osv_dict['signature_version'],
           source=osv_dict['source'],
           target_file=osv_dict['target']['file'],
@@ -270,7 +239,6 @@ class Signature(metaclass=abc.ABCMeta):
           truncated_path_level=_get_truncated_path_level(osv_dict),
           line_hashes=[int(h) for h in osv_dict['digest']['line_hashes']],
           threshold=osv_dict['digest']['threshold'],
-          signature_id_prefix=prefix,
       )
     else:
       raise ValueError(f'Signature type {sig_type} is unknown.')
@@ -311,7 +279,7 @@ class FunctionSignature(Signature):
     target['function'] = self.target_function
     return target
 
-  def to_osv_dict(self, use_string_hashes=False) -> dict[str, Any]:
+  def to_osv_dict(self, use_string_hashes=True) -> dict[str, Any]:
     osv_dict = super().to_osv_dict()
     osv_dict['digest'] = self.digest
     if use_string_hashes:
@@ -351,7 +319,7 @@ class LineSignature(Signature):
     """Returns signature digest."""
     return {'line_hashes': self.line_hashes, 'threshold': self.threshold}
 
-  def to_osv_dict(self, use_string_hashes=False) -> dict[str, Any]:
+  def to_osv_dict(self, use_string_hashes=True) -> dict[str, Any]:
     osv_dict = super().to_osv_dict()
     osv_dict['digest'] = self.digest
     if use_string_hashes:
@@ -360,24 +328,20 @@ class LineSignature(Signature):
 
 
 class SignatureFactory:
-  """Generates signatures from various sources."""
+  """Generates signatures from various sources and ensure all signature IDs are unique."""
 
-  def __init__(self, used_signature_ids: Collection[str] = ()):
-    
-    # generation is done in multiple processes (e.g. multiprocessing, in a
-    # service, or simply running sign_generator_runner multiple times on
-    # different set of vulns). And in order to ensure that signature hashes are
-    # unique per session, ensure that SignatureFactory is only used in
-    # VulnerabilityManager, and use only a single VulnerabilityManager object
-    # per session that you want to ensure hash uniqueness, most notably there
-    # should be only one SignatureFactory used during sig generation of a vuln.
-    
-    # during detection, in which case it stores the full signature IDs, but also
-    # to prevent duplicate signature hashes during signature generation, in
-    # which case it stores only the signature hashes.
-    self._used_signature_ids = set(used_signature_ids)
+  def __init__(self, id_prefix: str):
+    """Initializes Signature Factory.
 
-  def _generate_signature_hash(
+    Args:
+      id_prefix: prefix to be prepended to the signature hash. Usually a
+        vulnerability ID (such as OSV ID) to ensure uniqueness of signature IDs
+        across all vulnerabilities.
+    """
+    self._used_signature_ids = set()
+    self._id_prefix = id_prefix
+
+  def _generate_signature_id(
       self,
       signature_type: SignatureType,
       version: str,
@@ -393,15 +357,17 @@ class SignatureFactory:
           target_function if target_function else ''
       ])
       signature_hash = hashlib.sha1(sign_data.encode('UTF-8')).hexdigest()[:8]
-      if signature_hash in self._used_signature_ids:
+      signature_id = f'{self._id_prefix}-{signature_hash}'
+      if signature_id in self._used_signature_ids:
         logging.info(
-            'Signature ID %s already exists. Retrying with some more '
-            'salt.', signature_hash)
+            'Signature id %s already exists. Retrying with some more salt.',
+            signature_id
+        )
         salt += 1
         continue
       else:
-        self._used_signature_ids.add(signature_hash)
-        return signature_hash
+        self._used_signature_ids.add(signature_id)
+        return signature_id
 
   def create_from_function_chunk(
       self,
@@ -419,7 +385,7 @@ class SignatureFactory:
         level to identify the target file. See the Truncated Path module for
         details.
     """
-    signature_hash = self._generate_signature_hash(
+    signature_id = self._generate_signature_id(
         SignatureType.FUNCTION_SIGNATURE,
         _VANIR_SIGNATURE_VERSION,
         source,
@@ -427,7 +393,7 @@ class SignatureFactory:
         chunk.base.name,
     )
     return FunctionSignature(
-        signature_hash=signature_hash,
+        signature_id=signature_id,
         signature_version=_VANIR_SIGNATURE_VERSION,
         source=source,
         target_file=chunk.target_file,
@@ -438,7 +404,6 @@ class SignatureFactory:
         function_hash=chunk.function_hash,
         length=len(chunk.normalized_code),
         target_function=chunk.base.name,
-        signature_id_prefix=None,
     )
 
   def create_from_line_chunk(
@@ -460,14 +425,14 @@ class SignatureFactory:
         level to identify the target file. See the Truncated Path module for
         details.
     """
-    signature_hash = self._generate_signature_hash(
+    signature_id = self._generate_signature_id(
         SignatureType.LINE_SIGNATURE,
         _VANIR_SIGNATURE_VERSION,
         source,
         chunk.target_file
     )
     return LineSignature(
-        signature_hash=signature_hash,
+        signature_id=signature_id,
         signature_version=_VANIR_SIGNATURE_VERSION,
         source=source,
         target_file=chunk.target_file,
@@ -477,7 +442,6 @@ class SignatureFactory:
         truncated_path_level=truncated_path_level,
         line_hashes=chunk.line_hashes,
         threshold=containment_threshold,
-        signature_id_prefix=None,
     )
 
   def create_from_osv_sign(self, osv_sig: dict[str, Any]) -> Signature:
@@ -540,7 +504,7 @@ class SignatureBundle:
     for digest in self._function_signature_dict:
       if len(self._function_signature_dict[digest]) > 1:
         collide_sigs.append([
-            sign.signature_hash
+            sign.signature_id
             for sign in self._function_signature_dict[digest]
         ])
     return collide_sigs

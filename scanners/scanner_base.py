@@ -51,6 +51,7 @@ from vanir import parser
 from vanir import signature
 from vanir import vulnerability
 from vanir import vulnerability_manager
+from vanir import vulnerability_overwriter
 from vanir.scanners import target_selection_strategy
 
 Findings = Mapping[
@@ -315,6 +316,9 @@ class ScannerBase(abc.ABC):
       extra_vulnerability_filters: Optional[
           Sequence[vulnerability_manager.VulnerabilityFilter]
       ] = None,
+      vulnerability_overwrite_specs: Optional[
+          Sequence[vulnerability_overwriter.OverwriteSpec]
+      ] = None,
   ) -> Tuple[
       Findings, ScannedFileStats, vulnerability_manager.VulnerabilityManager
   ]:
@@ -336,6 +340,9 @@ class ScannerBase(abc.ABC):
         applied onto any |VulnerabilityManager| used. This is in addition to any
         filter already generated internally by the scanner or already applied to
         the given override_vuln_manager.
+      vulnerability_overwrite_specs: Optional list of |OverwriteSpec| to
+        be applied onto |VulnerabilityManager| created for OSV signatures if a
+        manager wasn't provided in |override_vuln_manager|.
 
     Returns:
       A tuple of |Findings|, |ScannedFileStats|, and the |VulnerabilityManager|

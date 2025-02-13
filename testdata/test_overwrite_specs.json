@@ -1,0 +1,22 @@
+[
+  {
+    "vuln_id": "ASB-A-172999675",
+    "replace": [
+      {
+        "path": "affected[*].ecosystem_specific.severity",
+        "value": "Low"
+      }
+    ],
+    "reason": "This vulnerability is not applicable to Nest devices because they lack SMS capability and do not use the telephony service."
+  },
+  {
+    "vuln_id": "ASB-A-202768292",
+    "replace": [
+      {
+        "path": "affected[*].ecosystem_specific.severity",
+        "value": "Low"
+      }
+    ],
+    "reason": "This issue is specific to devices using Quick Share and is not relevant to smartwatches. Therefore, it can be marked as Low severity."
+  }
+]

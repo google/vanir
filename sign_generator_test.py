@@ -4,8 +4,6 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
-"""Tests for sign_generator."""
-
 import concurrent
 import concurrent.futures
 import re
@@ -23,7 +21,7 @@ from pybind11_abseil import status
 _TEST_OSV_ID = 'ASB-A-1234'
 _TEST_ECOSYSTEM = 'Android'
 _TEST_PACKAGE_NAME = 'platform/foo'
-_TEST_COMMIT_SOURCE = 'https://googleplex-android.googlesource.com/'
+_TEST_COMMIT_SOURCE = 'https://android.googlesource.com/kernel/common/+/050fad7'
 _TEST_TARGET_FILE = 'foo/bar/baz.c'
 _TEST_NON_TARGET_FILE = 'src/tests/foo/BarTest.java'
 _TEST_PATCHED_FILES = {_TEST_TARGET_FILE: '/tmp/test/patched/baz.c'}
@@ -48,7 +46,7 @@ class SignGeneratorTest(absltest.TestCase):
     self.mock_line_chunk = mock.create_autospec(
         signature.LineChunk, instance=True)
     self.test_sign1 = signature.FunctionSignature(
-        signature_hash='sign1',
+        signature_id=f'{_TEST_OSV_ID}-sign1',
         source=_TEST_COMMIT_SOURCE,
         target_file=_TEST_TARGET_FILE,
         signature_version='v1',
@@ -59,13 +57,9 @@ class SignGeneratorTest(absltest.TestCase):
         function_hash='12345',
         length=10,
         target_function='func',
-        signature_id_prefix=None,
-    )
-    self.test_sign1_with_osv_id = self.test_sign1.with_id_prefix(
-        _TEST_OSV_ID
     )
     self.test_sign2 = signature.LineSignature(
-        signature_hash='sign2',
+        signature_id=f'{_TEST_OSV_ID}-sign2',
         source=_TEST_COMMIT_SOURCE,
         target_file=_TEST_TARGET_FILE,
         signature_version='v1',
@@ -75,10 +69,6 @@ class SignGeneratorTest(absltest.TestCase):
         truncated_path_level=None,
         line_hashes=['12345'],
         threshold=0.5,
-        signature_id_prefix=None,
-    )
-    self.test_sign2_with_osv_id = self.test_sign2.with_id_prefix(
-        _TEST_OSV_ID
     )
     self.mock_commit = mock.create_autospec(code_extractor_base.Commit,
                                             instance=True)
@@ -134,20 +124,42 @@ class SignGeneratorTest(absltest.TestCase):
         'A threshold must be between 0 and 1.'):
       sign_generator.SignGenerator(invalid_threshold)
 
-  def test_sign_generator_init_fails_with_invalid_custom_threshold(self):
-    invalid_custom_thresholds = {(_TEST_COMMIT_SOURCE, 'baz.c'): 1.1}
+  def test_sign_generator_init_fails_with_multiple_custom_thresholds_for_same_sig(
+      self,
+  ):
+    """There should be no more than one thresholds for a line signature."""
+    custom_threshold_1 = sign_generator.CustomLineSignatureThreshold(
+        _TEST_COMMIT_SOURCE, 'baz.c', 0.3
+    )
+    custom_threshold_2 = sign_generator.CustomLineSignatureThreshold(
+        _TEST_COMMIT_SOURCE, 'baz.c', 0.4
+    )
+    with self.assertRaisesRegex(
+        ValueError, 'Found more than one custom threshold.*'
+    ):
+      sign_generator.SignGenerator(
+          custom_line_signature_thresholds=[
+              custom_threshold_1,
+              custom_threshold_2,
+          ]
+      )
+
+  def test_custom_line_singature_threshold_fails_with_threshold(self):
+
     with self.assertRaisesRegex(
         ValueError, 'Custom line signature threshold entry .* is not valid. '
         'A threshold must be between 0 and 1.'):
-      sign_generator.SignGenerator(
-          custom_line_signature_thresholds=invalid_custom_thresholds)
+      sign_generator.CustomLineSignatureThreshold(
+          _TEST_COMMIT_SOURCE, 'baz.c', 1.1
+      )
 
   def test_sign_generation(self):
     test_threshold = 0.5
     generator = sign_generator.SignGenerator(
         line_signature_threshold=test_threshold)
     signatures = generator.generate_signatures_for_commit(
-        _TEST_ECOSYSTEM, _TEST_PACKAGE_NAME, self.mock_commit
+        _TEST_ECOSYSTEM, _TEST_PACKAGE_NAME, self.mock_commit,
+        signature_factory=self.mock_default_sign_factory,
     )
     self.mock_default_sign_factory.create_from_function_chunk.assert_called_once_with(
         self.mock_func_chunk, mock.ANY, None
@@ -160,10 +172,11 @@ class SignGeneratorTest(absltest.TestCase):
   def test_sign_generation_with_explicit_sign_factory(self):
     test_threshold = 0.5
     generator = sign_generator.SignGenerator(
-        line_signature_threshold=test_threshold,
-        signature_factory=self.mock_sign_factory)
+        line_signature_threshold=test_threshold
+    )
     signatures = generator.generate_signatures_for_commit(
-        _TEST_ECOSYSTEM, _TEST_PACKAGE_NAME, self.mock_commit
+        _TEST_ECOSYSTEM, _TEST_PACKAGE_NAME, self.mock_commit,
+        signature_factory=self.mock_sign_factory,
     )
     self.mock_default_sign_factory.create_from_function_chunk.assert_not_called(
     )
@@ -178,15 +191,17 @@ class SignGeneratorTest(absltest.TestCase):
 
   def test_sign_generation_with_custom_line_signature_thresholds(self):
     test_threshold = 0.1
-    custom_thresholds = {
-        (_TEST_COMMIT_SOURCE, _TEST_TARGET_FILE): test_threshold
-    }
+    custom_line_sig_threshold = sign_generator.CustomLineSignatureThreshold(
+        _TEST_COMMIT_SOURCE, _TEST_TARGET_FILE, test_threshold
+    )
     self.mock_commit.get_url.return_value = _TEST_COMMIT_SOURCE
     generator = sign_generator.SignGenerator(
         line_signature_threshold=0.9,  # Expected to be ignored.
-        custom_line_signature_thresholds=custom_thresholds)
+        custom_line_signature_thresholds=[custom_line_sig_threshold],
+    )
     generator.generate_signatures_for_commit(
         _TEST_ECOSYSTEM, _TEST_PACKAGE_NAME, self.mock_commit,
+        self.mock_default_sign_factory,
     )
     self.mock_default_sign_factory.create_from_line_chunk.assert_called_once_with(
         self.mock_line_chunk, mock.ANY, test_threshold, None
@@ -205,6 +220,7 @@ class SignGeneratorTest(absltest.TestCase):
     generator = sign_generator.SignGenerator(filters=(test_filter,))
     signatures = generator.generate_signatures_for_commit(
         _TEST_ECOSYSTEM, _TEST_PACKAGE_NAME, self.mock_commit,
+        self.mock_default_sign_factory,
     )
     self.assertEqual(signatures, [self.test_sign1, self.test_sign2])
 
@@ -214,7 +230,8 @@ class SignGeneratorTest(absltest.TestCase):
     generator = sign_generator.SignGenerator()
     with self.assertLogs(level=logging.ERROR) as logs:
       sigs = generator.generate_signatures_for_commit(
-          _TEST_ECOSYSTEM, _TEST_PACKAGE_NAME, self.mock_commit
+          _TEST_ECOSYSTEM, _TEST_PACKAGE_NAME, self.mock_commit,
+          self.mock_default_sign_factory,
       )
     self.assertRegex(''.join(logs.output), f'.*{_TEST_TARGET_FILE}.*')
     self.assertEmpty(sigs)
@@ -226,7 +243,8 @@ class SignGeneratorTest(absltest.TestCase):
     generator = sign_generator.SignGenerator()
     with self.assertLogs(level=logging.ERROR) as logs:
       sigs = generator.generate_signatures_for_commit(
-          _TEST_ECOSYSTEM, _TEST_PACKAGE_NAME, self.mock_commit
+          _TEST_ECOSYSTEM, _TEST_PACKAGE_NAME, self.mock_commit,
+          self.mock_default_sign_factory,
       )
     self.assertRegex(''.join(logs.output), f'.*{_TEST_TARGET_FILE}.*')
     self.assertEmpty(sigs)
@@ -248,7 +266,8 @@ class SignGeneratorTest(absltest.TestCase):
     )
     expected_tp_level = 1  # 'bar/baz.c'
     signatures = generator.generate_signatures_for_commit(
-        _TEST_ECOSYSTEM, _TEST_PACKAGE_NAME, self.mock_commit
+        _TEST_ECOSYSTEM, _TEST_PACKAGE_NAME, self.mock_commit,
+        self.mock_default_sign_factory,
     )
     self.mock_default_sign_factory.create_from_function_chunk.assert_called_once_with(
         self.mock_func_chunk, mock.ANY, expected_tp_level,

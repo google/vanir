@@ -10,6 +10,7 @@ import abc
 import collections
 import concurrent
 import concurrent.futures
+import dataclasses
 import multiprocessing
 import os
 import re
@@ -134,6 +135,35 @@ class TruncatedPathLevelFinder:
     return None
 
 
+@dataclasses.dataclass(frozen=True)
+class CustomLineSignatureThreshold:
+  """Dataclass for customizing a line signature's threshold.
+
+  Example:
+    CustomLineSignatureThreshold(
+      commit_url='https://android.googlesource.com/kernel/common/+/050fad7c',
+      target_file='artd/artd_main.cc', threshold=0.75)
+
+  Attributes:
+    commit_url: the fix commit URL of the line signature.
+    target_file: path of the signature's target file, relative to the root of
+      the target source tree. E.g., arch/x86/pci/irq.c in Linux Kernel.
+    threshold: the custom threshold for the designated line signature. A
+      threshold must be between 0 and 1.
+  """
+
+  commit_url: str
+  target_file: str
+  threshold: float
+
+  def __post_init__(self):
+    if not 0 < self.threshold <= 1:
+      raise ValueError(
+          'Custom line signature threshold entry %s is not'
+          ' valid. A threshold must be between 0 and 1.' % self
+      )
+
+
 class SignGenerator:
   """Generates known vulnerability signatures for Vanir.
 
@@ -142,15 +172,13 @@ class SignGenerator:
   patterns and builds them into Vanir signatures.
   """
 
-  
   def __init__(
       self,
       line_signature_threshold: float = _LINE_SIGNATURE_THRESHOLD,
       custom_line_signature_thresholds: Optional[
-          Mapping[tuple[str, str], float]
-      ] = None,
+          Sequence[CustomLineSignatureThreshold]
+      ] = (),
       session: Optional[requests.sessions.Session] = None,
-      signature_factory: Optional[signature.SignatureFactory] = None,
       filters: Sequence[FileFilter] = (),
       truncated_path_level_finder: Optional[TruncatedPathLevelFinder] = None,
   ):
@@ -159,15 +187,11 @@ class SignGenerator:
     Args:
       line_signature_threshold: the default threshold for line signatures.
       custom_line_signature_thresholds: optional arg to individually specify
-        line signature thresholds. Each individual entry should be specified as
-        a key tuple and threshold value. The string entries of a tuple are
-        the fix patch URL and target file path, and the float value is the
-        threshold for the specific signature. Example:
-        {('https://android.googlesource.com/kernel/common/+/050fad7c',
-          'artd/artd_main.cc'): 0.75}
+        line signature thresholds. Each individual entry of the sequence
+        specifies a threshold value for a line signature. Init will fail if
+        there are multiple thresholds set for a line signature.
       session: request session to use for retrieving vulns and patches. If none,
         a new session will be used.
-      signature_factory: optional arg for signature factory object to reuse.
       filters: optional list of filters to be used during generation.
       truncated_path_level_finder: TruncatedPathLevelFinder instance. If set,
         the instance will be utilized to update truncated path level field of
@@ -178,16 +202,18 @@ class SignGenerator:
                        'A threshold must be between 0 and 1.' %
                        line_signature_threshold)
     self._line_signature_threshold = line_signature_threshold
-    if not custom_line_signature_thresholds:
-      custom_line_signature_thresholds = dict()
-    for _, custom_threshold in custom_line_signature_thresholds.items():
-      if not 0 < custom_threshold <= 1:
-        raise ValueError('Custom line signature threshold entry %s is not'
-                         ' valid. A threshold must be between 0 and 1.' %
-                         custom_threshold)
-    self._custom_line_signature_thresholds = custom_line_signature_thresholds
+    self._custom_line_signature_threshold_map = {}
+    for custom_threshold in custom_line_signature_thresholds:
+      key = (custom_threshold.commit_url, custom_threshold.target_file)
+      if key in self._custom_line_signature_threshold_map:
+        raise ValueError(
+            'Found more than one custom threshold entries for the following '
+            'line signature:\n  commit_url:%s\n  target_file:%s' % key
+        )
+      self._custom_line_signature_threshold_map[key] = (
+          custom_threshold.threshold
+      )
     self._session = session or requests.sessions.Session()
-    self._signature_factory = signature_factory or signature.SignatureFactory()
     self._filters = filters
     self._tp_level_finder = truncated_path_level_finder
     # Cache for parsed files. Key is a tuple of (commit_url, target_file).
@@ -200,6 +226,7 @@ class SignGenerator:
       ecosystem: str,
       package_name: str,
       commit: code_extractor_base.Commit,
+      signature_factory: signature.SignatureFactory,
   ) -> Sequence[signature.Signature]:
     """Generates signatures for a commit.
 
@@ -208,7 +235,9 @@ class SignGenerator:
       package_name: the name of the package that the commit belongs to. E.g.,
         ":linux_kernel:", ":linux_kernel:Qualcomm", "platform/frameworks/base"
       commit: a |Commit| object containing a patch.
-
+      signature_factory: signature factory object to use. All signatures in a
+        factory will have unique IDs; conversely, signatures in different
+        factories may have ID collisions.
     Returns:
       A sequence of signatures generated for the given |commit|.
     """
@@ -276,16 +305,15 @@ class SignGenerator:
           else None
       )
       signatures.extend([
-          self._signature_factory.create_from_function_chunk(
-              chunk, url, tp_level
-          )
+          signature_factory.create_from_function_chunk(chunk, url, tp_level)
           for chunk in file_parser.get_function_chunks()
       ])
-      threshold = self._custom_line_signature_thresholds.get(
-          (url, target_file), self._line_signature_threshold,
+      threshold = self._custom_line_signature_threshold_map.get(
+          (url, target_file),
+          self._line_signature_threshold,
       )
       signatures.append(
-          self._signature_factory.create_from_line_chunk(
+          signature_factory.create_from_line_chunk(
               file_parser.get_line_chunk(), url, threshold, tp_level,
           )
       )

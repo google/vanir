@@ -19,13 +19,24 @@ from typing import Optional, Sequence
 
 from absl import flags
 from vanir import vulnerability_manager
+from vanir import vulnerability_overwriter
 from vanir.scanners import scanner_base
 from vanir.scanners import target_selection_strategy
+
 
 _OSV_ID_IGNORE_LIST = flags.DEFINE_list(
     'osv_id_ignore_list', [], 'Comma-separated list of OSV IDs of the'
     'vulnerabilities to exclude from scanning. '
     'E.g., \'--osv_id_ignore_list=ASB-A-1234,ASB-A-4567\''
+)
+
+_OSV_ID_ALLOWED_PREFIX = flags.DEFINE_list(
+    'osv_id_allowed_prefix',
+    None,
+    'Comma-separated list of OSV ID prefixes of the vulnerabilities to include'
+    ' from scanning. All other vulnerabilities will be excluded. E.g., '
+    '\'--osv_id_allowed_prefix=ASB-A-,PUB-A-\' for limiting the scanning to'
+    'Android Security Bulletin and Pixel Security Bulletin vulnerabilities.',
 )
 
 _CVE_ID_IGNORE_LIST = flags.DEFINE_list(
@@ -113,6 +124,16 @@ _PACKAGE_VERSIONS = flags.DEFINE_multi_string(
     '(subjected to other flags). This flag can be specified multiple times.'
 )
 
+_OVERWRITE_SPECS = flags.DEFINE_string(
+    'overwrite_specs',
+    None,
+    'Path to a JSON file containing vulnerability overwrite specifications. '
+    'This file should contain a JSON array of OverwriteSpec objects, each '
+    'defining how to modify specific vulnerabilities. See the '
+    'vulnerability_overwriter module for detailed information about the '
+    'OverwriteSpec format and examples.',
+)
+
 
 def _android_spl_validator(spl: Optional[str]) -> bool:
   if not spl:
@@ -155,6 +176,12 @@ def generate_vulnerability_filters_from_flags(
   if _OSV_ID_IGNORE_LIST.value:
     vfilters.append(
         vulnerability_manager.OsvIdFilter(_OSV_ID_IGNORE_LIST.value))
+  if _OSV_ID_ALLOWED_PREFIX.value:
+    vfilters.append(
+        vulnerability_manager.OsvIdAllowedPrefixFilter(
+            _OSV_ID_ALLOWED_PREFIX.value
+        )
+    )
   if _CVE_ID_IGNORE_LIST.value:
     vfilters.append(
         vulnerability_manager.CveIdFilter(_CVE_ID_IGNORE_LIST.value))
@@ -184,6 +211,18 @@ def generate_vulnerability_filters_from_flags(
   return vfilters
 
 
+def generate_overwrite_specs_from_flags() -> (
+    Sequence[vulnerability_overwriter.OverwriteSpec]
+):
+  """Parses vulnerability overwriters flags and returns a list of OverwriteSpec."""
+  path_to_overwrite_specs = _OVERWRITE_SPECS.value
+  if not path_to_overwrite_specs:
+    return []
+  return vulnerability_overwriter.load_overwrite_specs_from_file(
+      path_to_overwrite_specs
+  )
+
+
 def generate_vuln_manager_from_flags(
 ) -> Optional[vulnerability_manager.VulnerabilityManager]:
   """Create and return vuln manager containing vulns from vulnerability_file_name flag.
@@ -196,6 +235,7 @@ def generate_vuln_manager_from_flags(
   if not _VULNERABILITY_FILE_NAMES.value:
     return None
 
+  vulnerability_overwrite_specs = generate_overwrite_specs_from_flags()
   vuln_managers = []
   for vuln_file_name in _VULNERABILITY_FILE_NAMES.value:
     vuln_file_path = os.path.abspath(vuln_file_name)
@@ -203,7 +243,11 @@ def generate_vuln_manager_from_flags(
       raise ValueError(
           f'Failed to find vulnerability file at {vuln_file_path}')
     vuln_managers.append(
-        vulnerability_manager.generate_from_file(vuln_file_path))
+        vulnerability_manager.generate_from_file(
+            vuln_file_path,
+            vulnerability_overwrite_specs=vulnerability_overwrite_specs,
+        )
+    )
   return vulnerability_manager.generate_from_managers(
       vuln_managers,
       overwrite_older_duplicate=True,

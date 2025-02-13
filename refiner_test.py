@@ -4,8 +4,6 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
-"""Tests for refiner."""
-
 import concurrent
 import concurrent.futures
 import dataclasses
@@ -124,8 +122,7 @@ class RefinerTest(absltest.TestCase):
         mmh3.hash128, seed=0, x64arch=True, signed=False
     )
     self._test_function_sig = signature.FunctionSignature(
-        signature_hash=_TEST_FUNC_SIG_HASH,
-        signature_id_prefix=_TEST_OSV_ID,
+        signature_id=f'{_TEST_OSV_ID}-{_TEST_FUNC_SIG_HASH}',
         signature_version=signature._VANIR_SIGNATURE_VERSION,
         source=mock.Mock(),
         target_file=_TEST_TARGET_FILE,
@@ -147,8 +144,7 @@ class RefinerTest(absltest.TestCase):
       ])
       test_line_hashes.append(self._hash(ngram))
     self._test_line_sig = signature.LineSignature(
-        signature_hash=_TEST_LINE_SIG_HASH,
-        signature_id_prefix=_TEST_OSV_ID,
+        signature_id=f'{_TEST_OSV_ID}-{_TEST_LINE_SIG_HASH}',
         signature_version=signature._VANIR_SIGNATURE_VERSION,
         source=mock.Mock(),
         target_file=_TEST_TARGET_FILE,

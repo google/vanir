@@ -30,6 +30,7 @@ from absl import logging
 from vanir import signature
 from vanir import vulnerability
 from vanir import vulnerability_manager
+from vanir import vulnerability_overwriter
 from vanir.scanners import package_identifier
 from vanir.scanners import scanner_base
 from vanir.scanners import target_selection_strategy
@@ -40,7 +41,8 @@ def _run_cmd(
     stdin: Optional[str] = None, check: bool = False,
 ) -> Tuple[int, str, str]:
   """Run cmd in cwd. Return a tuple of exit code, stdout, and stderr."""
-  
+  # PYTHONSAFEPATH does not work with repo before 2.40. Older repo versions are
+  # still being used in a lot of distros.
   if 'PYTHONSAFEPATH' in os.environ:
     env = os.environ.copy()
     env.pop('PYTHONSAFEPATH')
@@ -107,6 +109,9 @@ class RepoScanner(scanner_base.ScannerBase):
       extra_vulnerability_filters: Optional[
           Sequence[vulnerability_manager.VulnerabilityFilter]
       ] = None,
+      vulnerability_overwrite_specs: Optional[
+          Sequence[vulnerability_overwriter.OverwriteSpec]
+      ] = None,
   ) -> Tuple[
       scanner_base.Findings,
       scanner_base.ScannedFileStats,
@@ -133,7 +138,9 @@ class RepoScanner(scanner_base.ScannerBase):
       )
     else:
       vuln_manager = vulnerability_manager.generate_from_osv(
-          self._ecosystem, vulnerability_filters=extra_vulnerability_filters
+          self._ecosystem,
+          vulnerability_filters=extra_vulnerability_filters,
+          vulnerability_overwrite_specs=vulnerability_overwrite_specs,
       )
 
     # Identify package name for each subdirectory.

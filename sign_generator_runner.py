@@ -37,8 +37,8 @@ _VULNERABILITY_FILE_NAME = flags.DEFINE_string(
 _OSV_ECOSYSTEM = flags.DEFINE_string(
     'osv_ecosystem', None,
     'Name of the OSV ecosystem to generate signatures for, e.g. "Android". '
-    'Also need to specify osv_package. Incompatible with '
-    '--vulnerability_file_name or --use_osv_android_kernel_vulns.')
+    'Incompatible with --vulnerability_file_name or '
+    '--use_osv_android_kernel_vulns.')
 
 _OSV_PACKAGES = flags.DEFINE_multi_string(
     'osv_package', None,
@@ -99,6 +99,18 @@ _REF_FILE_LIST_SOURCE = flags.DEFINE_enum_class(
     ' levels of signatures.',
 )
 
+_FLAG_ERROR_MESSAGE = (
+    'Not enough configuration flags has been passed. '
+    'Please provide one of the following sets of flags:\n'
+    ' 1) --vulnerability_file_name: generate signatures for the '
+    'vulnerabilities listed in the designated file.\n'
+    ' 2) --osv_ecosystem: generate signatures for all vulnerabilities under '
+    'the designated ecosystem in OSV.\n'
+    ' 3) --osv_ecosystem and --osv_package: generate signatures for the '
+    'designated package of the designated ecosystem in OSV.\n'
+    ' 4) --use_osv_android_kernel_vulns: generate signatures for the latest '
+    'Android kernel vulnerabilities in OSV'
+)
 _DRIVER_FILE_PATTERN = re.compile(r'drivers/.*')
 
 
@@ -108,11 +120,10 @@ def _validate_vuln_source_flags(flags_to_check: dict[str, str]) -> bool:
       'osv_ecosystem',
       'use_osv_android_kernel_vulns')
   only_one_source = 1 == sum(1 for flag in source_flags if flags_to_check[flag])
-  package_and_ecosystem_together = (
-      (flags_to_check['osv_ecosystem'] and flags_to_check['osv_package']) or
-      (not flags_to_check['osv_ecosystem'] and
-       not flags_to_check['osv_package']))
-  return only_one_source and bool(package_and_ecosystem_together)
+  package_without_ecosystem = bool(
+      flags_to_check['osv_package'] and not flags_to_check['osv_ecosystem']
+  )
+  return only_one_source and not package_without_ecosystem
 
 
 def main(argv: Sequence[str]) -> None:
@@ -165,19 +176,14 @@ def main(argv: Sequence[str]) -> None:
         packages=vulnerability.MetaPackage.ANDROID_KERNEL,
         session=session,
     )
-  elif _OSV_ECOSYSTEM.value and _OSV_PACKAGES.value:
+  elif _OSV_ECOSYSTEM.value:
     vuln_manager = vulnerability_manager.generate_from_osv(
         ecosystem=_OSV_ECOSYSTEM.value,
-        packages=_OSV_PACKAGES.value,
+        packages=_OSV_PACKAGES.value if _OSV_PACKAGES.value else None,
         session=session,
     )
   else:
-    
-    # all of Android in one go
-    raise ValueError(
-        'Must provide either --osv_ecosystem together with --osv_package, or '
-        'point to a custom vuln JSON file with --vulnerability_file_name, or '
-        'specify --use_osv_android_kernel_vulns.')
+    raise ValueError(_FLAG_ERROR_MESSAGE)
 
   filters = []
   if _IGNORE_TEST_FILES.value:
@@ -222,8 +228,6 @@ if __name__ == '__main__':
       [_VULNERABILITY_FILE_NAME, _OSV_ECOSYSTEM, _OSV_PACKAGES,
        _USE_OSV_ANDROID_KERNEL],
       _validate_vuln_source_flags,
-      message=(
-          'Must provide either --osv_ecosystem together with --osv_package, '
-          'or point to a custom vuln JSON file with --vulnerability_file_name, '
-          'or specify --use_osv_android_kernel_vulns.'))
+      message=_FLAG_ERROR_MESSAGE
+  )
   app.run(main)

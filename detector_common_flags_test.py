@@ -6,6 +6,9 @@
 
 """Tests for Detector Common Flags module."""
 
+import os
+import shutil
+
 from absl import flags
 from absl.testing import flagsaver
 from vanir import detector_common_flags
@@ -30,6 +33,13 @@ class DetectorCommonFlagsTest(absltest.TestCase):
     flags.FLAGS['osv_id_ignore_list'].parse('ASB-A-1111,ASB-A-1234')
     self.assertCountEqual(['ASB-A-1111', 'ASB-A-1234'],
                           detector_common_flags._OSV_ID_IGNORE_LIST.value)
+
+  @flagsaver.flagsaver
+  def test_osv_id_prefix(self):
+    flags.FLAGS['osv_id_allowed_prefix'].parse('ASB-A-,WSB-A-')
+    self.assertEqual(
+        ['ASB-A-', 'WSB-A-'], detector_common_flags._OSV_ID_ALLOWED_PREFIX.value
+    )
 
   @flagsaver.flagsaver
   def test_cve_id_ignore_list(self):
@@ -117,23 +127,29 @@ class DetectorCommonFlagsTest(absltest.TestCase):
 
   @flagsaver.flagsaver(
       osv_id_ignore_list=['ASB-A-1111', 'ASB-A-1234'],
+      osv_id_allowed_prefix='ASB-A-',
       cve_id_ignore_list=['CVE-1234-1234', 'CVE-1111-1111'],
       android_min_severity_level='MODERATE',
       android_spl='2020-05-01',
       sign_target_path_filter=['foo/bar/.*', 'foo/bar/.*', 'foo/baz/.*'],
-      sign_target_arch=['X86'])
+      sign_target_arch=['X86'],
+  )
   def test_generate_vulnerability_filters_from_flags(self):
     vfilters = detector_common_flags.generate_vulnerability_filters_from_flags()
-    self.assertLen(vfilters, 8)
+    self.assertLen(vfilters, 9)
     self.assertEqual(
         {type(vfilter) for vfilter in vfilters},
-        {vulnerability_manager.OsvIdFilter,
-         vulnerability_manager.CveIdFilter,
-         vulnerability_manager.AndroidSeverityFilter,
-         vulnerability_manager.AndroidSplFilter,
-         vulnerability_manager.TargetPathFilter,
-         vulnerability_manager.ArchitectureFilter,
-         vulnerability_manager.DeprecatedSignatureFilter})
+        {
+            vulnerability_manager.OsvIdFilter,
+            vulnerability_manager.OsvIdAllowedPrefixFilter,
+            vulnerability_manager.CveIdFilter,
+            vulnerability_manager.AndroidSeverityFilter,
+            vulnerability_manager.AndroidSplFilter,
+            vulnerability_manager.TargetPathFilter,
+            vulnerability_manager.ArchitectureFilter,
+            vulnerability_manager.DeprecatedSignatureFilter,
+        },
+    )
 
   @flagsaver.flagsaver(include_deprecated_signatures=True)
   def test_generate_vulnerability_filters_from_flags_ignores_low_severity(self):
@@ -159,6 +175,21 @@ class DetectorCommonFlagsTest(absltest.TestCase):
         filters[0], scanner_base.PackageVersionSpecificSignatureFilter
     )
     self.assertEqual(filters[0]._package_versions, {'1', '2'})
+
+  @flagsaver.flagsaver
+  def test_generate_overwrite_specs_from_flags_empty(self):
+    flags.FLAGS['overwrite_specs'].parse('')
+    specs = detector_common_flags.generate_overwrite_specs_from_flags()
+    self.assertEmpty(specs, 'Overwrite specs should be empty')
+
+  @flagsaver.flagsaver
+  def test_generate_overwrite_specs_from_flags(self):
+    flags.FLAGS['overwrite_specs'].parse(
+        'testdata/test_overwrite_specs.json'
+    )
+    specs = detector_common_flags.generate_overwrite_specs_from_flags()
+    self.assertNotEmpty(specs, 'Overwrite specs should not be empty')
+
 
 if __name__ == '__main__':
   absltest.main()

@@ -11,10 +11,10 @@ import dataclasses
 from typing import Optional, Sequence, Tuple
 
 from absl import logging
-
 from vanir import version_extractor
 from vanir import vulnerability
 from vanir import vulnerability_manager
+from vanir import vulnerability_overwriter
 from vanir.scanners import package_scanner
 from vanir.scanners import scanner_base
 from vanir.scanners import target_selection_strategy
@@ -51,6 +51,9 @@ class AndroidKernelScanner(package_scanner.PackageScanner):
       extra_vulnerability_filters: Optional[
           Sequence[vulnerability_manager.VulnerabilityFilter]
       ] = None,
+      vulnerability_overwrite_specs: Optional[
+          Sequence[vulnerability_overwriter.OverwriteSpec]
+      ] = None,
   ) -> Tuple[
       scanner_base.Findings,
       scanner_base.ScannedFileStats,
@@ -64,6 +67,7 @@ class AndroidKernelScanner(package_scanner.PackageScanner):
         strategy,
         override_vuln_manager,
         extra_vulnerability_filters,
+        vulnerability_overwrite_specs
     )
 
     logging.info('Collecting findings...')

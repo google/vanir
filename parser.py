@@ -41,11 +41,12 @@ class Parser:
 
     Args:
       file_path: the absolute path to the file to analyze.
-      target_file: relative path of the target file in the target system. E.g.,
-        arch/x86/pci/irq.c in Linux Kernel. Note that this value is used as a
-        label for the chunks generated from the parser and their corresponding
-        signatures. |file_path| is not suitable as a label value since it is an
-        absolute path in the runtime system and can be a temporary file.
+      target_file: path of the signature's target file, relative to the root of
+        the target source tree. E.g., arch/x86/pci/irq.c in Linux Kernel. Note
+        that this value is used as a label for the chunks generated from the
+        parser and their corresponding signatures. |file_path| is not suitable
+        as a label value since it is an absolute path in the runtime system and
+        can be a temporary file.
       affected_line_ranges: list of the ranges of lines affected by a patch.
         Only function chunks that are affected by at least one line within this
         range will be processed. This does not affect how line chunks are

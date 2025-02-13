@@ -12,6 +12,7 @@ CodeExtractor abstract classes.
 
 import abc
 import dataclasses
+import logging
 import os
 import tempfile
 from typing import Collection, Mapping, Optional, Sequence, Tuple
@@ -48,26 +49,21 @@ class Commit(metaclass=abc.ABCMeta):
         malformatted.
     """
     self._session = session
+    self._temp_files = set()
     self._url = self._normalize_url(url)
     self._commit_hash = self._extract_commit_hash()
     self._parent_commit = self._extract_parent_commit()
     self._patch = self._extract_patch()
     self._patched_files = self._extract_patched_files()
     self._unpatched_files = self._extract_unpatched_files()
-    self._other_files = {}
     self._affected_lines_dict = None
 
   def __del__(self):
-    for file_path in getattr(self, '_patched_files', {}):
-      self._del_tempfile(self._patched_files[file_path])
-    for file_path in getattr(self, '_unpatched_files', {}):
-      self._del_tempfile(self._unpatched_files[file_path])
-    for file_path in getattr(self, '_other_files', {}):
-      self._del_tempfile(self._other_files[file_path])
-
-  def _del_tempfile(self, tempfile_name):
-    if os.path.exists(tempfile_name):
-      os.remove(tempfile_name)
+    for file_path in getattr(self, '_temp_files', set()):
+      try:
+        os.remove(file_path)
+      except (FileNotFoundError, OSError) as e:
+        logging.exception('Failed to remove temp file %s: %s', file_path, e)
 
   def _create_temp_file(
       self, file_content: str, suffix: Optional[str] = None
@@ -84,6 +80,7 @@ class Commit(metaclass=abc.ABCMeta):
     with tempfile.NamedTemporaryFile(
         delete=False, suffix=suffix, mode='w'
     ) as f:
+      self._temp_files.add(f.name)
       f.write(file_content)
       return f.name
 
@@ -109,7 +106,7 @@ class Commit(metaclass=abc.ABCMeta):
 
     Returns:
       A file path map where a key is a relative path of the target file in the
-      target system and the value is the absoulte path to the extracted
+      target source tree and the value is the absoulte path to the extracted
       patched version of the file.
     """
 
@@ -119,7 +116,7 @@ class Commit(metaclass=abc.ABCMeta):
 
     Returns:
       A file path map where a key is a relative path of the target file in the
-      target system and the value is the absoulte path to the extracted
+      target source tree and the value is the absoulte path to the extracted
       unpatched version of the file.
     """
 
@@ -220,8 +217,8 @@ class Commit(metaclass=abc.ABCMeta):
     """Returns modified version of the files patched by the given commit.
 
     Returns:
-      A dictionary with each original file path in the target system as a key
-      and its corresponding temporary file path as the value.
+      A dictionary with each original file path in the target source tree as a
+      key and its corresponding temporary file path as the value.
     """
     return self._patched_files
 
@@ -229,8 +226,8 @@ class Commit(metaclass=abc.ABCMeta):
     """Returns unmodified version of the files patched by the given commit.
 
     Returns:
-      A dictionary with each original file path in the target system as a key
-      and its corresponding temporary file path as the value.
+      A dictionary with each original file path in the target source tree as a
+      key and its corresponding temporary file path as the value.
     """
     return self._unpatched_files
 
@@ -317,4 +314,3 @@ class AbstractCodeExtractor(abc.ABC):
       to the tip of a version not mentioned in |versions|, and the second item
       is the list of tip URLs failed to convert to |Commit| objects.
     """
-

@@ -6,27 +6,33 @@
 #
 absl-py==2.1.0
     # via -r requirements.txt
-certifi==2024.7.4
+certifi==2024.12.14
     # via requests
-charset-normalizer==3.3.2
+charset-normalizer==3.4.1
     # via requests
-idna==3.7
-    # via requests
-jinja2==3.1.4
+decorator==5.1.1
     # via -r requirements.txt
-markupsafe==2.1.5
+idna==3.10
+    # via requests
+jinja2==3.1.5
+    # via -r requirements.txt
+markupsafe==3.0.2
     # via jinja2
-mmh3==4.1.0
+mmh3==5.0.1
+    # via -r requirements.txt
+ply==3.11
     # via -r requirements.txt
 python-dateutil==2.9.0.post0
     # via -r requirements.txt
 requests==2.32.3
     # via -r requirements.txt
-six==1.16.0
-    # via python-dateutil
+six==1.17.0
+    # via
+    #   -r requirements.txt
+    #   python-dateutil
 typing-extensions==4.12.2
     # via -r requirements.txt
 unidiff==0.7.5
     # via -r requirements.txt
-urllib3==2.2.2
+urllib3==2.3.0
     # via requests

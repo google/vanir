@@ -11,8 +11,7 @@ from vanir import signature
 
 EXPECTED_SIGNATURES_KERNEL = frozenset({
     signature.FunctionSignature(
-        signature_id_prefix='ASB-A-210498909',
-        signature_hash='5bd698a6',
+        signature_id='ASB-A-210498909-5bd698a6',
         signature_version='v1',
         source='https://android.googlesource.com/kernel/common/+/050fad7c4534c13c8eb1d9c2ba66012e014773cb',
         target_file='kernel/bpf/core.c',
@@ -25,8 +24,7 @@ EXPECTED_SIGNATURES_KERNEL = frozenset({
         target_function='bpf_adj_branches',
     ),
     signature.FunctionSignature(
-        signature_id_prefix='ASB-A-210498909',
-        signature_hash='5d89291b',
+        signature_id='ASB-A-210498909-5d89291b',
         signature_version='v1',
         source='https://android.googlesource.com/kernel/common/+/050fad7c4534c13c8eb1d9c2ba66012e014773cb',
         target_file='kernel/bpf/core.c',
@@ -39,8 +37,7 @@ EXPECTED_SIGNATURES_KERNEL = frozenset({
         target_function='bpf_patch_insn_single',
     ),
     signature.FunctionSignature(
-        signature_id_prefix='ASB-A-210498909',
-        signature_hash='c48b4d8b',
+        signature_id='ASB-A-210498909-c48b4d8b',
         signature_version='v1',
         source='https://android.googlesource.com/kernel/common/+/050fad7c4534c13c8eb1d9c2ba66012e014773cb',
         target_file='net/core/filter.c',
@@ -53,8 +50,7 @@ EXPECTED_SIGNATURES_KERNEL = frozenset({
         target_function='bpf_convert_filter',
     ),
     signature.LineSignature(
-        signature_id_prefix='ASB-A-210498909',
-        signature_hash='2522d32a',
+        signature_id='ASB-A-210498909-2522d32a',
         signature_version='v1',
         source='https://android.googlesource.com/kernel/common/+/050fad7c4534c13c8eb1d9c2ba66012e014773cb',
         target_file='kernel/bpf/core.c',
@@ -113,8 +109,7 @@ EXPECTED_SIGNATURES_KERNEL = frozenset({
         threshold=0.9,
     ),
     signature.LineSignature(
-        signature_id_prefix='ASB-A-210498909',
-        signature_hash='a931e0c4',
+        signature_id='ASB-A-210498909-a931e0c4',
         signature_version='v1',
         source='https://android.googlesource.com/kernel/common/+/050fad7c4534c13c8eb1d9c2ba66012e014773cb',
         target_file='net/core/filter.c',
@@ -135,8 +130,7 @@ EXPECTED_SIGNATURES_KERNEL = frozenset({
         threshold=0.9,
     ),
     signature.FunctionSignature(
-        signature_id_prefix='ASB-A-210498909',
-        signature_hash='e2fa80cf',
+        signature_id='ASB-A-210498909-e2fa80cf',
         signature_version='v1',
         source='https://android.googlesource.com/kernel/common/+/99253eb750fda6a644d5188fb26c43bad8d5a745',
         target_file='net/ipv6/ip6mr.c',
@@ -149,8 +143,7 @@ EXPECTED_SIGNATURES_KERNEL = frozenset({
         target_function='ip6_mroute_setsockopt',
     ),
     signature.FunctionSignature(
-        signature_id_prefix='ASB-A-210498909',
-        signature_hash='e920a872',
+        signature_id='ASB-A-210498909-e920a872',
         signature_version='v1',
         source='https://android.googlesource.com/kernel/common/+/99253eb750fda6a644d5188fb26c43bad8d5a745',
         target_file='net/ipv6/ip6mr.c',
@@ -163,8 +156,7 @@ EXPECTED_SIGNATURES_KERNEL = frozenset({
         target_function='ip6_mroute_getsockopt',
     ),
     signature.LineSignature(
-        signature_id_prefix='ASB-A-210498909',
-        signature_hash='74456a17',
+        signature_id='ASB-A-210498909-74456a17',
         signature_version='v1',
         source='https://android.googlesource.com/kernel/common/+/99253eb750fda6a644d5188fb26c43bad8d5a745',
         target_file='net/ipv6/ip6mr.c',
@@ -189,8 +181,7 @@ EXPECTED_SIGNATURES_KERNEL = frozenset({
         threshold=0.9,
     ),
     signature.FunctionSignature(
-        signature_id_prefix='ASB-A-172999675',
-        signature_hash='e2fa80cf',
+        signature_id='ASB-A-172999675-e2fa80cf',
         signature_version='v1',
         source='https://android.googlesource.com/kernel/common/+/99253eb750fda6a644d5188fb26c43bad8d5a745',
         target_file='net/ipv6/ip6mr.c',
@@ -203,8 +194,7 @@ EXPECTED_SIGNATURES_KERNEL = frozenset({
         target_function='ip6_mroute_setsockopt',
     ),
     signature.FunctionSignature(
-        signature_id_prefix='ASB-A-172999675',
-        signature_hash='e920a872',
+        signature_id='ASB-A-172999675-e920a872',
         signature_version='v1',
         source='https://android.googlesource.com/kernel/common/+/99253eb750fda6a644d5188fb26c43bad8d5a745',
         target_file='net/ipv6/ip6mr.c',
@@ -217,8 +207,7 @@ EXPECTED_SIGNATURES_KERNEL = frozenset({
         target_function='ip6_mroute_getsockopt',
     ),
     signature.LineSignature(
-        signature_id_prefix='ASB-A-172999675',
-        signature_hash='74456a17',
+        signature_id='ASB-A-172999675-74456a17',
         signature_version='v1',
         source='https://android.googlesource.com/kernel/common/+/99253eb750fda6a644d5188fb26c43bad8d5a745',
         target_file='net/ipv6/ip6mr.c',
@@ -243,8 +232,7 @@ EXPECTED_SIGNATURES_KERNEL = frozenset({
         threshold=0.9,
     ),
     signature.FunctionSignature(
-        signature_id_prefix='PUB-A-160818461',
-        signature_hash='482eb047',
+        signature_id='PUB-A-160818461-482eb047',
         signature_version='v1',
         source='https://android.googlesource.com/kernel/common/+/bce1305c0ece3',
         target_file='drivers/hid/hid-core.c',
@@ -257,8 +245,7 @@ EXPECTED_SIGNATURES_KERNEL = frozenset({
         target_function='hid_output_report',
     ),
     signature.FunctionSignature(
-        signature_id_prefix='PUB-A-160818461',
-        signature_hash='95d3f56d',
+        signature_id='PUB-A-160818461-95d3f56d',
         signature_version='v1',
         source='https://android.googlesource.com/kernel/common/+/bce1305c0ece3',
         target_file='drivers/hid/hid-core.c',
@@ -271,8 +258,7 @@ EXPECTED_SIGNATURES_KERNEL = frozenset({
         target_function='hid_report_raw_event',
     ),
     signature.LineSignature(
-        signature_id_prefix='PUB-A-160818461',
-        signature_hash='4606e0d5',
+        signature_id='PUB-A-160818461-4606e0d5',
         signature_version='v1',
         source='https://android.googlesource.com/kernel/common/+/bce1305c0ece3',
         target_file='drivers/hid/hid-core.c',
@@ -299,8 +285,7 @@ EXPECTED_SIGNATURES_KERNEL = frozenset({
 
 EXPECTED_SIGNATURES_PLATFORM = frozenset({
     signature.FunctionSignature(
-        signature_id_prefix='ASB-A-202768292',
-        signature_hash='0cf66e03',
+        signature_id='ASB-A-202768292-0cf66e03',
         signature_version='v1',
         source='https://android.googlesource.com/platform/frameworks/base/+/b2dc041a4e84986e3a6932b127d3a18ef02b6d0a',
         target_file='services/core/java/com/android/server/om/OverlayManagerService.java',
@@ -313,8 +298,7 @@ EXPECTED_SIGNATURES_PLATFORM = frozenset({
         target_function='executeRequest',
     ),
     signature.FunctionSignature(
-        signature_id_prefix='ASB-A-202768292',
-        signature_hash='a6c73092',
+        signature_id='ASB-A-202768292-a6c73092',
         signature_version='v1',
         source='https://android.googlesource.com/platform/frameworks/base/+/b2dc041a4e84986e3a6932b127d3a18ef02b6d0a',
         target_file='services/core/java/com/android/server/om/OverlayManagerService.java',
@@ -327,8 +311,7 @@ EXPECTED_SIGNATURES_PLATFORM = frozenset({
         target_function='OverlayManagerService',
     ),
     signature.LineSignature(
-        signature_id_prefix='ASB-A-202768292',
-        signature_hash='4b745b9d',
+        signature_id='ASB-A-202768292-4b745b9d',
         signature_version='v1',
         source='https://android.googlesource.com/platform/frameworks/base/+/b2dc041a4e84986e3a6932b127d3a18ef02b6d0a',
         target_file='services/core/java/com/android/server/om/OverlayManagerService.java',

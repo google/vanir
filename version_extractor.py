@@ -12,8 +12,6 @@ truth of the immunity against certain vulnerabilities since it can be simply
 modified without actual code patching.
 """
 
-
-
 import abc
 import collections
 import collections.abc

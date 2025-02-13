@@ -32,8 +32,7 @@ class ScannerBaseTest(absltest.TestCase):
         for test_file in test_files
     ]
     self._test_func_sign = signature.FunctionSignature(
-        signature_hash='sign1',
-        signature_id_prefix='ASB-A-1234',
+        signature_id='ASB-A-1234-sign1',
         signature_version='v1',
         source='https://android.googlesource.com/sign1_source',
         target_file='target.c',
@@ -46,8 +45,7 @@ class ScannerBaseTest(absltest.TestCase):
         function_hash='func_hash',
     )
     self._test_line_sign = signature.LineSignature(
-        signature_hash='sign2',
-        signature_id_prefix='ASB-A-1234',
+        signature_id='ASB-A-1234-sign2',
         signature_version='v1',
         source='https://android.googlesource.com/sign2_source',
         target_file='target.c',

@@ -473,7 +473,7 @@ class CodeExtractorAndroidTest(parameterized.TestCase):
     commits, failed_urls = (
         extractor.extract_files_at_tip_of_unaffected_versions(
             _ANDROID_TEST_USERSPACE_PROJECT,
-            ['10', '11', '12', '12L', '13', '14-next'],  # all but 14
+            ['10', '11', '12', '12L', '13', '15', '15-next'],  # all but 14
             [_TEST_FILE_RELATIVE_PATH],
         )
     )

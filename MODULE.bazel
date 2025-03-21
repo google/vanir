@@ -1,0 +1,59 @@
+# Copyright 2025 Google LLC
+#
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file or at
+# https://developers.google.com/open-source/licenses/bsd
+
+"""Vanir build and test dependencies."""
+
+module(name = "vanir")
+
+bazel_dep(name = "rules_python", version = "1.1.0")
+bazel_dep(name = "platforms", version = "0.0.11")
+bazel_dep(name = "abseil-cpp", version = "20250127.0", repo_name = "com_google_absl")
+bazel_dep(name = "pybind11_bazel", version = "2.13.6")
+bazel_dep(name = "pybind11_abseil", version = "202402.0")
+bazel_dep(name = "rules_proto", version = "7.1.0")
+bazel_dep(name = "protobuf", version = "29.3", repo_name = "com_google_protobuf")
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+python.toolchain(
+    is_default = True,
+    python_version = "3.9"
+)
+
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+pip.parse(
+    hub_name = "vanir_deps",
+    python_version = "3.9",
+    requirements_lock = "//:requirements_lock.txt",
+)
+use_repo(pip, "vanir_deps")
+
+pip.parse(
+    hub_name = "antlr4_deps",
+    python_version = "3.9",
+    requirements_lock = "//:requirements_antlr4_lock.txt",
+)
+use_repo(pip, "antlr4_deps")
+
+antlr4_grammar_java_lexer_g4_extension = use_extension("//:extensions.bzl", "antlr4_grammar_java_lexer_g4_extension")
+use_repo(antlr4_grammar_java_lexer_g4_extension, "antlr4_grammar_java_lexer_g4")
+
+antlr4_grammar_java_parser_g4_extension = use_extension("//:extensions.bzl", "antlr4_grammar_java_parser_g4_extension")
+use_repo(antlr4_grammar_java_parser_g4_extension, "antlr4_grammar_java_parser_g4")
+
+antlr4_runtimes_extension = use_extension("//:extensions.bzl", "antlr4_runtimes_extension")
+use_repo(antlr4_runtimes_extension, "antlr4_runtimes")
+
+fuzzyc_extension = use_extension("//:extensions.bzl", "fuzzyc_extension")
+use_repo(fuzzyc_extension, "fuzzyc")
+
+com_google_osv_extension = use_extension("//:extensions.bzl", "com_google_osv_extension")
+use_repo(com_google_osv_extension, "com_google_osv")
+
+jsonpath_rw_extension = use_extension("//:extensions.bzl", "jsonpath_rw_extension")
+use_repo(jsonpath_rw_extension, "jsonpath-rw-git")
+
+antlr4_entry_points_extension = use_extension("//:extensions.bzl", "antlr4_entry_points_extension")
+use_repo(antlr4_entry_points_extension, "antlr4_entry_points")

@@ -15,9 +15,10 @@ with low false-positive rate in a sustainable and scalable way.
 ## Quick Start
 
 > [!CAUTION]
-> Currently Vanir only builds on Bazel 7 and below. Bazel 8 migration work is
-> being carried out; in the meantime, build with Bazel 7. If using Bazelisk,
-> set environment variable `USE_BAZEL_VERSION=7.5.0`
+> This instruction is written based on systems using Bazel >= 8. For Bazel 7.1
+> and 7.0, edit .bazelrc to enable workspace and disable bzlmod.
+> For Bazel 6, remove or comment out the line `common --enable_workspace=False`
+> as this flag is not supported.
 
 1. Install the following [prerequisite](#prerequisite) tools in a Linux machine
 if not already installed:

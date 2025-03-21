@@ -1,0 +1,39 @@
+# Copyright 2023 Google LLC
+#
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file or at
+# https://developers.google.com/open-source/licenses/bsd
+
+# Package containing all programming language parsers for Vanir.
+
+load("@rules_python//python:defs.bzl", "py_library", "py_test")
+
+package(default_visibility = ["//visibility:public"])
+
+py_library(
+    name = "abstract_language_parser",
+    srcs = [
+        "abstract_language_parser.py",
+    ],
+    deps = [
+        ":common",
+    ],
+)
+
+py_library(
+    name = "common",
+    srcs = [
+        "common.py",
+    ],
+)
+
+py_library(
+    name = "language_parsers",
+    srcs = ["language_parsers.py"],
+    deps = [
+        ":abstract_language_parser",
+        ":common",
+        "//vanir/language_parsers/cpp:cpp_parser",
+        "//vanir/language_parsers/java:java_parser",
+    ],
+)

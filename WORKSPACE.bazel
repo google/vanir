@@ -59,6 +59,18 @@ pip_parse(
 load("@antlr4_deps//:requirements.bzl", install_antlr4_deps = "install_deps")
 install_antlr4_deps()
 
+new_local_repository(
+    name = "antlr4_entry_points",
+    path = "vanir/language_parsers/java",
+    build_file_content = """
+alias(
+    name = "antlr4",
+    actual = "@antlr4_deps_antlr4_tools//:rules_python_wheel_entry_point_antlr4",
+    visibility = ["//visibility:public"],
+)
+"""
+)
+
 # Download Antlr4 Java grammar
 ANTLR4_JAVA_REV = "c85ec510bd7cfba4649aec1ac2cf66bebd8ce2ed"
 http_file(
@@ -85,7 +97,7 @@ cc_library(
     hdrs = glob(["runtime/Cpp/runtime/src/**/*.h"]),
     includes = ["runtime/Cpp/runtime/src"],
 )
-    """,
+""",
     sha256 = "50e87636a61daabd424d884c60f804387430920072f585a9fee2b90e2043fdcc",
     strip_prefix = "antlr4-4.11.1",
     urls = ["https://github.com/antlr/antlr4/archive/v4.11.1.tar.gz"],

@@ -1,0 +1,71 @@
+# Copyright 2023 Google LLC
+#
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file or at
+# https://developers.google.com/open-source/licenses/bsd
+
+load("@rules_python//python:defs.bzl", "py_library", "py_test")
+load("@vanir_deps//:requirements.bzl", "requirement")
+load(":antlr4.external.bzl", "antlr4_cc_gen")
+
+package(default_visibility = [
+    "//visibility:public",
+])
+
+ANTLR4_VER = "4.11.1"
+
+antlr4_cc_gen(
+    name = "java_cc_lexer",
+    srcs = ["@antlr4_grammar_java_lexer_g4//file"],
+    antlr4_ver = ANTLR4_VER,
+    cc_files_prefix = "JavaLexer",
+    cc_namespace = "java_cc_lexer",
+    listener = False,
+)
+
+antlr4_cc_gen(
+    name = "java_cc_parser",
+    srcs = [
+        "@antlr4_grammar_java_lexer_g4//file",
+        "@antlr4_grammar_java_parser_g4//file",
+    ],
+    antlr4_ver = ANTLR4_VER,
+    cc_files_prefix = "JavaParser",
+    cc_namespace = "java_cc_parser",
+    listener = True,
+)
+
+cc_library(
+    name = "parser_core",
+    srcs = ["parser_core.cc"],
+    hdrs = ["parser_core.h"],
+    deps = [
+        ":java_cc_lexer",
+        ":java_cc_parser",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/status:statusor",
+    ],
+)
+
+py_library(
+    name = "java_parser",
+    srcs = ["java_parser.py"],
+    data = [
+        "//vanir/language_parsers/java/python:parser_core.so",
+    ],
+    deps = [
+        "//vanir/language_parsers:abstract_language_parser",
+        "//vanir/language_parsers:common",
+    ],
+)
+
+py_test(
+    name = "java_parser_test",
+    size = "small",
+    srcs = ["java_parser_test.py"],
+    data = ["@pybind11_abseil//pybind11_abseil:status.so"],
+    deps = [
+        ":java_parser",
+        requirement("absl-py"),
+    ],
+)

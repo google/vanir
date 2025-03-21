@@ -1,0 +1,56 @@
+# Copyright 2023 Google LLC
+#
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file or at
+# https://developers.google.com/open-source/licenses/bsd
+
+# Bazel build rules for Vanir parser core.
+load("@rules_python//python:defs.bzl", "py_library", "py_test")
+load("@vanir_deps//:requirements.bzl", "requirement")
+
+package(default_visibility = [
+    "//visibility:public",
+])
+
+cc_library(
+    name = "parser_core",
+    srcs = ["parser_core.cc"],
+    hdrs = ["parser_core.h"],
+    copts = [
+        # fexception is needed only for catching Antlr4 exceptions.
+        "-fexceptions",
+    ],
+    features = ["-use_header_modules"],
+    deps = [
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@fuzzyc//:fuzzyc_cc_function",
+        "@fuzzyc//:fuzzyc_cc_module",
+    ],
+)
+
+py_library(
+    name = "cpp_parser",
+    srcs = ["cpp_parser.py"],
+    data = [
+        "//vanir/language_parsers/cpp/python:parser_core.so",
+        "@pybind11_abseil//pybind11_abseil:status.so",
+    ],
+    deps = [
+        "//vanir/language_parsers:abstract_language_parser",
+        "//vanir/language_parsers:common",
+        requirement("absl-py"),
+    ],
+)
+
+py_test(
+    name = "cpp_parser_test",
+    size = "small",
+    srcs = ["cpp_parser_test.py"],
+    data = ["@pybind11_abseil//pybind11_abseil:status.so"],
+    deps = [
+        ":cpp_parser",
+        requirement("absl-py"),
+    ],
+)

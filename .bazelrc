@@ -4,6 +4,19 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
+# The following file specifies the Bazel configuration. Currently, Vanir is
+# only tested with Bazel >= 6.0.0. For Bazel >= 7.2.0, Vanir runs
+# without any changes in this file. For earlier versions, following
+# configuration changes are needed.
 
-common --enable_bzlmod=False
+# In order to run on Bazel <= 7.1.0, following line needs to be
+# commented as bzlmod build does not work on Bazel 7.1 and earlier.
+
+common --enable_workspace=False
+
+# Additionally, for Bazel 7.1.0 and 7.0.0, following line needs
+# to be uncommented.
+
+# common --enable_bzlmod=False
+
 build --cxxopt=-std=c++17 --cxxopt=-fexceptions --cxxopt=-Wno-nonnull --cxxopt=-Wno-sign-compare --cxxopt=-Wno-parentheses --cxxopt=-Wno-deprecated-declarations

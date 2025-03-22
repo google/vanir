@@ -101,7 +101,7 @@ verify any missing patches in a highly automated and systematic way.
 
 ### Macro-architecture
 
-![Vanir Macro Architecture](docs/images/vanir_macro_arch.png)
+![Vanir Macro Architecture](vanir/docs/images/vanir_macro_arch.png)
 
 Vanir mainly consists of two components — **Signature Generator** and
 **Detector**.
@@ -135,7 +135,7 @@ The diagram below illustrates the macro-architecture of Vanir.
 The following diagram depicts the internal architecture of Vanir Signature
 Generator and Vanir Detector.
 
-![Vanir Micro Architecture](docs/images/vanir_micro_arch.png)
+![Vanir Micro Architecture](vanir/docs/images/vanir_micro_arch.png)
 
 Vanir was primarily designed to detect missing security patches with low
 false-positive rate in a sustainable and scalable way. To achieve the goal,
@@ -684,4 +684,4 @@ The <strong><code>details</code></strong> field is a list of unpatched code snip
 The HTML report file shows the same result in a more human-readable format as
 follows:
 
-![HTML report screenshot](docs/images/vanir_detector_report.png)
+![HTML report screenshot](vanir/docs/images/vanir_detector_report.png)

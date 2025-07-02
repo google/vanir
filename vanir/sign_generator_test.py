@@ -45,6 +45,7 @@ class SignGeneratorTest(absltest.TestCase):
         signature.FunctionChunk, instance=True)
     self.mock_line_chunk = mock.create_autospec(
         signature.LineChunk, instance=True)
+    self.mock_line_chunk.line_hashes = ['12345']
     self.test_sign1 = signature.FunctionSignature(
         signature_id=f'{_TEST_OSV_ID}-sign1',
         source=_TEST_COMMIT_SOURCE,
@@ -96,8 +97,8 @@ class SignGeneratorTest(absltest.TestCase):
             autospec=True))
 
     # Configure mock objects.
-    self.mock_commit.get_unpatched_files.return_value = _TEST_UNPATCHED_FILES
-    self.mock_commit.get_patched_files.return_value = _TEST_PATCHED_FILES
+    self.mock_commit.unpatched_files = _TEST_UNPATCHED_FILES
+    self.mock_commit.patched_files = _TEST_PATCHED_FILES
     self.mock_parser.get_function_chunks.return_value = [self.mock_func_chunk]
     self.mock_parser.get_line_chunk.return_value = self.mock_line_chunk
     self.mock_default_sign_factory.create_from_function_chunk.return_value = (
@@ -194,7 +195,7 @@ class SignGeneratorTest(absltest.TestCase):
     custom_line_sig_threshold = sign_generator.CustomLineSignatureThreshold(
         _TEST_COMMIT_SOURCE, _TEST_TARGET_FILE, test_threshold
     )
-    self.mock_commit.get_url.return_value = _TEST_COMMIT_SOURCE
+    self.mock_commit.url = _TEST_COMMIT_SOURCE
     generator = sign_generator.SignGenerator(
         line_signature_threshold=0.9,  # Expected to be ignored.
         custom_line_signature_thresholds=[custom_line_sig_threshold],
@@ -208,10 +209,10 @@ class SignGeneratorTest(absltest.TestCase):
     )
 
   def test_sign_generation_ignore_test_file(self):
-    self.mock_commit.get_unpatched_files.return_value = (
+    self.mock_commit.unpatched_filess = (
         _TEST_UNPATCHED_FILES_WITH_TEST
     )
-    self.mock_commit.get_patched_files.return_value = (
+    self.mock_commit.patched_files = (
         _TEST_PATCHED_FILES_WITH_TEST
     )
     test_filter = sign_generator.EcosystemAndFileNameFilter(

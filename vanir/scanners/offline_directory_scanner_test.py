@@ -6,13 +6,14 @@
 
 from unittest import mock
 
+from vanir import file_path_utils
 from vanir import vulnerability_manager
 from vanir.scanners import offline_directory_scanner
 from vanir.scanners import scanner_base
 
 from absl.testing import absltest
 
-_TESTDATA_DIR = 'vanir/testdata/'
+_TESTDATA_DIR = file_path_utils.get_root_file_path('testdata/')
 _TEST_SIGNATURES_FILE = _TESTDATA_DIR + 'test_signatures.json'
 
 

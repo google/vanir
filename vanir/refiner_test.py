@@ -108,9 +108,9 @@ class RefinerTest(absltest.TestCase):
     mock_commit = mock.create_autospec(
         code_extractor_base.Commit, instance=True
     )
-    mock_commit.get_url.return_value = hash(content)
+    mock_commit.url = hash(content)
     tempfile = self._create_tempfile(_TEST_TARGET_FILE, content)
-    mock_commit.get_patched_files.return_value = {
+    mock_commit.patched_files = {
         _TEST_TARGET_FILE: tempfile,
         'unhandled.filetype': 'nonexistent_file',
     }
@@ -294,8 +294,8 @@ class RefinerTest(absltest.TestCase):
     mock_commit = mock.create_autospec(
         code_extractor_base.Commit, instance=True
     )
-    mock_commit.get_url.return_value = hash(_TEST_PATCHED_CODE)
-    mock_commit.get_patched_files.return_value = {'unrelated.c': clean_file}
+    mock_commit.url = hash(_TEST_PATCHED_CODE)
+    mock_commit.patched_files = {'unrelated.c': clean_file}
     mock_commit.get_file_at_rev.return_value = false_positive_file
 
     refined_signatures = self._refiner.refine_against_patch_series(

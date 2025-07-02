@@ -126,8 +126,8 @@ class Refiner:
     # later commit takes precedence.
     commit_files_map = {}
     for commit in commits:
-      for target_file, file_path in commit.get_patched_files().items():
-        commit_files_map[target_file] = (commit.get_url(), file_path)
+      for target_file, file_path in commit.patched_files.items():
+        commit_files_map[target_file] = (commit.url, file_path)
     groundtruth_files = {
         (target_file, url, file_path)
         for target_file, (url, file_path) in commit_files_map.items()
@@ -137,7 +137,7 @@ class Refiner:
     # them at the revision of the latest commit in the series.
     last_commit = commits[-1]
     for file in sig_files - set(commit_files_map):
-      url = last_commit.get_url()
+      url = last_commit.url
       if (url, file) not in self._download_cache:
         try:
           local_file = last_commit.get_file_at_rev(file)

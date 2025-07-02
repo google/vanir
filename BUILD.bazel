@@ -100,8 +100,8 @@ py_library(
     deps = [
         ":osv_client",
         ":refiner",
-        ":signature",
         ":sign_generator",
+        ":signature",
         ":vulnerability",
         ":vulnerability_overwriter",
         "//vanir/code_extractors:code_extractor",
@@ -187,11 +187,11 @@ py_library(
     name = "file_list_manager",
     srcs = ["vanir/file_list_manager.py"],
     data = [
-        "//vanir/cache:ecosystem_file_lists",
         "@pybind11_abseil//pybind11_abseil:status.so",
     ],
     deps = [
         ":parser",
+        "//vanir/cache:ecosystem_file_lists",
     ],
 )
 
@@ -238,7 +238,7 @@ py_library(
     name = "vulnerability_overwriter",
     srcs = ["vanir/vulnerability_overwriter.py"],
     deps = [
-        "@jsonpath-rw-git//:jsonpath_rw",
+        "@jsonpath-ng-git//:jsonpath_ng",
     ],
 )
 
@@ -249,6 +249,11 @@ py_library(
     deps = [
         requirement("absl-py"),
     ],
+)
+
+py_library(
+    name = "file_path_utils",
+    srcs = ["vanir/file_path_utils.py"],
 )
 
 py_test(
@@ -308,6 +313,8 @@ py_test(
     srcs = ["vanir/vulnerability_test.py"],
     deps = [
         ":vulnerability",
+        "@com_google_osv//:vulnerability_py_pb2",
+        "@com_google_protobuf//:protobuf_python",
         requirement("absl-py"),
     ],
 )
@@ -367,6 +374,7 @@ py_test(
     ],
     deps = [
         ":detector_common_flags",
+        ":file_path_utils",
         ":vulnerability_manager",
         "//vanir/scanners:scanner_base",
         "//vanir/scanners:target_selection_strategy",
@@ -442,19 +450,28 @@ py_test(
         "//vanir/testdata:test_overwrite_specs.json",
     ],
     deps = [
+        ":file_path_utils",
         ":vulnerability_overwriter",
         requirement("absl-py"),
     ],
 )
 
 # This is an example test demonstrating how to validate overwrite specs.
-# To use this test, you'll need to provide your own overwrite specs file and signature files.
-py_test(
+# To use this test, you'll need to provide your own overwrite specs file
+# and signature files. e.g.
+# bazel run //:overwrite_specs_validity_test -- \
+#     --overwrite_specs=your_overwrite_specs.json \
+#     --signature_files=your_signatures_json_file.json
+# Note: This is not a test that verifies Vanir's functionality; it's to verify
+# that the overwrite specs are correct or not and hence it is declared as a
+# 'py_binary' here.
+py_binary(
     name = "overwrite_specs_validity_test",
     srcs = ["vanir/overwrite_specs_validity_test.py"],
     args = [
         "--overwrite_specs=vanir/testdata/test_overwrite_specs.json",
-        # "--signature_files=testdata/test_vulnerabilities_platform.json",
+        "--signature_files=vanir/testdata/test_vulnerabilities_platform.json",
+        "--signature_files=vanir/testdata/test_vulnerabilities_kernel.json",
     ],
     data = [
         "//vanir/testdata:test_overwrite_specs.json",

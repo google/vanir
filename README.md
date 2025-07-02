@@ -350,7 +350,12 @@ output:
 ```posix-terminal
 bazel test --test_output=all //...
 ```
-
+> [!NOTE]
+> If you encounter "file name too long" error, this may be due to Bazel sandbox
+> creating a test directory that is longer than 255 characters. In that case,
+> this can be worked around by running bazel or bazelisk with a different output
+> dir, like so:
+> `bazel --output_user_root=/tmp/mybazeldir test --test_output=all //...`
 
 ### Building Vanir
 

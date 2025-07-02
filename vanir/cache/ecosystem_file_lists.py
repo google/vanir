@@ -1,4 +1,22 @@
-{
+# Copyright 2025 Google LLC
+#
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file or at
+# https://developers.google.com/open-source/licenses/bsd
+
+"""This module contains cached ecosystem file lists.
+
+Ecosystem file lists is a map object where:
+- Keys are ecosystem names (str, e.g. "Android").
+- Values are dictionary (dict) where:
+    - Keys are package name (str, e.g. ":linux_kernel:"),
+    - Values are list of files (list[str]) associated with that package.
+
+It currently contains the file list cache for the ':linux_kernel:' package for
+the Android ecosystem and is used for signature generation for kernel.
+"""
+
+ECOSYSTEM_FILE_LISTS_CACHE = {
   "Android": {
     ":linux_kernel:": [
       "Documentation/gpu/rfc/i915_small_bar.h",

@@ -4,11 +4,13 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
-"""Tests for code_extractor."""
+from unittest import mock
 
 from vanir import vulnerability
 from vanir.code_extractors import code_extractor
+from vanir.code_extractors import code_extractor_android
 from vanir.code_extractors import code_extractor_base
+from vanir.code_extractors import code_extractor_git
 
 from absl.testing import absltest
 from absl.testing import parameterized
@@ -22,10 +24,27 @@ _TEST_ANDROID_COMMIT_URL = _ANDROID_PATCH_URL_BASE + _TEST_COMMIT
 
 class CodeExtractorTest(parameterized.TestCase):
 
-  @absltest.mock.patch.object(
+  def setUp(self):
+    super().setUp()
+    self.mock_extract_git = self.enter_context(
+        mock.patch.object(
+            code_extractor_git.GitCodeExtractor,
+            'extract_commits_for_affected_entry',
+            autospec=True,
+        )
+    )
+    self.mock_extract_android = self.enter_context(
+        mock.patch.object(
+            code_extractor_android.AndroidCodeExtractor,
+            'extract_commits_for_affected_entry',
+            autospec=True,
+        )
+    )
+
+  @mock.patch.object(
       code_extractor_base, 'Commit', autospec=True, instance=True
   )
-  @absltest.mock.patch.object(code_extractor_base, 'AbstractCodeExtractor')
+  @mock.patch.object(code_extractor_base, 'AbstractCodeExtractor')
   def test_extract(self, mock_extractor_class, mock_commit):
     mock_extractor_class.__subclasses__ = lambda self: [mock_extractor_class]
     mock_extractor_class.is_supported_ecosystem.side_effect = (
@@ -42,13 +61,23 @@ class CodeExtractorTest(parameterized.TestCase):
     self.assertEmpty(failures)
     self.assertListEqual(commits, [mock_commit])
 
-  def test_extract_with_no_package(self):
-    with self.assertRaisesRegex(ValueError, 'Missing package info.*'):
-      code_extractor.extract_for_affected_entry(
-          vulnerability.AffectedEntry({})
-      )
+  def test_extract_with_no_package_should_use_git_extractor(self):
+    code_extractor.extract_for_affected_entry(
+        vulnerability.AffectedEntry({})
+    )
+    self.mock_extract_git.assert_called_once()
+    self.mock_extract_android.assert_not_called()
 
-  @absltest.mock.patch.object(code_extractor_base, 'AbstractCodeExtractor')
+  def test_extract_with_android_package_should_use_android_extractor(self):
+    code_extractor.extract_for_affected_entry(
+        vulnerability.AffectedEntry(
+            {'package': {'ecosystem': 'Android', 'name': 'pkg'}}
+        )
+    )
+    self.mock_extract_git.assert_not_called()
+    self.mock_extract_android.assert_called_once()
+
+  @mock.patch.object(code_extractor_base, 'AbstractCodeExtractor')
   def test_extract_with_no_patch_found(self, mock_extractor_class):
     mock_extractor_class.__subclasses__ = lambda self: [mock_extractor_class]
     mock_extractor_class.is_supported_ecosystem.side_effect = (
@@ -71,10 +100,10 @@ class CodeExtractorTest(parameterized.TestCase):
     with self.assertRaises(NotImplementedError):
       _, _ = code_extractor.extract_for_affected_entry(test_affected)
 
-  @absltest.mock.patch.object(
+  @mock.patch.object(
       code_extractor_base, 'Commit', autospec=True, instance=True
   )
-  @absltest.mock.patch.object(code_extractor_base, 'AbstractCodeExtractor')
+  @mock.patch.object(code_extractor_base, 'AbstractCodeExtractor')
   def test_extract_files_at_tip_of_unaffected_versions(
       self, mock_extractor_class, mock_commit,
   ):

@@ -12,12 +12,10 @@ for calculating truncated path level.
 
 import collections
 import enum
-import json
 from typing import Mapping, Sequence
 
 from vanir import parser
-
-
+from vanir.cache import ecosystem_file_lists
 
 _GITFS_TIMEOUT_SEC = 60
 _GITFS_ADDR = 'blade:git'
@@ -27,10 +25,6 @@ KERNEL_PACKAGE = ':linux_kernel:'
 _MAINLINE_KERNEL_PROJECT = 'android:kernel/common:refs/heads/android-mainline:'
 
 _KNOWN_SOURCES = [(ANDROID_ECOSYSTEM, KERNEL_PACKAGE, _MAINLINE_KERNEL_PROJECT)]
-
-ECOSYSTEM_FILE_LISTS_CACHE = (
-    'vanir/cache/ecosystem_file_lists.json'
-)
 
 
 @enum.unique
@@ -51,8 +45,6 @@ def get_file_lists(
     package name and the value is list of files.
   """
   if source == Source.CACHE:
-    resource = open(ECOSYSTEM_FILE_LISTS_CACHE, mode='rb').read()
-    file_lists = json.loads(resource)
-    return file_lists
+    return ecosystem_file_lists.ECOSYSTEM_FILE_LISTS_CACHE
   else:
     raise ValueError('Unknown file list source: %s' % source)

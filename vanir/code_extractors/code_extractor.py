@@ -18,8 +18,9 @@ from vanir import vulnerability
 # abstract extractor class and therefore available for use.
 # pylint: disable=unused-import
 from vanir.code_extractors import code_extractor_android
-# pylint: enable=unused-import
 from vanir.code_extractors import code_extractor_base
+from vanir.code_extractors import code_extractor_git
+# pylint: enable=unused-import
 
 _P = TypeVar('_P', bound=code_extractor_base.AbstractCodeExtractor)
 
@@ -80,7 +81,9 @@ def extract_for_affected_entry(
   extractor_class = _get_extractor_class(affected.ecosystem)
   if not extractor_class:
     raise NotImplementedError(f'Unsupported ecosystem: {affected.ecosystem}')
-  return extractor_class(session).extract_commits_for_affected_entry(affected)
+  return extractor_class().extract_commits_for_affected_entry(
+      affected, requests_session=session
+  )
 
 
 def extract_files_at_tip_of_unaffected_versions(
@@ -116,6 +119,6 @@ def extract_files_at_tip_of_unaffected_versions(
   extractor_class = _get_extractor_class(ecosystem)
   if not extractor_class:
     raise NotImplementedError(f'Unsupported ecosystem: {ecosystem}')
-  return extractor_class(session).extract_files_at_tip_of_unaffected_versions(
-      package_name, affected_versions, files,
+  return extractor_class().extract_files_at_tip_of_unaffected_versions(
+      package_name, affected_versions, files, requests_session=session,
   )

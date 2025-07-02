@@ -4,6 +4,7 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
+import base64
 import collections
 import dataclasses
 import enum
@@ -11,22 +12,23 @@ import json
 import re
 import tarfile
 from typing import Any, Callable, Collection
-
+from unittest import mock
 from absl import logging
 from absl.testing import parameterized
 import requests
+from vanir import file_path_utils
 from vanir import osv_client
 from vanir import reporter
 from vanir import signature
 from vanir import vanir_test_base
 from vanir import vulnerability
 from vanir import vulnerability_manager
+from vanir.code_extractors import code_extractor_android
 from vanir.scanners import scanner_base
 from vanir.testdata import test_signatures
-
 from absl.testing import absltest
 
-_TESTDATA_DIR = 'vanir/testdata/'
+_TESTDATA_DIR = file_path_utils.get_root_file_path('testdata/')
 _GITILES_TESTDATA_DIR = _TESTDATA_DIR + 'gitiles/'
 
 _TEST_FRAMEWORKS_BASE = _TESTDATA_DIR + 'test_frameworks_base.tar.gz'
@@ -183,6 +185,18 @@ class MissingPatchDetectionHermeticTest(
       vulns_json: str,
       vuln_source_type: VulnerabilityDataSource,
   ):
+    self.enter_context(
+        mock.patch.object(
+            code_extractor_android.AndroidCodeExtractor,
+            'VERSION_BRANCH_MAP',
+            new={
+                '13': 'android13-security-release',
+                '14': 'android14-security-release',
+                '15': 'android15-security-release',
+                '15-next': 'main',
+            },
+        )
+    )
     mock_session().get.side_effect = _fake_gitiles_response
 
     with self.runtime_reporter('vul_ingest'):

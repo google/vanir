@@ -118,6 +118,7 @@ py_test(
     deps = [
         ":offline_directory_scanner",
         ":scanner_base",
+        "//:file_path_utils",
         "//:vulnerability_manager",
         requirement("absl-py"),
     ],
@@ -132,6 +133,7 @@ py_test(
     deps = [
         ":android_kernel_scanner",
         ":scanner_base",
+        "//:file_path_utils",
         "//:vulnerability_manager",
         requirement("absl-py"),
         requirement("requests"),
@@ -147,6 +149,7 @@ py_test(
     deps = [
         ":package_scanner",
         ":scanner_base",
+        "//:file_path_utils",
         "//:vulnerability",
         "//:vulnerability_manager",
         requirement("absl-py"),
@@ -165,6 +168,7 @@ py_test(
         ":repo_scanner",
         ":scanner_base",
         ":target_selection_strategy",
+        "//:file_path_utils",
         "//:signature",
         "//:vulnerability_manager",
         requirement("absl-py"),
@@ -190,6 +194,7 @@ py_test(
     ],
     deps = [
         ":package_identifier",
+        "//:file_path_utils",
         "//:truncated_path",
         "//:vulnerability",
         "//:vulnerability_manager",

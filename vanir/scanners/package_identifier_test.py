@@ -6,6 +6,7 @@
 
 """Test for Package Identifier module."""
 
+from vanir import file_path_utils
 from vanir import truncated_path
 from vanir import vulnerability
 from vanir import vulnerability_manager
@@ -13,7 +14,7 @@ from vanir.scanners import package_identifier
 
 from absl.testing import absltest
 
-_TEST_SIGN_FILE = 'vanir/testdata/test_signatures.json'
+_TEST_SIGN_FILE = file_path_utils.get_root_file_path('testdata/test_signatures.json')
 _TEST_ECOSYSTEM = 'Android'
 
 

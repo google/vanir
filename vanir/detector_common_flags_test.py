@@ -12,6 +12,7 @@ import shutil
 from absl import flags
 from absl.testing import flagsaver
 from vanir import detector_common_flags
+from vanir import file_path_utils
 from vanir import vulnerability_manager
 from vanir.scanners import scanner_base
 from vanir.scanners import target_selection_strategy
@@ -185,7 +186,7 @@ class DetectorCommonFlagsTest(absltest.TestCase):
   @flagsaver.flagsaver
   def test_generate_overwrite_specs_from_flags(self):
     flags.FLAGS['overwrite_specs'].parse(
-        'vanir/testdata/test_overwrite_specs.json'
+        file_path_utils.get_root_file_path('testdata/test_overwrite_specs.json')
     )
     specs = detector_common_flags.generate_overwrite_specs_from_flags()
     self.assertNotEmpty(specs, 'Overwrite specs should not be empty')

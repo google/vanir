@@ -172,7 +172,7 @@ class Signature(metaclass=abc.ABCMeta):
     """Returns dictionary type signature target information."""
     return {'file': self.target_file}
 
-  def to_osv_dict(self, use_string_hashes=True) -> dict[str, Any]:
+  def to_osv_dict(self, use_string_hashes: bool = True) -> dict[str, Any]:
     """Returns dictionary signature based on OSV Vanir Signature Schema.
 
     Args:

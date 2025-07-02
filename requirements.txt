@@ -6,8 +6,10 @@ unidiff
 jinja2
 typing_extensions>=4,<5
 python-dateutil
+tenacity
 
-# jsonpath_rw dependencies
+# jsonpath_ng dependencies
+
 six
 ply
 decorator

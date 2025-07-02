@@ -1,7 +1,7 @@
-diff --git a/ipsum b/ipsum
+diff --git a/modified.txt b/modified.txt
 index dcf24e1..8b16546 100644
---- a/ipsum
-+++ b/ipsum
+--- a/modified.txt
++++ b/modified.txt
 @@ -1,3 +1,6 @@
 +AFFECTED LINE START CASE 2) This hunk's first non-context line is
 +an added line and there is no context line before
@@ -58,3 +58,9 @@ index dcf24e1..8b16546 100644
  155 Fusce sed ultrices tellus.
 +AFFECTED LINE STOP CASE 2) This hunk's last non-context line is an added line,
 +and there is no context line after the added line.
+diff --git a/added.bin b/added.bin
+new file mode 100644
+index 0000000..d2f800d
+--- /dev/null
++++ b/added.bin
+Binary files differ

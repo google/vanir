@@ -52,8 +52,8 @@ use_repo(fuzzyc_extension, "fuzzyc")
 com_google_osv_extension = use_extension("//:extensions.bzl", "com_google_osv_extension")
 use_repo(com_google_osv_extension, "com_google_osv")
 
-jsonpath_rw_extension = use_extension("//:extensions.bzl", "jsonpath_rw_extension")
-use_repo(jsonpath_rw_extension, "jsonpath-rw-git")
+jsonpath_ng_extension = use_extension("//:extensions.bzl", "jsonpath_ng_extension")
+use_repo(jsonpath_ng_extension, "jsonpath-ng-git")
 
 antlr4_entry_points_extension = use_extension("//:extensions.bzl", "antlr4_entry_points_extension")
 use_repo(antlr4_entry_points_extension, "antlr4_entry_points")

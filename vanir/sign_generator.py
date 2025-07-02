@@ -14,7 +14,7 @@ import dataclasses
 import multiprocessing
 import os
 import re
-from typing import Mapping, Optional, Sequence
+from typing import Mapping, Optional, Sequence, Tuple
 
 from absl import logging
 import requests
@@ -219,7 +219,7 @@ class SignGenerator:
     # Cache for parsed files. Key is a tuple of (commit_url, target_file).
     # Note that line_range is not included in the key because each
     # (commit_url, file) pair has a unique line_range.
-    self._parsers_cache = {}
+    self._parsers_cache: dict[Tuple[str, str], parser.Parser] = {}
 
   def generate_signatures_for_commit(
       self,
@@ -241,13 +241,13 @@ class SignGenerator:
     Returns:
       A sequence of signatures generated for the given |commit|.
     """
-    url = commit.get_url()
+    url = commit.url
 
     # Build the list of relevant files and files that need parsing
     # (i.e. not in cache)
     relevant_target_files = set()
     files_to_parse = set()
-    for target_file, temp_file_path in commit.get_unpatched_files().items():
+    for target_file, temp_file_path in commit.unpatched_files.items():
       should_filter_out = any(
           file_filter.should_filter_out(
               ecosystem, package_name, commit, target_file, temp_file_path
@@ -312,9 +312,11 @@ class SignGenerator:
           (url, target_file),
           self._line_signature_threshold,
       )
-      signatures.append(
-          signature_factory.create_from_line_chunk(
-              file_parser.get_line_chunk(), url, threshold, tp_level,
-          )
-      )
+      line_chunk = file_parser.get_line_chunk()
+      if line_chunk.line_hashes:
+        signatures.append(
+            signature_factory.create_from_line_chunk(
+                line_chunk, url, threshold, tp_level,
+            )
+        )
     return signatures

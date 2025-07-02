@@ -20,6 +20,7 @@ py_test(
         "//vanir/testdata:vanir_test_source_simplified",
     ],
     deps = [
+        "//:file_path_utils",
         "//:osv_client",
         "//:reporter",
         "//:signature",

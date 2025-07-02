@@ -12,12 +12,9 @@ CodeExtractor abstract classes.
 
 import abc
 import dataclasses
-import logging
-import os
 import tempfile
-from typing import Collection, Mapping, Optional, Sequence, Tuple
+from typing import Collection, Mapping, Optional, Sequence, Tuple, Union
 
-import requests
 import unidiff
 from vanir import vulnerability
 
@@ -33,12 +30,12 @@ class IncompatibleUrlError(ValueError):
 class Commit(metaclass=abc.ABCMeta):
   """Class to extract commit files/patches/messages for the given commit URL."""
 
-  def __init__(self, url: str, session: requests.sessions.Session):
+  def __init__(self, url: str, **kwargs):
     """Sets up a commit object for the given |url| address.
 
     Args:
       url: URL of a commit.
-      session: requests session to use for retrieving commit files and patches.
+      **kwargs: additional arguments to pass to the Commit objects' constructor.
 
     Raises:
       IncompatibleUrlError: when the given URL is pointing a source repo
@@ -48,57 +45,38 @@ class Commit(metaclass=abc.ABCMeta):
       ValueError: when the given URL is pointing a compatible source repo but
         malformatted.
     """
-    self._session = session
-    self._temp_files = set()
+    del kwargs  # Unused.
+    # self._working_dir is used to store all files created by _create_temp_file.
+    # It will be deleted when the object is destroyed.
+    self._working_dir = tempfile.TemporaryDirectory()
     self._url = self._normalize_url(url)
-    self._commit_hash = self._extract_commit_hash()
-    self._parent_commit = self._extract_parent_commit()
     self._patch = self._extract_patch()
+    self._affected_line_ranges = self._compute_affected_line_ranges()
     self._patched_files = self._extract_patched_files()
     self._unpatched_files = self._extract_unpatched_files()
-    self._affected_lines_dict = None
-
-  def __del__(self):
-    for file_path in getattr(self, '_temp_files', set()):
-      try:
-        os.remove(file_path)
-      except (FileNotFoundError, OSError) as e:
-        logging.exception('Failed to remove temp file %s: %s', file_path, e)
 
   def _create_temp_file(
-      self, file_content: str, suffix: Optional[str] = None
+      self, file_content: Union[bytes, str], suffix: Optional[str] = None
   ) -> str:
     """Creates a temporary file and write |file_content| into it.
 
     Args:
-      file_content: file content string to be written into the temporary file.
+      file_content: file content to be written to the temporary file.
       suffix: suffix of the temporary file.
 
     Returns:
       Path to the temporary file.
     """
+    mode = 'wb' if isinstance(file_content, bytes) else 'wt'
     with tempfile.NamedTemporaryFile(
-        delete=False, suffix=suffix, mode='w'
+        delete=False, suffix=suffix, mode=mode, dir=self._working_dir.name,
     ) as f:
-      self._temp_files.add(f.name)
       f.write(file_content)
       return f.name
 
   @abc.abstractmethod
-  def _normalize_url(self, url: str) -> str:
-    """Normalizes the given commit URL."""
-
-  @abc.abstractmethod
-  def _extract_commit_hash(self) -> str:
-    """Extracts commit hash from the registered commit URL |self._url|."""
-
-  @abc.abstractmethod
-  def _extract_parent_commit(self) -> str:
-    """Extracts parent commit from the registered commit URL |self._url|."""
-
-  @abc.abstractmethod
   def _extract_patch(self) -> unidiff.PatchSet:
-    """Extracts the patch for the commit."""
+    """Extracts a |unidiff.PatchSet| object corresponding to this commit."""
 
   @abc.abstractmethod
   def _extract_patched_files(self) -> Mapping[str, str]:
@@ -120,29 +98,65 @@ class Commit(metaclass=abc.ABCMeta):
       unpatched version of the file.
     """
 
-  def get_url(self) -> str:
-    """Returns the registered commit URL."""
+  @abc.abstractmethod
+  def _normalize_url(self, url: str) -> str:
+    """Returns the normalized registered commit URL."""
+
+  @property
+  def url(self) -> str:
+    """Returns the normalized registered commit URL."""
     return self._url
 
-  def get_commit_hash(self, length: Optional[int] = None) -> str:
-    """Returns the commit hash string for this commit.
+  def _compute_affected_line_ranges(
+      self
+  ) -> Mapping[str, Sequence[Tuple[int, int]]]:
+    """Returns a dictionary of affected line ranges for each file."""
+    all_affected_lines = {}
+    for patched_file in self._patch:
+      affected_lines = []
+      for hunk in patched_file:
+        # The number of context lines can differ based on diff config, so
+        # we don't rely on the context info provided by hunk. We calculate
+        # start and stop lines ourselves.
+        start: int
+        stop: int
+        # A non-context line is either an added line or a removed line.
+        non_context_lines = [line for line in hunk if not line.is_context]
+        first_change = non_context_lines[0]
+        last_change = non_context_lines[-1]
 
-    Args:
-      length: optional arg to request for a short commit hash with length
-        |length| characters.
+        # Compute the affected line start.
+        if first_change.is_removed:
+          start = first_change.source_line_no
+        else:
+          # Index of the line just before the first changed line.
+          context_line_index = hunk.index(first_change) - 1
+          if context_line_index < 0:  # Even no context.
+            start = hunk.source_start
+          else:
+            start = hunk[context_line_index].source_line_no
 
-    Returns:
-      If |length| is not None and within the valid range, returns the first
-      |length| characters of the commit hash. Otherwise, returns the full commit
-      hash.
-    """
-    if length and 0 < length < len(self._commit_hash):
-      return self._commit_hash[0:length]
-    return self._commit_hash
+        # Compute the affected line stop.
+        if last_change.is_removed:
+          stop = last_change.source_line_no
+        else:
+          # Index of the line just after the last changed line.
+          context_line_index = hunk.index(last_change) + 1
+          if context_line_index >= len(hunk):  # Even no context.
+            # Source length can be 0 when context is 0 & no added line exists.
+            stop = (
+                hunk.source_start + hunk.source_length - 1
+                if hunk.source_length else hunk.source_start)
+          else:
+            stop = hunk[context_line_index].source_line_no - 1
+        # When no context line is provided, start can be greater than stop
+        # Adjust the range in this case to contain at least 1 line.
+        if start > stop:
+          stop = start
 
-  def get_patch(self) -> unidiff.PatchSet:
-    """Returns a PatchSet object containing the patch file for this commit."""
-    return self._patch
+        affected_lines.append((start, stop))
+      all_affected_lines[patched_file.path] = affected_lines
+    return all_affected_lines
 
   def get_affected_line_ranges(
       self, file_path: str
@@ -163,57 +177,10 @@ class Commit(metaclass=abc.ABCMeta):
       The list of ranges that include all affected lines. If the file is not
       affected by this commit, returns an empty list.
     """
-    if not self._affected_lines_dict:
-      self._affected_lines_dict = {}
-      patch_set = self.get_patch()
-      for patched_file in patch_set:
-        affected_lines = []
-        for hunk in patched_file:
-          # The number of context lines can differ based on diff config, so
-          # we don't rely on the context info provided by hunk. We calculate
-          # start and stop lines ourselves.
-          start = None
-          stop = None
-          # A non-context line is either an added line or a removed line.
-          non_context_lines = [line for line in hunk if not line.is_context]
-          first_change = non_context_lines[0]
-          last_change = non_context_lines[-1]
+    return self._affected_line_ranges.get(file_path, [])
 
-          # Compute the affected line start.
-          if first_change.is_removed:
-            start = first_change.source_line_no
-          else:
-            # Index of the line just before the first changed line.
-            context_line_index = hunk.index(first_change) - 1
-            if context_line_index < 0:  # Even no context.
-              start = hunk.source_start
-            else:
-              start = hunk[context_line_index].source_line_no
-
-          # Compute the affected line stop.
-          if last_change.is_removed:
-            stop = last_change.source_line_no
-          else:
-            # Index of the line just after the last changed line.
-            context_line_index = hunk.index(last_change) + 1
-            if context_line_index >= len(hunk):  # Even no context.
-              # Source length can be 0 when context is 0 & no added line exists.
-              stop = (
-                  hunk.source_start + hunk.source_length - 1
-                  if hunk.source_length else hunk.source_start)
-            else:
-              stop = hunk[context_line_index].source_line_no - 1
-          # When no context line is provided, start can be greater than stop
-          # Adjust the range in this case to contain at least 1 line.
-          if start > stop:
-            stop = start
-
-          affected_lines.append((start, stop))
-        self._affected_lines_dict[patched_file.path] = affected_lines
-
-    return self._affected_lines_dict.get(file_path, [])
-
-  def get_patched_files(self) -> Mapping[str, str]:
+  @property
+  def patched_files(self) -> Mapping[str, str]:
     """Returns modified version of the files patched by the given commit.
 
     Returns:
@@ -222,7 +189,8 @@ class Commit(metaclass=abc.ABCMeta):
     """
     return self._patched_files
 
-  def get_unpatched_files(self) -> Mapping[str, str]:
+  @property
+  def unpatched_files(self) -> Mapping[str, str]:
     """Returns unmodified version of the files patched by the given commit.
 
     Returns:
@@ -259,14 +227,6 @@ class AbstractCodeExtractor(abc.ABC):
   3. unmodified & modified versions of the files changed by the patch
   """
 
-  def __init__(self, session: requests.sessions.Session):
-    """Initializes this CodeExtractor instance.
-
-    Args:
-      session: requests session to use for retrieving files and patches.
-    """
-    self._session = session
-
   @classmethod
   @abc.abstractmethod
   def is_supported_ecosystem(cls, ecosystem: str) -> bool:
@@ -274,13 +234,14 @@ class AbstractCodeExtractor(abc.ABC):
 
   @abc.abstractmethod
   def extract_commits_for_affected_entry(
-      self, affected: vulnerability.AffectedEntry,
+      self, affected: vulnerability.AffectedEntry, **kwargs,
   ) -> Tuple[Sequence[Commit], Sequence[FailedCommitUrl]]:
     """For the given package of the given CVE, download the unpatched files.
 
     Args:
       affected: the Affected object to extract fix commits from, in the OSV CVE
         dictionary format
+      **kwargs: additional arguments to pass to the Commit objects' constructor.
 
     Returns:
       A tuple where the first item is the list of |Commit| objects pertaining
@@ -296,6 +257,7 @@ class AbstractCodeExtractor(abc.ABC):
       package_name: str,
       versions: Sequence[str],
       files: Collection[str],
+      **kwargs,
   ) -> Tuple[Sequence[Commit], Sequence[FailedCommitUrl]]:
     """Extracts files tip of unaffected versions of the given package.
 
@@ -308,6 +270,7 @@ class AbstractCodeExtractor(abc.ABC):
       versions: the list of versions of the package. Tip of versions not in this
         list will be extracted.
       files: the list of files to include.
+      **kwargs: additional arguments to pass to the Commit objects' constructor.
 
     Returns:
       A tuple where the first item is the list of |Commit| objects pertaining

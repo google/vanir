@@ -96,21 +96,23 @@ py_proto_library(
         urls = ["https://github.com/google/osv.dev/archive/%s.tar.gz" % OSV_REV],
     )
 
-def jsonpath_rw_repo():
+
+def jsonpath_ng_repo():
     git_repository(
-        name = "jsonpath-rw-git",
+        name = "jsonpath-ng-git",
         build_file_content = """
 load("@rules_python//python:defs.bzl", "py_library")
 load("@vanir_deps//:requirements.bzl", "requirement")
 
 py_library(
-    name = "jsonpath_rw",
+    name = "jsonpath_ng",
     visibility = ["//visibility:public"],
     srcs = [
-        "jsonpath_rw/__init__.py",
-        "jsonpath_rw/jsonpath.py",
-        "jsonpath_rw/lexer.py",
-        "jsonpath_rw/parser.py"
+        "jsonpath_ng/__init__.py",
+        "jsonpath_ng/exceptions.py",
+        "jsonpath_ng/jsonpath.py",
+        "jsonpath_ng/lexer.py",
+        "jsonpath_ng/parser.py"
     ],
     srcs_version = "PY3",
     deps = [
@@ -120,8 +122,8 @@ py_library(
     ],
 )
 """,
-        commit = "6f5647bb3ad2395c20f0191fef07a1df51c9fed8",
-        remote = "https://github.com/kennknowles/python-jsonpath-rw.git",
+        remote = "https://github.com/h2non/jsonpath-ng.git",
+        tag = "v1.7.0",
     )
 
 def antlr4_entry_points_repo():

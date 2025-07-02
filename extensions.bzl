@@ -14,7 +14,7 @@ load(
     "antlr4_runtimes_repo",
     "com_google_osv_repo",
     "fuzzyc_repo",
-    "jsonpath_rw_repo",
+    "jsonpath_ng_repo",
 )
 
 def _antlr4_grammar_java_lexer_g4_impl(_ctx):
@@ -46,10 +46,10 @@ def _com_google_osv_impl(_ctx):
 
 com_google_osv_extension = module_extension(implementation = _com_google_osv_impl)
 
-def _jsonpath_rw_impl(_ctx):
-    jsonpath_rw_repo()
+def _jsonpath_ng_impl(_ctx):
+    jsonpath_ng_repo()
 
-jsonpath_rw_extension = module_extension(implementation = _jsonpath_rw_impl)
+jsonpath_ng_extension = module_extension(implementation = _jsonpath_ng_impl)
 
 def _antlr4_entry_points_impl(_ctx):
     antlr4_entry_points_repo()

@@ -10,6 +10,7 @@ import subprocess
 from unittest import mock
 import requests
 
+from vanir import file_path_utils
 from vanir import signature
 from vanir import vulnerability
 from vanir import vulnerability_manager
@@ -20,7 +21,7 @@ from vanir.scanners import target_selection_strategy
 
 from absl.testing import absltest
 
-_TESTDATA_DIR = 'vanir/testdata/'
+_TESTDATA_DIR = file_path_utils.get_root_file_path('testdata/')
 _TEST_SIGNATURES_FILE = _TESTDATA_DIR + 'test_signatures.json'
 _TEST_SIGNATURES_ZIP_FILE = _TESTDATA_DIR + 'test_signatures.zip'
 _TEST_REPO_MAP = {

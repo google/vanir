@@ -43,6 +43,7 @@ filegroup(
     name = "test_patch_set",
     srcs = [
         "test_patch_file",
+        "test_patched_binary_file.png",
         "test_patched_file",
         "test_unpatched_file",
         "test_unrelated_file",

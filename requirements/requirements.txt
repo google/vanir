@@ -1,0 +1,27 @@
+# Vanir direct dependencies
+# Update pyproject.toml accordingly when updating the requirements_lock files as
+# per this file.
+requests
+absl-py
+mmh3
+unidiff
+jinja2
+typing_extensions>=4,<5
+python-dateutil
+tenacity
+google-cloud-storage
+
+# For Python 3.9, use 'osv==0.0.18' to avoid 'unsupported operand type(s)'
+# error for '|' operator. For Python 3.10 and above, use the latest OSV version.
+osv==0.0.18; python_version<'3.10'
+osv; python_version>='3.10'
+
+# For Python 3.9, use 'protobuf==3.20.3' as per the error message
+# seen while running Vanir PiP on Python 3.9 with latest protobuf version.
+# Reference: https://github.com/protocolbuffers/protobuf/issues/10051.
+# For Python 3.10 and above, use the latest protobuf version.
+protobuf==3.20.3; python_version<'3.10'
+protobuf; python_version>='3.10'
+
+jsonpath_ng
+

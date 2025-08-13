@@ -23,7 +23,7 @@ import json
 import os
 import sys
 import textwrap
-from typing import Mapping, Sequence, Type, TypeVar
+from typing import Any, Mapping, Sequence, Type, TypeVar
 
 from absl import app
 from absl import flags
@@ -45,8 +45,7 @@ from vanir.scanners import package_scanner
 from vanir.scanners import repo_scanner
 # pylint: enable=unused-import,g-bad-import-order
 
-
-VanirScanner = TypeVar('VanirScanner', bound=scanner_base.ScannerBase)
+ScannerClass = TypeVar('ScannerClass', bound=scanner_base.ScannerBase)
 
 flags.declare_key_flag('osv_id_ignore_list')
 flags.declare_key_flag('cve_id_ignore_list')
@@ -73,6 +72,25 @@ _MINIMUM_NUMBER_OF_FILES = flags.DEFINE_integer(
     'detector will fail. This is just a safety knob for preventing mistakes of '
     'scanning a wrong target. If you intend to scan directory containing few '
     'files, please update this flag.',
+)
+
+_SCANNER = flags.DEFINE_string(
+    'scanner',
+    None,
+    'The name of the scanner to use for the detection run. This can also be '
+    'provided as the first positional argument. If no scanner is specified, '
+    'the list of available scanners will be printed.',
+)
+
+_SCANNER_ARGS = flags.DEFINE_string(
+    'scanner_args',
+    None,
+    'A JSON object containing arguments for the scanner. The key is the '
+    'argument name and the value is the argument value. This flag can be used '
+    'to pass arbitraty arguments to the scanner that are not possible with the '
+    'positional-only arguments, as well as to improve readability. See each '
+    'scanner\'s help message for the list of its supported arguments.'
+    'Example: --scanner_args=\'{"code_location": "/path/to/source"}\'.',
 )
 
 _HTML_REPORT_TEMPLATE = """
@@ -214,7 +232,7 @@ _CMDLINE_ARGS_TYPES = (
     inspect.Parameter.VAR_POSITIONAL)
 
 
-def _get_all_scanners() -> Mapping[str, Type[VanirScanner]]:
+def _get_all_scanners() -> Mapping[str, Type[ScannerClass]]:
   """Return all known scanners that can be run from the command line.
 
   This covers all scanners that do not require keyword-only arguments.
@@ -244,7 +262,7 @@ def _get_all_scanners() -> Mapping[str, Type[VanirScanner]]:
   return scanner_map
 
 
-def _get_scanner_usage_str(scanner: Type[VanirScanner]) -> str:
+def _get_scanner_usage_str(scanner: Type[ScannerClass]) -> str:
   """Returns commandline usage instruction string for the given scanner."""
   all_args = inspect.signature(scanner.__init__).parameters.values()
   scanner_args = [arg for arg in all_args if arg.name != 'self'
@@ -262,26 +280,53 @@ def _get_scanner_usage_str(scanner: Type[VanirScanner]) -> str:
       arg_strs.append(f'[{arg.name}]')
   init_doc = (
       textwrap.indent(inspect.cleandoc(scanner.__init__.__doc__), '  ')
-      if scanner.__init__.__doc__ else '')
-  return (f'Usage for {scanner.name()}:\n'
-          f'  detector_runner.py {scanner.name()} {" ".join(arg_strs)}\n'
-          f'{init_doc}').strip()
+      if scanner.__init__.__doc__ else ''
+  )
+  class_doc = (
+      textwrap.indent(inspect.cleandoc(scanner.__doc__), '  ')
+      if scanner.__doc__ else ''
+  )
+  sample_json_args = f'\'{{"{arg_strs[0]}": "some_value..."}}\''
+  return (
+      f'Documentation for {scanner.name()}:\n'
+      '  Usage (with positional args):\n'
+      f'    detector_runner.py {scanner.name()} {" ".join(arg_strs)}\n\n'
+      '  Usage (with argument json object):\n'
+      f'    detector_runner.py {scanner.name()} '
+      f'--scanner_args={sample_json_args}\n\n'
+      f'{init_doc or class_doc}'
+  ).strip()
 
 
 def _is_valid_scanner_args(
-    scanner: Type[VanirScanner], given_args: Sequence[str]) -> bool:
+    scanner: Type[ScannerClass],
+    positional_args: Sequence[str],
+    kwargs: Mapping[str, Any],
+) -> bool:
   """Returns whether the given args pass validity check for the scanner."""
   all_args = inspect.signature(scanner.__init__).parameters.values()
   scanner_args = [arg for arg in all_args if arg.name != 'self'
                   and arg.kind in _CMDLINE_ARGS_TYPES]
-  num_required_args = len(
-      [1 for arg in scanner_args if (arg.default is inspect.Parameter.empty)])
-  has_vararg = any(1 for arg in scanner_args
-                   if arg.kind is inspect.Parameter.VAR_POSITIONAL)
+  scanner_arg_names = [arg.name for arg in scanner_args]
+  required_arg_names = [
+      arg.name for arg in scanner_args
+      if (arg.default is inspect.Parameter.empty)
+  ]
+  has_vararg = any(
+      1 for arg in scanner_args if arg.kind is inspect.Parameter.VAR_POSITIONAL
+  )
   # Check to see if number of args is valid for the given scanner
-  if len(given_args) < num_required_args:
+  if len(positional_args) > len(scanner_args):
+    if not has_vararg:
+      return False
+    args_given_as_positional = set(scanner_arg_names)
+  else:
+    args_given_as_positional = set(scanner_arg_names[:len(positional_args)])
+  # Check to see if any arg is given more than once
+  if args_given_as_positional & set(kwargs):
     return False
-  if len(given_args) > len(scanner_args) and not has_vararg:
+  # Check to see if any required arg is missing
+  if set(required_arg_names) - (set(kwargs) | args_given_as_positional):
     return False
   return True
 
@@ -425,18 +470,25 @@ def main(argv: Sequence[str]) -> None:
   scanners_list_str = '\n\n'.join(
       f'- {scanner.name()}: {scanner.__doc__ if scanner.__doc__ else ""}'
       for scanner in scanners.values())
-  if len(argv) <= 1:
+  if len(argv) <= 0 or (len(argv) <= 1 and not _SCANNER.value):
     raise app.UsageError(
         f'Scanner is not specified. Known scanners:\n{scanners_list_str}')
-  scanner_name = argv[1]
+  if _SCANNER.value:
+    scanner_name = _SCANNER.value
+    scanner_args = argv[1:]
+  else:
+    scanner_name = argv[1]
+    scanner_args = argv[2:]
+
   if scanner_name not in scanners:
     raise app.UsageError(
         f'{scanner_name} is not a valid scanner. Known scanners:\n'
         f'{scanners_list_str}')
-
   scanner_class = scanners[scanner_name]
-  scanner_args = argv[2:]
-  if not _is_valid_scanner_args(scanner_class, scanner_args):
+  scanner_kwargs = (
+      json.loads(_SCANNER_ARGS.value) if _SCANNER_ARGS.value else {}
+  )
+  if not _is_valid_scanner_args(scanner_class, scanner_args, scanner_kwargs):
     raise app.UsageError(_get_scanner_usage_str(scanner_class))
 
   if not flags.FLAGS['verbosity'].present:
@@ -461,7 +513,7 @@ def main(argv: Sequence[str]) -> None:
     report_file = open(output_file_name, 'w')
     report_file.close()
 
-  scanner = scanner_class(*scanner_args)
+  scanner = scanner_class(*scanner_args, **scanner_kwargs)
   findings, stats, vuln_manager = scanner.scan(
       strategy=flags.FLAGS['target_selection_strategy'].value,
       override_vuln_manager=(

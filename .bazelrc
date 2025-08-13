@@ -20,3 +20,13 @@ common --enable_workspace=False
 # common --enable_bzlmod=False
 
 build --cxxopt=-std=c++17 --cxxopt=-fexceptions --cxxopt=-Wno-nonnull --cxxopt=-Wno-sign-compare --cxxopt=-Wno-parentheses --cxxopt=-Wno-deprecated-declarations
+
+# Following config settings are added to build Vanir with different Python
+# versions. These settings are only supported on Bzlmod setup(not supported on
+# WORKSPACE setup) and are used for building pybind extension modules in Vanir
+# PiP packaging.
+build:py3.9 --@rules_python//python/config_settings:python_version=3.9
+build:py3.10 --@rules_python//python/config_settings:python_version=3.10
+build:py3.11 --@rules_python//python/config_settings:python_version=3.11
+build:py3.12 --@rules_python//python/config_settings:python_version=3.12
+build:py3.13 --@rules_python//python/config_settings:python_version=3.13

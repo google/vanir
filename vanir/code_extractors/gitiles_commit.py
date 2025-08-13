@@ -45,10 +45,14 @@ class GitilesCommit(code_extractor_base.Commit):
     self._session = requests_session or requests.Session()
     super().__init__(url, **kwargs)
 
-  def _normalize_url(self, url: str) -> str:
-    if not re.sub(r'^https?://', '', url).startswith(self._KNOWN_GITILES_HOSTS):
-      raise code_extractor_base.IncompatibleUrlError(f'Unknown URL: {url}')
-    return url
+  def _normalize_url(self) -> str:
+    if not re.sub(r'^https?://', '', self._original_url).startswith(
+        self._KNOWN_GITILES_HOSTS
+    ):
+      raise code_extractor_base.IncompatibleUrlError(
+          f'Unknown URL: {self._original_url}'
+      )
+    return self._original_url
 
   @functools.cached_property
   def _parent_commit(self) -> str:

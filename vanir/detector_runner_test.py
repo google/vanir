@@ -83,6 +83,7 @@ _TEST_VUL = {
 class TestScanner(scanner_base.ScannerBase):
 
   def __init__(self, code_location: str, opt_arg: bool = True):
+    """test_scanner init doc."""
     self._code_location = code_location
     self._opt_arg = opt_arg
 
@@ -195,6 +196,7 @@ class DetectorRunnerTest(absltest.TestCase):
 
   def setUp(self):
     super().setUp()
+    # detector_runner._get_all_scanners.cache_clear()
     self._report_file_prefix = '/tmp/vanir_test_report_file_prefix'
     self._json_report_file = self.create_tempfile(
         self._report_file_prefix + '.json', mode='wt'
@@ -287,16 +289,19 @@ class DetectorRunnerTest(absltest.TestCase):
     with flagsaver.flagsaver(
         vulnerability_file_name=[self._test_vul_file.full_path],
     ):
-      scanner_msg = ('Usage for test_scanner:\n  detector_runner.py '
-                     'test_scanner code_location [opt_arg]')
-      scanner2_msg = ('Usage for test_scanner2:\n  detector_runner.py '
-                      'test_scanner2 req_arg req_vararg [req_vararg...]\n'
-                      '  TestScanner2 init doc.')
-      with self.assertRaisesRegex(app.UsageError, re.escape(scanner_msg)):
+      scanner_msg = re.compile(
+          r'.*Usage .*test_scanner code_location \[opt_arg\].*',
+          re.DOTALL,
+      )
+      scanner2_msg = re.compile(
+          r'.*Usage .*test_scanner2 req_arg req_vararg \[req_vararg\.\.\.\].*',
+          re.DOTALL,
+      )
+      with self.assertRaisesRegex(app.UsageError, scanner_msg):
         detector_runner.main(['', 'test_scanner'])
-      with self.assertRaisesRegex(app.UsageError, re.escape(scanner_msg)):
+      with self.assertRaisesRegex(app.UsageError, scanner_msg):
         detector_runner.main(['', 'test_scanner', 'codedir', 'True', 'extra'])
-      with self.assertRaisesRegex(app.UsageError, re.escape(scanner2_msg)):
+      with self.assertRaisesRegex(app.UsageError, scanner2_msg):
         detector_runner.main(['', 'test_scanner2', 'req'])
 
   def test_correct_scanner_args(self):
@@ -326,18 +331,56 @@ class DetectorRunnerTest(absltest.TestCase):
         detector_runner._get_all_scanners()
 
   def test_is_valid_scanner_args(self):
+    self.assertFalse(
+        detector_runner._is_valid_scanner_args(TestScanner, [], {}),
+        'Should fail with not enough args.',
+    )
+    self.assertTrue(
+        detector_runner._is_valid_scanner_args(TestScanner, ['/codedir'], {}),
+        'Should pass with all required args.',
+    )
+    self.assertTrue(
+        detector_runner._is_valid_scanner_args(
+            TestScanner, [], {'code_location': '/codedir'}
+        ),
+        'Should pass with all required args.',
+    )
+    self.assertTrue(
+        detector_runner._is_valid_scanner_args(
+            TestScanner2, ['req'], {'req_vararg': ['asdf']},
+        ),
+        'Should pass with required args split between positional and kwargs.',
+    )
+    self.assertTrue(
+        detector_runner._is_valid_scanner_args(
+            TestScanner, ['codedir', 'True'], {}
+        ),
+        'Should pass with all required args and some optional args.',
+    )
+    self.assertTrue(
+        detector_runner._is_valid_scanner_args(
+            TestScanner, ['codedir'], {'opt_arg': False},
+        ),
+        'Should pass with all required args and some optional args.',
+    )
+    self.assertFalse(
+        detector_runner._is_valid_scanner_args(
+            TestScanner, ['codedir', 'True', 'extra'], {},
+        ),
+        'Should fail with extra args.',
+    )
+    self.assertFalse(
+        detector_runner._is_valid_scanner_args(
+            TestScanner, ['codedir', 'True'], {'opt_arg': False},
+        ),
+        'Should fail with duplicate args.',
+    )
     self.assertFalse(detector_runner._is_valid_scanner_args(
-        TestScanner, []))
+        TestScanner2, ['req'], {},
+    ))
     self.assertTrue(detector_runner._is_valid_scanner_args(
-        TestScanner, ['codedir']))
-    self.assertTrue(detector_runner._is_valid_scanner_args(
-        TestScanner, ['codedir', 'True']))
-    self.assertFalse(detector_runner._is_valid_scanner_args(
-        TestScanner, ['codedir', 'True', 'extra']))
-    self.assertFalse(detector_runner._is_valid_scanner_args(
-        TestScanner2, ['req']))
-    self.assertTrue(detector_runner._is_valid_scanner_args(
-        TestScanner2, ['req', 'vararg1', 'vararg2', 'vararg3']))
+        TestScanner2, ['req', 'vararg1', 'vararg2', 'vararg3'], {},
+    ))
 
   def test_main(self):
     mock_stdout = io.StringIO()
@@ -465,7 +508,7 @@ class DetectorRunnerTest(absltest.TestCase):
       <tr>
         <td>ASB-A-test-1234</td>
         <td>
-          foo/bar/baz.c  (<a href="http://android.googlesource.com/hellworld">patch</a>)<br>
+          foo/bar/baz.c  (<a href="http://android.googlesource.com/hellworld">patch</a>, ASB-A-test-1234-abcdef1234)<br>
           OSV: <a href="https://osv.dev/vulnerability/ASB-A-test-1234">https://osv.dev/vulnerability/ASB-A-test-1234</a><br>
           CVE: CVE-1234-12345 CVE-999-99999 <br>
         </td>
@@ -477,7 +520,7 @@ class DetectorRunnerTest(absltest.TestCase):
       <tr>
         <td>ASB-A-test-1234</td>
         <td>
-          foo/bar/baz.h::testfunc()  (<a href="http://android.googlesource.com/hellworld">patch</a>)<br>
+          foo/bar/baz.h::testfunc()  (<a href="http://android.googlesource.com/hellworld">patch</a>, ASB-A-test-1234-abcdef4321)<br>
           OSV: <a href="https://osv.dev/vulnerability/ASB-A-test-1234">https://osv.dev/vulnerability/ASB-A-test-1234</a><br>
           CVE: CVE-1234-12345 CVE-999-99999 <br>
         </td>
@@ -618,6 +661,19 @@ class DetectorRunnerTest(absltest.TestCase):
     ):
       with self.assertRaises(ValueError):
         detector_runner.main(['', 'test_scanner', _TEST_TARGET_ROOT])
+
+  def test_main_fails_with_no_scanner_specified(self):
+    with self.assertRaisesRegex(app.UsageError, '.*Scanner is not specified.*'):
+      detector_runner.main([''])
+
+  def test_main_fails_with_missing_scanner_args_positional(self):
+    with self.assertRaisesRegex(app.UsageError, TestScanner.__init__.__doc__):
+      detector_runner.main(['', 'test_scanner'])
+
+  @flagsaver.flagsaver(scanner='test_scanner')
+  def test_main_fails_with_missing_scanner_args_absl_flag(self):
+    with self.assertRaisesRegex(app.UsageError, TestScanner.__init__.__doc__):
+      detector_runner.main([''])
 
   def test_main_logs_error_when_target_has_too_few_supported_files(self):
     high_threshold = _TEST_ANALYZED_FILES + _TEST_SKIPPED_FILES + 1

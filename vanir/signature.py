@@ -16,8 +16,10 @@ import abc
 import collections
 import dataclasses
 import enum
+import functools
 import hashlib
-from typing import Any, Collection, FrozenSet, Mapping, Optional, Sequence, Tuple, Union
+import itertools
+from typing import Any, FrozenSet, Iterable, Mapping, Optional, Sequence, Set, Tuple, Union
 
 from absl import logging
 from typing_extensions import Self
@@ -444,24 +446,17 @@ class SignatureFactory:
         threshold=containment_threshold,
     )
 
-  def create_from_osv_sign(self, osv_sig: dict[str, Any]) -> Signature:
-    """Returns a signature generated from an OSV Vanir signature entry."""
-    sig = Signature.from_osv_dict(osv_sig)
-    if sig.signature_id in self._used_signature_ids:
+  def add_used_signature_id(self, sig_id: str):
+    """Ensures the signature ID was not seen before and adds it to the set."""
+    if sig_id in self._used_signature_ids:
       raise ValueError(
-          f'The signature ID {sig.signature_id} is already assigned to '
-          'another signature.'
+          f'The signature ID {sig_id} is already assigned to another signature.'
       )
-    self._used_signature_ids.add(sig.signature_id)
-    return sig
+    self._used_signature_ids.add(sig_id)
 
-  def add_used_signature_id(self, sign_id: str):
-    """Adds the signature ID to prevent duplicate."""
-    self._used_signature_ids.add(sign_id)
-
-  def remove_used_signature_id(self, sign_id: str):
+  def remove_used_signature_id(self, sig_id: str):
     """Removes the signature ID to prevent duplicate."""
-    self._used_signature_ids.remove(sign_id)
+    self._used_signature_ids.remove(sig_id)
 
 
 class SignatureBundle:
@@ -472,7 +467,7 @@ class SignatureBundle:
   matching.
   """
 
-  def __init__(self, signatures: Collection[Signature]):
+  def __init__(self, signatures: Iterable[Signature]):
     """Initializes Signature Bundle.
 
     Args:
@@ -497,6 +492,17 @@ class SignatureBundle:
             'Signature %s is disregarded due to its unrecognized type: %s',
             signature.signature_id, signature.signature_type)
         continue
+
+  @classmethod
+  def from_bundles(
+      cls, bundles: Sequence[Self]
+  ) -> 'SignatureBundle':
+    """Returns a single SignatureBundle from a list of SignatureBundles."""
+    if len(bundles) == 1:
+      return bundles[0]
+    return SignatureBundle(
+        itertools.chain.from_iterable(bundle.signatures for bundle in bundles)
+    )
 
   def function_signature_hash_collisions(self):
     """Returns the lists of function signatures with the same digest values."""
@@ -539,7 +545,7 @@ class SignatureBundle:
       matched_line_signatures.append(line_sign)
     return matched_line_signatures
 
-  @property
+  @functools.cached_property
   def signatures(self) -> Sequence[Signature]:
     """Returns all signatures in the bundle."""
     signatures = []
@@ -547,3 +553,12 @@ class SignatureBundle:
       signatures.extend(func_sign_list)
     signatures.extend(self._line_signature_list)
     return signatures
+
+  def __bool__(self) -> bool:
+    """Returns wheter the bundle is empty."""
+    return True if self.signatures else False
+
+  @functools.cached_property
+  def target_file_paths(self) -> Set[str]:
+    """Returns all target file paths in the bundle."""
+    return set(sign.target_file for sign in self.signatures)

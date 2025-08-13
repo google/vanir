@@ -52,9 +52,15 @@ class Report:
       simple_report += '::%s()' % self.unpatched_function_name
     if include_patch_source:
       if use_html_link_for_patch_source:
-        simple_report += '  (<a href="%s">patch</a>)' % self.signature_source
+        simple_report += '  (<a href="%s">patch</a>, %s)' % (
+            self.signature_source,
+            self.signature_id,
+        )
       else:
-        simple_report += '  (patch:%s)' % self.signature_source
+        simple_report += '  (patch:%s, signature:%s)' % (
+            self.signature_source,
+            self.signature_id,
+        )
     return simple_report
 
 

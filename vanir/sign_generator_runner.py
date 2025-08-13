@@ -99,6 +99,14 @@ _REF_FILE_LIST_SOURCE = flags.DEFINE_enum_class(
     ' levels of signatures.',
 )
 
+_STORE_SIGNATURES_IN_LEGACY_LOCATION = flags.DEFINE_bool(
+    'store_signatures_in_legacy_location',
+    False,
+    'If True, new signatures will be stored in'
+    ' affected[].ecosystem_specific.vanir_signatures. If False, they will be'
+    ' stored in affected[].database_specific.vanir_signatures.',
+)
+
 _FLAG_ERROR_MESSAGE = (
     'Not enough configuration flags has been passed. '
     'Please provide one of the following sets of flags:\n'
@@ -167,20 +175,26 @@ def main(argv: Sequence[str]) -> None:
   retries = requests.adapters.Retry(total=10, backoff_factor=0.5)
   session.mount('https://', requests.adapters.HTTPAdapter(max_retries=retries))
 
+  legacy_signatures = _STORE_SIGNATURES_IN_LEGACY_LOCATION.value
   if _VULNERABILITY_FILE_NAME.value:
     vuln_file_path = os.path.abspath(_VULNERABILITY_FILE_NAME.value)
-    vuln_manager = vulnerability_manager.generate_from_file(vuln_file_path)
+    vuln_manager = vulnerability_manager.generate_from_file(
+        vuln_file_path,
+        store_signatures_in_legacy_location=legacy_signatures,
+    )
   elif _USE_OSV_ANDROID_KERNEL.value:
     vuln_manager = vulnerability_manager.generate_from_osv(
         ecosystem='Android',
         packages=vulnerability.MetaPackage.ANDROID_KERNEL,
         session=session,
+        store_signatures_in_legacy_location=legacy_signatures,
     )
   elif _OSV_ECOSYSTEM.value:
     vuln_manager = vulnerability_manager.generate_from_osv(
         ecosystem=_OSV_ECOSYSTEM.value,
         packages=_OSV_PACKAGES.value if _OSV_PACKAGES.value else None,
         session=session,
+        store_signatures_in_legacy_location=legacy_signatures,
     )
   else:
     raise ValueError(_FLAG_ERROR_MESSAGE)
@@ -188,9 +202,12 @@ def main(argv: Sequence[str]) -> None:
   filters = []
   if _IGNORE_TEST_FILES.value:
     java_test_file_filter = sign_generator.EcosystemAndFileNameFilter(
-        'Android', r'(^|.*/)tests?/.*[^/]Tests?(Base)?.java')
+        'Android',
+        r'(^|.*/)(multivalent|java)?[Tt]ests?/.*[^/]Tests?(Base)?\.java',
+    )
     cpp_test_file_filter = sign_generator.EcosystemAndFileNameFilter(
-        'Android', r'(^|.*/)tests?/.*[^/]Tests?.(cpp|cc)')
+        'Android', r'(^|.*/)tests?/.*[^/][Tt]ests?\.(cpp|cc)'
+    )
     filters += [java_test_file_filter, cpp_test_file_filter]
 
   ref_file_lists = file_list_manager.get_file_lists(

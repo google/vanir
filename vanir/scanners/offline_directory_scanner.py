@@ -5,13 +5,12 @@
 # https://developers.google.com/open-source/licenses/bsd
 
 """Vanir detector scanner that scans a given directory against given signatures.
-
-This scanner requires signatures to be given in vul_file_path.
 """
 
 from typing import Optional, Sequence, Tuple
 
 from absl import logging
+from vanir import signature
 from vanir import vulnerability_manager
 from vanir import vulnerability_overwriter
 from vanir.scanners import scanner_base
@@ -19,7 +18,10 @@ from vanir.scanners import target_selection_strategy
 
 
 class OfflineDirectoryScanner(scanner_base.ScannerBase):
-  """Vanir scanner that scans a directory against a local vulns json file."""
+  """Vanir scanner that scans a directory against a local vulns json file.
+
+  This scanner requires signatures to be given in vul_file_path.
+  """
 
   def __init__(self, code_location: str):
     self._code_location = code_location
@@ -38,7 +40,7 @@ class OfflineDirectoryScanner(scanner_base.ScannerBase):
     """Scans the local direcotry designated in |_code_location|."""
     return scanner_base.scan(
         self._code_location,
-        vuln_manager.signatures,
+        signature.SignatureBundle(vuln_manager.signatures),
         strategy=strategy,
     )
 

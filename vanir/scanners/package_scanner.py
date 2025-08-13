@@ -23,7 +23,7 @@ class PackageScanner(offline_directory_scanner.OfflineDirectoryScanner):
 
   PackageScanner is an offline directory scanner with pacakage filters. I.e.,
   this scanner first filters out all signatures unrelated to the package and
-  ecosystem designated in |ecosystem| and |package_name|, and run against
+  ecosystem designated in |ecosystem| and |package|, and run against
   the offline directory designated in |code_location|.
   """
 

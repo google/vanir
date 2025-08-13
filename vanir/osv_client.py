@@ -13,6 +13,7 @@ from typing import Any, Dict, Optional, Sequence
 import zipfile
 
 from absl import flags
+from google.cloud import storage
 import requests
 
 
@@ -47,9 +48,7 @@ ANDROID_KERNEL_PACKAGES = (_ANDROID_COMPONENT_KERNEL,) + tuple(
 _OSV_LINK_PREFIX = 'https://osv.dev/vulnerability/'
 
 # https://google.github.io/osv.dev/data/#data-dumps
-_OSV_ZIP_URL = (
-    'https://osv-vulnerabilities.storage.googleapis.com/{ecosystem}/all.zip'
-)
+_OSV_GCS_BUCKET = 'osv-vulnerabilities'
 
 
 def get_osv_url(osv_id: str) -> str:
@@ -61,9 +60,8 @@ class OsvClient:
   """Class to abstract OSV APIs for retrieving Android CVEs."""
 
   def __init__(self, session: Optional[requests.sessions.Session] = None):
-    if not session:
-      session = requests.session()
-    self._session = session
+    self._session = session or requests.session()
+    self._osv_api_key = _OSV_API_KEY
     self._osv_url_base = _OSV_PROD_URL_BASE
 
   def get_vuln(self, osv_id: str) -> Dict[str, Any]:
@@ -72,7 +70,7 @@ class OsvClient:
         self._osv_url_base,
         _OSV_VULNERABILITY_POSTFIX,
         osv_id,
-        _OSV_API_KEY,
+        self._osv_api_key,
     )
     response = self._session.get(osv_vulnerability_url)
     return json.loads(response.text)
@@ -86,7 +84,7 @@ class OsvClient:
       osv_query_url = '%s%s?key=%s' % (
           self._osv_url_base,
           _OSV_QUERY_POSTFIX,
-          _OSV_API_KEY,
+          self._osv_api_key,
       )
       payload = {
           'package': {
@@ -108,10 +106,18 @@ class OsvClient:
   def get_vulns_for_ecosystem(self, ecosystem: str) -> list[Dict[str, Any]]:
     """Retrieve all vulns in the given ecosystem from OSV."""
     vulnerabilities = []
-    response = self._session.get(_OSV_ZIP_URL.format(ecosystem=ecosystem))
-    response.raise_for_status()
-    zip_file = zipfile.ZipFile(io.BytesIO(response.content))
-    for filename in zip_file.namelist():
-      if filename.endswith('.json'):
-        vulnerabilities.append(json.loads(zip_file.read(filename)))
+    bucket_name = _OSV_GCS_BUCKET
+    blob_name = f'{ecosystem}/all.zip'
+
+    storage_client = storage.Client.create_anonymous_client()
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(blob_name)
+
+    with io.BytesIO() as zip_in_memory:
+      blob.download_to_file(zip_in_memory)
+      zip_in_memory.seek(0)
+      with zipfile.ZipFile(zip_in_memory) as zip_file:
+        for filename in zip_file.namelist():
+          if filename.endswith('.json'):
+            vulnerabilities.append(json.loads(zip_file.read(filename)))
     return vulnerabilities

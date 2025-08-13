@@ -18,10 +18,12 @@ import re
 from typing import Optional, Sequence
 
 from absl import flags
+import dateutil.relativedelta
 from vanir import vulnerability_manager
 from vanir import vulnerability_overwriter
 from vanir.scanners import scanner_base
 from vanir.scanners import target_selection_strategy
+
 
 
 _OSV_ID_IGNORE_LIST = flags.DEFINE_list(
@@ -58,6 +60,16 @@ _ANDROID_SPL = flags.DEFINE_string(
     'android_spl', None, 'The Security Patch Level (SPL) for the scanning. '
     'Vulnerabilities with SPL after this value will be excluded. The SPL '
     'format should be YYYY-MM-DD. E.g., \'--android_spl=2020-01-05\'.'
+)
+
+_ANDROID_SPL_RELATIVE_MONTHS = flags.DEFINE_integer(
+    'android_spl_relative_months',
+    None,
+    'The Security Patch Level (SPL) for scanning. Vulnerabilities with SPL '
+    'after today\'s date plus this number of months will be excluded. Example: '
+    '--android_spl_relative_months=1 will exclude vulnerabilities with SPL '
+    'after next month. The offset can be negative. Mutually exclusive with '
+    '--android_spl.',
 )
 
 _SIGN_TARGET_PATH_FILTER = flags.DEFINE_multi_string(
@@ -156,11 +168,15 @@ def _sign_target_path_filter_validator(
       return False
   return True
 
+flags.mark_flags_as_mutual_exclusive(
+    [_ANDROID_SPL, _ANDROID_SPL_RELATIVE_MONTHS]
+)
 
 flags.register_validator(
     'android_spl',
     _android_spl_validator,
-    message='--android_spl format must be YYYY-MM-DD.')
+    message='--android_spl format must be YYYY-MM-DD.'
+)
 
 flags.register_validator(
     'sign_target_path_filter',
@@ -195,6 +211,12 @@ def generate_vulnerability_filters_from_flags(
                 _ANDROID_MIN_SEVERITY_LEVEL.value]))
   if _ANDROID_SPL.value:
     vfilters.append(vulnerability_manager.AndroidSplFilter(_ANDROID_SPL.value))
+  elif _ANDROID_SPL_RELATIVE_MONTHS.present:
+    today = datetime.date.today()
+    offset = _ANDROID_SPL_RELATIVE_MONTHS.value
+    offset_delta = dateutil.relativedelta.relativedelta(months=offset)
+    spl = (today + offset_delta).strftime(vulnerability_manager.SPL_FORMAT)
+    vfilters.append(vulnerability_manager.AndroidSplFilter(spl))
   if _SIGN_TARGET_PATH_FILTER.value:
     for path_pattern_str in set(_SIGN_TARGET_PATH_FILTER.value):
       path_pattern = re.compile(path_pattern_str)

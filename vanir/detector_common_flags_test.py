@@ -6,6 +6,7 @@
 
 """Tests for Detector Common Flags module."""
 
+import datetime
 import os
 import shutil
 
@@ -18,9 +19,10 @@ from vanir.scanners import scanner_base
 from vanir.scanners import target_selection_strategy
 
 from absl.testing import absltest
+from absl.testing import parameterized
 
 
-class DetectorCommonFlagsTest(absltest.TestCase):
+class DetectorCommonFlagsTest(parameterized.TestCase):
   """Tests common Detector flags and their validators.
 
   Note that the flag parsing behaviour cannot be tested with flagsaver so most
@@ -70,6 +72,42 @@ class DetectorCommonFlagsTest(absltest.TestCase):
     flags.FLAGS['android_spl'].parse(test_spl)
     with self.assertRaisesRegex(flags.IllegalFlagValueError,
                                 '--android_spl format must be YYYY-MM-DD'):
+      flags.FLAGS.validate_all_flags()
+
+  @parameterized.named_parameters(
+      ('none', 0, datetime.datetime(2020, 7, 30)),
+      ('same_year', 2, datetime.datetime(2020, 9, 30)),
+      ('next_year', 8, datetime.datetime(2021, 3, 30)),
+      ('date_truncated', 7, datetime.datetime(2021, 2, 28)),
+      ('negative', -1, datetime.datetime(2020, 6, 30)),
+      ('last_year', -9, datetime.datetime(2019, 10, 30)),
+  )
+  @flagsaver.flagsaver
+  def test_android_spl_offset(self, offset, expected_spl):
+    # Since datetime.date is native, we can't mock datetime.date.today()
+    # We can't mock datetime.date either, because some libraries use isinstance
+    # which does not work if the type is a mock. We'll create a fake date class.
+    class MyDate(datetime.date):
+      @classmethod
+      def today(cls):
+        return datetime.date(2020, 7, 30)
+    datetime.date = MyDate
+
+    flags.FLAGS['android_spl_relative_months'].parse(offset)
+    flags.FLAGS.validate_all_flags()
+    spl_filter = [
+        filter for filter in
+        detector_common_flags.generate_vulnerability_filters_from_flags()
+        if isinstance(filter, vulnerability_manager.AndroidSplFilter)
+    ]
+    self.assertLen(spl_filter, 1)
+    self.assertEqual(spl_filter[0]._target_spl, expected_spl)
+
+  @flagsaver.flagsaver
+  def test_android_spl_offset_and_spl_flags_are_mutually_exclusive(self):
+    flags.FLAGS['android_spl_relative_months'].parse(1)
+    flags.FLAGS['android_spl'].parse('2020-05-01')
+    with self.assertRaises(flags.IllegalFlagValueError):
       flags.FLAGS.validate_all_flags()
 
   @flagsaver.flagsaver

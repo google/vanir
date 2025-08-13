@@ -6,6 +6,7 @@
 
 """Test for Target Selection Strategy module."""
 
+import dataclasses
 import os
 from unittest import mock
 
@@ -31,48 +32,59 @@ class TargetSelectionStrategyTest(absltest.TestCase):
     }
     for file in self._test_files:
       self._test_dir.create_file(file)
-    self._mock_sign_1 = mock.create_autospec(
-        signature.FunctionSignature,
-        instance=True,
+    self._test_sign_1 = signature.FunctionSignature(
         signature_id='sign1',
         source='https://android.googlesource.com/sign1_source',
         target_file='exact_match1.c',
         target_function='foo',
         truncated_path_level=None,
-        signature_type=signature.SignatureType.FUNCTION_SIGNATURE,
         length=3,
+        signature_version='v1',
+        function_hash='func_hash',
+        deprecated=False,
+        exact_target_file_match_only=False,
+        match_only_versions=None,
     )
-    self._mock_sign_2 = mock.create_autospec(
-        signature.LineSignature,
-        instance=True,
+    self._test_sign_2 = signature.LineSignature(
         signature_id='sign2',
         source='https://android.googlesource.com/sign2_source',
         target_file='foo/exact_match2.c',
         truncated_path_level=None,
-        signature_type=signature.SignatureType.LINE_SIGNATURE,
+        signature_version='v1',
+        deprecated=False,
+        exact_target_file_match_only=False,
+        match_only_versions=None,
+        line_hashes=['line_hash_2'],
+        threshold=0.5,
     )
-    self._mock_sign_3 = mock.create_autospec(
-        signature.LineSignature,
-        instance=True,
+    self._test_sign_3 = signature.LineSignature(
         signature_id='sign3',
         source='https://android.googlesource.com/sign3_source',
         target_file=(
             'somewhat/different/dir/prefix/foo/bar/truncated_path_match.c'
         ),
         truncated_path_level=2,
-        signature_type=signature.SignatureType.LINE_SIGNATURE,
+        signature_version='v1',
+        deprecated=False,
+        exact_target_file_match_only=False,
+        match_only_versions=None,
+        line_hashes=['line_hash_3'],
+        threshold=0.5,
     )
 
-    self._mock_signatures = [
-        self._mock_sign_1,
-        self._mock_sign_2,
-        self._mock_sign_3,
+    self._test_signatures = [
+        self._test_sign_1,
+        self._test_sign_2,
+        self._test_sign_3,
     ]
     self._mock_sign_bundle = mock.create_autospec(
         signature.SignatureBundle, instance=True
     )
     type(self._mock_sign_bundle).signatures = mock.PropertyMock(
-        return_value=self._mock_signatures
+        return_value=self._test_signatures,
+    )
+    type(self._mock_sign_bundle).target_file_paths = mock.PropertyMock(
+        return_value={sign.target_file for sign in self._test_signatures},
     )
 
   def test_all_files_strategy(self):
@@ -123,7 +135,16 @@ class TargetSelectionStrategyTest(absltest.TestCase):
     self.assertEqual(skipped, 2)
 
   def test_truncated_path_match_raises_if_level_is_invalid(self):
-    self._mock_sign_3.truncated_path_level = 100
+    bad_sign_3 = dataclasses.replace(
+        self._test_sign_3, truncated_path_level=100,
+    )
+    type(self._mock_sign_bundle).signatures = mock.PropertyMock(
+        return_value=[
+            self._test_sign_1,
+            self._test_sign_2,
+            bad_sign_3,
+        ],
+    )
     expected_error_message = 'The signature .* has invalid Truncated Path Level'
     with self.assertRaisesRegex(ValueError, expected_error_message):
       target_selection_strategy.Strategy.TRUNCATED_PATH_MATCH.get_target_files(

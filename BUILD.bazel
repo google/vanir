@@ -22,6 +22,7 @@ py_library(
     deps = [
         requirement("absl-py"),
         requirement("requests"),
+        requirement("google-cloud-storage"),
     ],
 )
 
@@ -89,8 +90,16 @@ py_library(
     srcs = ["vanir/vulnerability.py"],
     deps = [
         ":signature",
-        "@com_google_osv//:vulnerability_py_pb2",
-        "@com_google_protobuf//:protobuf_python",
+        requirement("osv"),
+        requirement("protobuf"),
+        
+        # This is not a direct dependency but is added to resolve dependency errors. For Python 3.9,
+        # the version of google-cloud-datastore used is 1.15.5 and dependency on six module in
+        # google-cloud-datastore was removed in version 2.1.0 as per
+        # https://github.com/googleapis/python-datastore/pull/120.
+        # This is a temporary fix required only for Python 3.9 and can be removed once Python 3.9 is
+        # out-of-support in 2025-10 as per https://devguide.python.org/versions/#supported-versions.
+        requirement("six"),
     ],
 )
 
@@ -238,7 +247,7 @@ py_library(
     name = "vulnerability_overwriter",
     srcs = ["vanir/vulnerability_overwriter.py"],
     deps = [
-        "@jsonpath-ng-git//:jsonpath_ng",
+        requirement("jsonpath_ng"),
     ],
 )
 
@@ -312,10 +321,11 @@ py_test(
     size = "small",
     srcs = ["vanir/vulnerability_test.py"],
     deps = [
+        ":signature",
         ":vulnerability",
-        "@com_google_osv//:vulnerability_py_pb2",
-        "@com_google_protobuf//:protobuf_python",
         requirement("absl-py"),
+        requirement("osv"),
+        requirement("protobuf"),
     ],
 )
 

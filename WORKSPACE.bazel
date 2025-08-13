@@ -35,7 +35,7 @@ load("@python3_9//:defs.bzl", "interpreter")
 pip_parse(
     name = "vanir_deps",
     python_interpreter_target = interpreter,
-    requirements_lock = "//:requirements_lock.txt",
+    requirements_lock = "//:requirements/requirements_lock_3.9.txt",
 )
 
 load("@vanir_deps//:requirements.bzl", "install_deps")
@@ -53,7 +53,7 @@ git_repository(
 pip_parse(
     name = "antlr4_deps",
     python_interpreter_target = interpreter,
-    requirements_lock = "//:requirements_antlr4_lock.txt",
+    requirements_lock = "//:requirements/requirements_antlr4_lock_3.9.txt",
 )
 
 load("@antlr4_deps//:requirements.bzl", install_antlr4_deps = "install_deps")
@@ -146,87 +146,4 @@ git_repository(
     name = "pybind11_abseil",
     commit = "13d4f99d5309df3d5afa80fe2ae332d7a2a64c6b",
     remote = "https://github.com/pybind/pybind11_abseil.git",
-)
-
-http_archive(
-    name = "com_google_protobuf",
-    urls = ["https://github.com/google/protobuf/archive/v3.10.0.zip"],
-    strip_prefix = "protobuf-3.10.0",
-)
-
-# OSV
-OSV_REV = "bbb8ab4f0491bf367f8e1406d8ddf9e9dbf5de86"
-http_archive(
-    name = "com_google_osv",
-    strip_prefix = "osv.dev-%s" % OSV_REV,
-    build_file_content = """
-load("@com_google_protobuf//:protobuf.bzl", "py_proto_library")
-load("@rules_proto//proto:defs.bzl", "proto_library")
-
-package(default_visibility = ["//visibility:public"])
-
-PROTO_FILES = [
-"osv/vulnerability.proto",
-]
-
-filegroup(
-  name = "protobuf_files",
-  srcs = PROTO_FILES,
-  visibility = ["//visibility:public"],
-)
-
-proto_library(
-    name = 'vulnerability_proto',
-    srcs = PROTO_FILES,
-    deps = [
-        '@com_google_protobuf//:struct_proto',
-        '@com_google_protobuf//:timestamp_proto',
-    ],
-    visibility = ['//visibility:public'],
-)
-
-py_proto_library(
-    name = "vulnerability_py_pb2",
-    visibility = ["//visibility:public"],
-    srcs = PROTO_FILES,
-    deps = [
-        "@com_google_protobuf//:protobuf_python",
-    ],
-)
-""",
-    urls = ["https://github.com/google/osv.dev/archive/%s.tar.gz" % OSV_REV],
-)
-
-load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
-
-protobuf_deps()
-
-
-# jsonpath_ng
-git_repository(
-    name = "jsonpath-ng-git",
-    build_file_content = """
-load("@rules_python//python:defs.bzl", "py_library")
-load("@vanir_deps//:requirements.bzl", "requirement")
-
-py_library(
-    name = "jsonpath_ng",
-    visibility = ["//visibility:public"],
-    srcs = [
-        "jsonpath_ng/__init__.py",
-        "jsonpath_ng/exceptions.py",
-        "jsonpath_ng/jsonpath.py",
-        "jsonpath_ng/lexer.py",
-        "jsonpath_ng/parser.py"
-    ],
-    srcs_version = "PY3",
-    deps = [
-       requirement("six"),
-       requirement("ply"),
-       requirement("decorator"),
-    ],
-)
-""",
-    remote = "https://github.com/h2non/jsonpath-ng.git",
-    tag = "v1.7.0",
 )

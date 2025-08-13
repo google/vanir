@@ -182,7 +182,9 @@ class SignGeneratorRunnerTest(absltest.TestCase):
     self.mock_generate_from_osv.assert_called_with(
         ecosystem='Android',
         packages=vulnerability.MetaPackage.ANDROID_KERNEL,
-        session=mock.ANY)
+        session=mock.ANY,
+        store_signatures_in_legacy_location=False,
+    )
     self.mock_get_vulns_for_packages.assert_called_once()
     self.mock_generate_signatures.assert_called_once_with(
         session=mock.ANY,
@@ -200,6 +202,24 @@ class SignGeneratorRunnerTest(absltest.TestCase):
 
   @flagsaver.flagsaver(signature_file_name=_DESIGNATED_SIGNATURE_FILE_NAME)
   @flagsaver.flagsaver(use_osv_android_kernel_vulns=True)
+  @flagsaver.flagsaver(store_signatures_in_legacy_location=True)
+  @mock.patch.object(os, 'makedirs', autospec=True)
+  def test_store_signatures_in_legacy_location(self, _):
+    test_datetime = datetime.datetime(2022, 10, 4, 10, 10)
+    with mock.patch.object(
+        datetime, 'datetime', wraps=datetime.datetime) as mock_datetime:
+      mock_datetime.now.return_value = test_datetime
+      with mock.patch.object(builtins, 'open', self.mock_file_open):
+        sign_generator_runner.main([])
+    self.mock_generate_from_osv.assert_called_with(
+        ecosystem='Android',
+        packages=vulnerability.MetaPackage.ANDROID_KERNEL,
+        session=mock.ANY,
+        store_signatures_in_legacy_location=True,
+    )
+
+  @flagsaver.flagsaver(signature_file_name=_DESIGNATED_SIGNATURE_FILE_NAME)
+  @flagsaver.flagsaver(use_osv_android_kernel_vulns=True)
   @mock.patch.object(os, 'makedirs', autospec=True)
   def test_main_with_designated_sign_file_name(self, _):
     with mock.patch.object(builtins, 'open', self.mock_file_open):
@@ -207,7 +227,9 @@ class SignGeneratorRunnerTest(absltest.TestCase):
     self.mock_generate_from_osv.assert_called_with(
         ecosystem='Android',
         packages=vulnerability.MetaPackage.ANDROID_KERNEL,
-        session=mock.ANY)
+        session=mock.ANY,
+        store_signatures_in_legacy_location=False,
+    )
     self.mock_get_vulns_for_packages.assert_called_once()
     self.mock_generate_signatures.assert_called_once()
     expected_output_file = _DESIGNATED_SIGNATURE_FILE_NAME

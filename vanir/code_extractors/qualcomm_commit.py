@@ -49,19 +49,22 @@ class QualcommCommit(code_extractor_base.Commit):
     self._session = requests_session or requests.Session()
     super().__init__(url, **kwargs)
 
-  def _normalize_url(self, url: str) -> str:
-    schemeless_url = re.sub(HTTP_PREFIX_PATTERN, '', url)
+  def _normalize_url(self) -> str:
+    schemeless_url = re.sub(HTTP_PREFIX_PATTERN, '', self._original_url)
     if schemeless_url.startswith(self.code_aurora_quic_repo_prefix):
-      normal_url = self._convert_aurora_to_linaro(url)
+      normal_url = self._convert_aurora_to_linaro(self._original_url)
       logging.info(
-          'Converted Code Aurora URL %s to Code Linaro URL %s', url, normal_url,
+          'Converted Code Aurora URL %s to Code Linaro URL %s',
+          self._original_url, normal_url,
       )
       return normal_url
     elif schemeless_url.startswith(self.code_linaro_repo_prefix):
       # Linaro URL may contain redundant subdirectory expression '/-/'.
-      return url.replace('/-/', '/')
+      return self._original_url.replace('/-/', '/')
     else:
-      raise code_extractor_base.IncompatibleUrlError(f'Bad URL: {url}')
+      raise code_extractor_base.IncompatibleUrlError(
+          f'Bad URL: {self._original_url}'
+      )
 
   @classmethod
   def _convert_aurora_to_linaro(cls, aurora_url: str) -> str:

@@ -4,18 +4,7 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
-"""Vanir detector scanner that scans a source tree managed with repo tool.
-
-Android uses repo tool (https://source.android.com/docs/setup/create/repo) to
-manage multiple git repositories that get checked out into specific
-subdirectories under the source tree. Each git repository corresponds to a
-"package" in OSV. This scanner takes a source tree location for a project that
-utilizes repo (e.g. Android, Chromium), figures out which vulnerabilities apply
-to which subdirectory and run Vanir scans on each subdir accordingly, and
-aggregate the results.
-
-This requires the repo tool to be installed.
-"""
+"""Vanir detector scanner that scans a source tree managed with repo tool."""
 
 import collections
 import dataclasses
@@ -34,6 +23,10 @@ from vanir import vulnerability_overwriter
 from vanir.scanners import package_identifier
 from vanir.scanners import scanner_base
 from vanir.scanners import target_selection_strategy
+
+
+def _apply(func, args, kwargs):
+  return func(*args, **kwargs)
 
 
 def _run_cmd(
@@ -76,11 +69,36 @@ class RepoScanner(scanner_base.ScannerBase):
       ecosystem: str,
       code_location: str,
       package_agnostic_analysis: bool = False,
+      min_package_truncated_paths: Optional[int] = None,
   ):
+    """Vanir scanner for code on a source tree managed with repo tool.
+
+    Android uses repo tool (https://source.android.com/docs/setup/create/repo)
+    to manage multiple git repositories that get checked out into specific
+    subdirectories under the source tree. Each git repository corresponds to a
+    "package" in OSV. This scanner takes a source tree location for a project
+    that utilizes repo (e.g. Android, Chromium), figures out which
+    vulnerabilities apply to which subdirectory and run Vanir scans on each
+    subdir accordingly, and aggregate the results.
+
+    This requires the repo tool to be installed.
+
+    Args:
+      ecosystem: The ecosystem to use for the scan (e.g. "Android").
+      code_location: The location of the source tree managed with repo tool.
+      package_agnostic_analysis: if True, scan projects against all signatures.
+        If False (default), signatures will be limited to their corresponding
+        signature packages matched against the project.
+      min_package_truncated_paths: Optional minimum number of unique file paths
+        (after truncation) to be considered in package matching. A package must
+        have more than this number of files to be considered for heuristic
+        matching against differently named packages.
+    """
     super().__init__()
     self._code_location = code_location
     self._ecosystem = ecosystem
     self._package_agnostic_analysis = package_agnostic_analysis
+    self._min_package_truncated_paths = min_package_truncated_paths
 
   @classmethod
   def name(cls):
@@ -89,14 +107,16 @@ class RepoScanner(scanner_base.ScannerBase):
   def _scan_one_subdir(
       self,
       subdir: str,
-      signatures: Sequence[signature.Signature],
+      signature_bundle: signature.SignatureBundle,
       strategy: target_selection_strategy.Strategy = (
           target_selection_strategy.Strategy.TRUNCATED_PATH_MATCH
       ),
   ) -> Tuple[scanner_base.Findings, scanner_base.ScannedFileStats]:
     """Scan a single repo subdir pertaining to a one git repository."""
     current_scan_path = os.path.join(self._code_location, subdir)
-    return scanner_base.scan(current_scan_path, signatures, strategy=strategy)
+    return scanner_base.scan(
+        current_scan_path, signature_bundle, strategy=strategy,
+    )
 
   def scan(
       self,
@@ -156,9 +176,18 @@ class RepoScanner(scanner_base.ScannerBase):
         (repo_name, _get_file_list(os.path.join(self._code_location, subdir)))
         for subdir, repo_name in repository_names.items()
     ]
+    kwargs = {}
+    if self._min_package_truncated_paths is not None:
+      kwargs = dict(
+          min_package_truncated_paths=self._min_package_truncated_paths,
+      )
+    starmap_args = zip(
+        itertools.repeat(pkg_identifier.packages_for_repo),
+        args, itertools.repeat(kwargs),
+    )
     context = multiprocessing.get_context('forkserver')
     with context.Pool() as pool:
-      subdirs_packages = pool.starmap(pkg_identifier.packages_for_repo, args)
+      subdirs_packages = pool.starmap(_apply, starmap_args)
       pool.close()
       pool.join()
 
@@ -218,7 +247,7 @@ class RepoScanner(scanner_base.ScannerBase):
       if self._package_agnostic_analysis:
         logging.info('Scanning %s', subdir)
         results[subdir] = self._scan_one_subdir(
-            subdir, vuln_manager.signatures, strategy
+            subdir, signature.SignatureBundle(vuln_manager.signatures), strategy
         )
       else:
         logging.info('Scanning %s (against %s)', subdir, packages)
@@ -227,7 +256,7 @@ class RepoScanner(scanner_base.ScannerBase):
             for package in packages
         )
         results[subdir] = self._scan_one_subdir(
-            subdir, list(signatures), strategy
+            subdir, signature.SignatureBundle(signatures), strategy
         )
 
       findings, _ = results[subdir]

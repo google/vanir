@@ -56,22 +56,30 @@ class ScannerBaseTest(absltest.TestCase):
         line_hashes=['line_hash'],
         threshold=0.5,
     )
-    self._mock_signatures = [
+    self._test_extra_sign = signature.LineSignature(
+        signature_id='sign3',
+        target_file='target.h',
+        truncated_path_level=None,
+        exact_target_file_match_only=False,
+        signature_version='v1',
+        source='sign3_source',
+        deprecated=False,
+        match_only_versions=None,
+        line_hashes=['line_hash'],
+        threshold=0.5,
+    )
+    self._test_signatures = [
         self._test_func_sign,
         self._test_line_sign,
-        mock.create_autospec(
-            signature.Signature,
-            instance=True,
-            signature_id='sign3',
-            target_file='target.h',
-            truncated_path_level=None,
-            exact_target_file_match_only=False,
-        ),
+        self._test_extra_sign,
     ]
     self._mock_sign_bundle = mock.create_autospec(
         signature.SignatureBundle, instance=True)
     type(self._mock_sign_bundle).signatures = mock.PropertyMock(
-        return_value=self._mock_signatures
+        return_value=self._test_signatures
+    )
+    type(self._mock_sign_bundle).target_file_paths = mock.PropertyMock(
+        return_value={'target.c', 'target.h'},
     )
 
     # Configure the mock match to always return only sign1 for function chunks
@@ -162,7 +170,7 @@ class ScannerBaseTest(absltest.TestCase):
 
   def test_scan_quick_mode(self):
     findings, stats = scanner_base.scan(
-        self._test_target_root, self._mock_signatures)
+        self._test_target_root, self._mock_sign_bundle)
 
     # Quick scan mode should be used by default, and checks only targeted files.
     expected_scanned_files = ['target.c', 'target.h']
@@ -185,7 +193,7 @@ class ScannerBaseTest(absltest.TestCase):
   def test_scan_full_mode(self):
     findings, stats = scanner_base.scan(
         self._test_target_root,
-        self._mock_signatures,
+        self._mock_sign_bundle,
         strategy=target_selection_strategy.Strategy.ALL_FILES,
     )
 
@@ -216,7 +224,7 @@ class ScannerBaseTest(absltest.TestCase):
 
     findings, stats = scanner_base.scan(
         self._test_target_root,
-        self._mock_signatures,
+        self._mock_sign_bundle,
         strategy=target_selection_strategy.Strategy.ALL_FILES,
     )
 
@@ -247,7 +255,7 @@ class ScannerBaseTest(absltest.TestCase):
     )
     findings, stats = scanner_base.scan(
         self._test_target_root,
-        self._mock_signatures,
+        self._mock_sign_bundle,
         strategy=target_selection_strategy.Strategy.ALL_FILES,
     )
     self.assertIn(self._test_func_sign, findings)
@@ -280,7 +288,7 @@ class ScannerBaseTest(absltest.TestCase):
         function_length_threshold=10, filter_exatct_match=True)
     findings, stats = scanner_base.scan(
         self._test_target_root,
-        self._mock_signatures,
+        self._mock_sign_bundle,
         strategy=target_selection_strategy.Strategy.ALL_FILES,
     )
     findings = short_function_filter.filter(findings)
@@ -295,7 +303,7 @@ class ScannerBaseTest(absltest.TestCase):
         function_length_threshold=10, filter_exatct_match=True)
     findings, stats = scanner_base.scan(
         self._test_target_root,
-        self._mock_signatures,
+        self._mock_sign_bundle,
         strategy=target_selection_strategy.Strategy.ALL_FILES,
     )
     findings = short_function_filter.filter(findings)
@@ -309,7 +317,7 @@ class ScannerBaseTest(absltest.TestCase):
         function_length_threshold=10, filter_exatct_match=False)
     findings, stats = scanner_base.scan(
         self._test_target_root,
-        self._mock_signatures,
+        self._mock_sign_bundle,
         strategy=target_selection_strategy.Strategy.ALL_FILES,
     )
     findings = short_function_filter.filter(findings)
@@ -355,19 +363,33 @@ class ScannerBaseTest(absltest.TestCase):
     self.assertEqual(reports[1].unpatched_function_name, '')
     self.assertEqual(
         reports[0].get_simple_report(),
-        '%s::%s()' % (self._mock_function_chunk_foo.target_file,
-                      self._mock_function_chunk_foo.base.name))
+        '%s::%s()'
+        % (
+            self._mock_function_chunk_foo.target_file,
+            self._mock_function_chunk_foo.base.name,
+        ),
+    )
     self.assertEqual(
         reports[0].get_simple_report(include_patch_source=True),
-        '%s::%s()  (patch:%s)' %
-        (self._mock_function_chunk_foo.target_file,
-         self._mock_function_chunk_foo.base.name, test_sign1.source))
+        '%s::%s()  (patch:%s, signature:%s)'
+        % (
+            self._mock_function_chunk_foo.target_file,
+            self._mock_function_chunk_foo.base.name,
+            test_sign1.source,
+            test_sign1.signature_id,
+        ),
+    )
     self.assertEqual(
         reports[1].get_simple_report(), mock_line_chunk.target_file
     )
     self.assertEqual(
         reports[1].get_simple_report(include_patch_source=True),
-        '%s  (patch:%s)' % (mock_line_chunk.target_file, test_sign2.source),
+        '%s  (patch:%s, signature:%s)'
+        % (
+            mock_line_chunk.target_file,
+            test_sign2.source,
+            test_sign2.signature_id,
+        ),
     )
 
   def test_scanner_with_unexpected_crash(self):
@@ -380,7 +402,7 @@ class ScannerBaseTest(absltest.TestCase):
         res.result.return_value = func(*args)
       return res
     self._mock_executor.return_value.submit.side_effect = mock_apply
-    _, stats = scanner_base.scan(self._test_target_root, self._mock_signatures)
+    _, stats = scanner_base.scan(self._test_target_root, self._mock_sign_bundle)
     self.assertLen(stats.errors, 1)
     self.assertIn('target.h', str(stats.errors[0]))
     self.assertEqual(stats.analyzed_files, 1)

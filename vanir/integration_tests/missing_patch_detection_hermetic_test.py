@@ -233,7 +233,9 @@ class MissingPatchDetectionHermeticTest(
           f.extractall(test_src_dir)
 
     with self.runtime_reporter('detection'):
-      findings, _ = scanner_base.scan(test_src_dir, signatures)
+      findings, _ = scanner_base.scan(
+          test_src_dir, signature.SignatureBundle(signatures),
+      )
       findings = scanner_base.ShortFunctionFilter().filter(findings)
 
     with self.runtime_reporter('report_gen'):

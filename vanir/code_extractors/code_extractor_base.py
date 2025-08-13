@@ -49,7 +49,8 @@ class Commit(metaclass=abc.ABCMeta):
     # self._working_dir is used to store all files created by _create_temp_file.
     # It will be deleted when the object is destroyed.
     self._working_dir = tempfile.TemporaryDirectory()
-    self._url = self._normalize_url(url)
+    self._original_url = url
+    self._url = self._normalize_url()
     self._patch = self._extract_patch()
     self._affected_line_ranges = self._compute_affected_line_ranges()
     self._patched_files = self._extract_patched_files()
@@ -99,13 +100,18 @@ class Commit(metaclass=abc.ABCMeta):
     """
 
   @abc.abstractmethod
-  def _normalize_url(self, url: str) -> str:
-    """Returns the normalized registered commit URL."""
+  def _normalize_url(self) -> str:
+    """Validates the URL in self._original_url and returns the normalized URL."""
 
   @property
   def url(self) -> str:
     """Returns the normalized registered commit URL."""
     return self._url
+
+  @property
+  def original_url(self) -> str:
+    """Returns the original commit URL."""
+    return self._original_url
 
   def _compute_affected_line_ranges(
       self

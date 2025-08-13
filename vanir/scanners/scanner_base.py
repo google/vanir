@@ -213,7 +213,7 @@ def _parse_file(
 
 def scan(
     code_location: str,
-    signatures: Sequence[signature.Signature],
+    signature_bundle: signature.SignatureBundle,
     strategy: target_selection_strategy.Strategy = (
         target_selection_strategy.Strategy.TRUNCATED_PATH_MATCH
     ),
@@ -223,7 +223,7 @@ def scan(
   Args:
     code_location: the path to the root directory of the system to conduct
       missing patch scanning against.
-    signatures: the sequence of signatures to scan against.
+    signature_bundle: the SignatureBundle containing signatures to scan against.
     strategy: the target file selection strategy.
 
   Returns:
@@ -234,10 +234,6 @@ def scan(
   code_location = os.path.abspath(code_location)
   if not os.path.isdir(code_location):
     raise ValueError(f'Invalid directory: {code_location}')
-
-  findings = collections.defaultdict(list)
-
-  signature_bundle = signature.SignatureBundle(signatures)
 
   to_scan, total_skipped = strategy.get_target_files(
       code_location, signature_bundle
@@ -259,6 +255,7 @@ def scan(
       result_futures.append(executor.submit(_parse_file, file, code_location))
 
   concurrent.futures.wait(result_futures)
+  findings = collections.defaultdict(list)
   broken_process_files = []
   for file, future in zip(to_scan, result_futures):
     try:

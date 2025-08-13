@@ -14,6 +14,25 @@ with low false-positive rate in a sustainable and scalable way.
 
 ## Quick Start
 
+### Install Vanir as a package using `pip`
+
+1. Install Vanir.
+
+    ```sh
+    pip install vanir
+    ```
+
+2. To scan your Android repo project located at ~/my/android/repo, run:
+
+    ```sh
+    python -m vanir.detector_runner repo_scanner Android ~/my/android/repo
+    ```
+
+3. Find the missing patches identified by Vanir at `/tmp/vanir/report-YYYYMMDDhhmmss.html` and `/tmp/vanir/report-YYYYMMDDhhmmss.json`.
+
+Alternatively, follow the steps below to use the version from GitHub.
+
+### Clone Vanir from GitHub
 > [!CAUTION]
 > This instruction is written based on systems using Bazel >= 8. For Bazel 7.1
 > and 7.0, edit .bazelrc to enable workspace and disable bzlmod.
@@ -101,7 +120,7 @@ verify any missing patches in a highly automated and systematic way.
 
 ### Macro-architecture
 
-![Vanir Macro Architecture](docs/images/vanir_macro_arch.png)
+![Vanir Macro Architecture](https://raw.githubusercontent.com/google/vanir/refs/heads/main/docs/images/vanir_macro_arch.png)
 
 Vanir mainly consists of two components — **Signature Generator** and
 **Detector**.
@@ -135,7 +154,7 @@ The diagram below illustrates the macro-architecture of Vanir.
 The following diagram depicts the internal architecture of Vanir Signature
 Generator and Vanir Detector.
 
-![Vanir Micro Architecture](docs/images/vanir_micro_arch.png)
+![Vanir Micro Architecture](https://raw.githubusercontent.com/google/vanir/refs/heads/main/docs/images/vanir_micro_arch.png)
 
 Vanir was primarily designed to detect missing security patches with low
 false-positive rate in a sustainable and scalable way. To achieve the goal,
@@ -238,16 +257,80 @@ Vanir uses `TRUNCATED_PATH_MATCH` as a default target selection strategy.
 
 ## User Guide
 
-### Prerequisite
+### Using the PyPI version
 
-#### Linux
+#### Create a virtual environment (recommended to avoid dependency conflicts)
+
+Steps using virtualenv
+
+```sh
+virtualenv -p python3 ~/vanir-pip-env
+source ~/vanir-pip-env/bin/activate
+```
+
+For using specific python version such as `3.13`, steps using pyenv are as
+follows:
+
+```sh
+pyenv virtualenv 3.13 vanir-3.13
+pyenv activate vanir-3.13
+```
+
+#### Install and Test Vanir
+
+Install the latest vanir using `pip install` as follows:
+
+```sh
+pip install vanir
+```
+
+Run the unit tests:
+
+```sh
+python -m vanir.pip_modules.pip_test_runner
+```
+
+If all tests are successful, you will see the result similar to the following:
+
+```sh
+I0624 19:14:22.476867 140398746275584 pip_test_runner.py:134] Pass: vanir.code_extractors.code_extractor_android_test
+I0624 19:14:23.066157 140398746275584 pip_test_runner.py:134] Pass: vanir.code_extractors.code_extractor_test
+[...]
+I0624 19:14:49.976438 140398746275584 pip_test_runner.py:134] Pass: vanir.vulnerability_overwriter_test
+I0624 19:14:50.533897 140398746275584 pip_test_runner.py:134] Pass: vanir.vulnerability_test
+I0624 19:14:50.534017 140398746275584 pip_test_runner.py:205] Total tests: 31
+I0624 19:14:50.534083 140398746275584 pip_test_runner.py:206] Successfully ran 31 tests.
+```
+
+If the tests don't pass, please open an issue with the error logs, and we'll
+take a look.
+
+#### Run Vanir Detector from the PyPI Vanir
+
+To scan your Android repo project located at ~/my/android/repo, run:
+
+```sh
+python -m vanir.detector_runner repo_scanner Android ~/my/android/repo
+```
+
+Find the missing patches identified by Vanir at
+`/tmp/vanir/report-YYYYMMDDhhmmss.html` and
+`/tmp/vanir/report-YYYYMMDDhhmmss.json`.
+
+For more details and examples, please refer to [Run Vanir Detector](#run-vanir-detector)
+
+### Using the GitHub version
+
+#### Prerequisite
+
+##### Linux
 
 Vanir is currently tested only on Linux operating systems. Running Vanir with
 other operating systems may be possible, but is neither tested nor officially
 supported.
 
 
-#### Bazel
+##### Bazel
 
 Vanir builds using [Bazel](https://bazel.build/). The Vanir Bazel configuration
 files ([WORKSPACE.bazel](./WORKSPACE.bazel) and [BUILD.bazel](./BUILD.bazel)) specify the complete list of
@@ -262,7 +345,7 @@ information on how to install Bazel through Bazelisk, please refer to the
 Bazelisk [README](https://github.com/bazelbuild/bazelisk/blob/master/README.md).
 
 
-#### Git
+##### Git
 
 Though Vanir does not directly use Git at run time, Vanir Bazel build
 configuration uses Git for downloading dependencies. If you haven’t installed
@@ -272,7 +355,7 @@ Git, run the following command and install it:
 sudo apt install git
 ```
 
-#### JRE
+##### JRE
 
 Vanir internally uses [Antlr4](https://www.antlr.org/) for generating parsers,
 and it requires Java 11 or higher. For Ubuntu, install Java 11 as follow:
@@ -281,7 +364,7 @@ and it requires Java 11 or higher. For Ubuntu, install Java 11 as follow:
 sudo apt install openjdk-11-jre
 ```
 
-#### Other Tools
+##### Other Tools
 
 Vanir targets Python3.9 and C++17. For Python, if you use Bazel, Bazel will
 internally create a repository and register the toolchain for running Vanir. For
@@ -292,7 +375,7 @@ internally create a repository and register the toolchain for running Vanir. For
  compatibility of your toolchain with the options listed in `.bazelrc`.
 
 
-### Download and Test Vanir
+#### Download and Test Vanir
 
 Download the latest version of Vanir from https://github.com/google/vanir.
 In this tutorial, we will assume that you downloaded Vanir at `~/vanir`.
@@ -357,7 +440,7 @@ bazel test --test_output=all //...
 > dir, like so:
 > `bazel --output_user_root=/tmp/mybazeldir test --test_output=all //...`
 
-### Building Vanir
+#### Building Vanir
 
 Vanir mainly consists of two components – Vanir Signature Generator and Vanir
 Detector. Vanir signature generator is the component for signature publishes
@@ -368,7 +451,7 @@ this document, but feel free to look at
 `bazel run //:sign_generator_runner -- --help` for how it can be used.
 The rest of this document is focused on explaining the use of Vanir Detector.
 
-#### Build Vanir Detector Runner
+##### Build Vanir Detector Runner
 
 Though Vanir Detector can be used as a Python library, we also provide Vanir
 Detector as a standalone binary target, _Detector Runner_, for easier use. To
@@ -415,7 +498,7 @@ and the stand-alone binary file will be created at `./bazel-bin/detector_runner`
 > consider using absolute paths with `bazel run`.
 
 
-### Signatures
+#### Signatures
 
 Vanir is designed to decouple the signature release process & the code release
 process. In the current implementation, Vanir is configured to retrieve
@@ -433,7 +516,7 @@ the signatures instead of the ones in OSV, you can pass the files by using the
 ```
 
 
-### Run Vanir Detector
+#### Run Vanir Detector
 
 Now, you are ready to run the Vanir Detector Runner to scan missing patches from
  your Android tree.
@@ -462,7 +545,7 @@ consumer PC.
 > scan against all of the specified signatures.
 
 
-#### Output
+##### Output
 
 By default, Detector Runner will generate report files at
 `/tmp/vanir/YYYYMMDDhhmmss.json` and `/tmp/vanir/YYYYMMDDhhmmss.html`. You can
@@ -471,7 +554,7 @@ For instance, `--report_file_name=/tmp/foo/bar` will make Vanir to generate
 report files `/tmp/foo/bar.json` and `/tmp/foo/bar.html`.
 
 
-#### Other examples
+##### Other examples
 
 To run Vanir Detector runner against a local kernel code located at
 `/tmp/test_kernel` with the Android kernel vulnerabilities and their
@@ -504,7 +587,7 @@ signature patch is.
 ```
 
 
-#### Some notable command-line options
+##### Some notable command-line options
 
 Vanir Detector Runner supports several optional command line options that allow
 users to set the range of vulnerability scanning or to filter out known issues.
@@ -523,7 +606,7 @@ Vanir Detector help command:
 ~/vanir_beta/bazel-bin/detector_runner --help
 ```
 
-#### Scanners
+##### Scanners
 
 You may have noticed that Vanir *Detector Runners* has several *Scanners*, each
 of which can be used to scan a different type of target. We have shown how to
@@ -554,7 +637,7 @@ Usage for repo_scanner:
   detector_runner.py repo_scanner ecosystem code_location
 ```
 
-### Looking at Results
+#### Looking at Results
 
 For a modern PC with ~16 CPU threads, Vanir can take around 10-20 minutes to
 finish scanning an Android source tree (the time may vary depending on the
@@ -689,4 +772,4 @@ The <strong><code>details</code></strong> field is a list of unpatched code snip
 The HTML report file shows the same result in a more human-readable format as
 follows:
 
-![HTML report screenshot](docs/images/vanir_detector_report.png)
+![HTML report screenshot](https://raw.githubusercontent.com/google/vanir/refs/heads/main/docs/images/vanir_detector_report.png)

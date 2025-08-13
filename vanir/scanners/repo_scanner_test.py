@@ -8,8 +8,8 @@ import multiprocessing.pool
 import os
 import subprocess
 from unittest import mock
-import requests
 
+from google.cloud import storage
 from vanir import file_path_utils
 from vanir import signature
 from vanir import vulnerability
@@ -206,11 +206,23 @@ class RepoScannerTest(absltest.TestCase):
     # skipped: fwk 2, bt 4, unaffected/proj 10
     self.assertEqual(stats, scanner_base.ScannedFileStats(14, 16))
 
-  @mock.patch.object(requests.sessions, 'Session', autospec=True)
-  def test_scan_osv(self, mock_session_class):
-    mock_session_class().get.return_value = absltest.mock.MagicMock(
-        content=open(_TEST_SIGNATURES_ZIP_FILE, mode='rb').read()
+  @mock.patch.object(storage, 'Client', autospec=True)
+  def test_scan_osv(self, mock_storage_client):
+    mock_blob = mock.MagicMock()
+
+    def download_to_file(file_obj):
+      with open(
+          _TEST_SIGNATURES_ZIP_FILE, 'rb'
+      ) as f:
+        file_obj.write(f.read())
+
+    mock_blob.download_to_file.side_effect = download_to_file
+    mock_bucket = mock.MagicMock()
+    mock_bucket.blob.return_value = mock_blob
+    mock_storage_client.create_anonymous_client.return_value.bucket.return_value = (
+        mock_bucket
     )
+
     scanner = repo_scanner.RepoScanner('Android', self._code_location)
     _, _, vuln_manager = scanner.scan()
     self.assertEqual(

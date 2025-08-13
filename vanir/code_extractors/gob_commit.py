@@ -45,7 +45,7 @@ class GobCommit(code_extractor_base.Commit):
     )
     super().__init__(url)
 
-  def _normalize_url(self, url: str) -> str:
+  def _normalize_url(self) -> str:
     return (
         f'https://{self._gob_host}.googlesource.com/'
         f'{self._project}/+/{self._revision}'

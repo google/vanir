@@ -71,7 +71,16 @@ class CodeExtractorGitTest(absltest.TestCase):
         any_order=True,
     )
 
-  def test_extract_commits_for_affected_entry_with_non_git(self):
+  def test_extract_commits_for_affected_entry_skipping_non_git_ranges(self):
+    affected_with_semver = _TEST_AFFECTED.to_osv_dict()
+    affected_with_semver['ranges'].append({'type': 'SEMVER'})
+    commits, failures = self.extractor.extract_commits_for_affected_entry(
+        vulnerability.AffectedEntry(affected_with_semver),
+    )
+    self.assertLen(commits, 3)
+    self.assertEmpty(failures)
+
+  def test_extract_commits_for_affected_entry_with_only_non_git_ranges(self):
     affected = vulnerability.AffectedEntry({'ranges': [{'type': 'SEMVER'}]})
     with self.assertRaises(ValueError):
       self.extractor.extract_commits_for_affected_entry(affected)

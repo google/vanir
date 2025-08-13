@@ -53,7 +53,7 @@ py_library(
         ":code_extractor_base",
         ":git_commit",
         "//:vulnerability",
-        "@com_google_osv//:vulnerability_py_pb2",
+        requirement("osv"),
     ],
 )
 

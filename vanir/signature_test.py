@@ -545,6 +545,42 @@ class SignatureTest(parameterized.TestCase):
         [['test-sig-id-1', 'test-sig-id-2']])
     self.assertEqual(sign_bundle.signatures, [test_signature1, test_signature2])
 
+  def test_signature_bundle_get_target_file_paths(self):
+    sign_bundle = signature.SignatureBundle([
+        self.test_line_signature,
+        self.test_function_signature,
+    ])
+    self.assertEqual(sign_bundle.target_file_paths, {'file1'})
+
+  def test_signature_bundle_from_bundles(self):
+    test_line_signature_2 = dataclasses.replace(
+        self.test_line_signature,
+        signature_id='line-sig-id-2',
+    )
+    bundle1 = signature.SignatureBundle(
+        [self.test_line_signature, self.test_function_signature]
+    )
+    bundle2 = signature.SignatureBundle([test_line_signature_2])
+    combined_bundle = signature.SignatureBundle.from_bundles([bundle1, bundle2])
+    self.assertCountEqual(
+        combined_bundle.signatures,
+        [
+            self.test_line_signature,
+            self.test_function_signature,
+            test_line_signature_2,
+        ],
+    )
+
+  def test_signature_bundle_from_bundles_single_bundle(self):
+    bundle = signature.SignatureBundle(
+        [self.test_line_signature, self.test_function_signature]
+    )
+    combined_bundle_single = signature.SignatureBundle.from_bundles([bundle])
+    self.assertIs(combined_bundle_single, bundle)
+
+  def test_signature_bundle_truthiness(self):
+    self.assertFalse(signature.SignatureBundle([]))
+    self.assertTrue(signature.SignatureBundle([self.test_line_signature]))
 
 if __name__ == '__main__':
   absltest.main()

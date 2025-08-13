@@ -1,0 +1,93 @@
+# Copyright 2025 Google LLC
+#
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file or at
+# https://developers.google.com/open-source/licenses/bsd
+
+[build-system]
+requires = [
+    "pdm-backend",
+]
+build-backend = "pdm.backend"
+
+[project]
+name = "vanir"
+version = "1.0.0"
+authors = [
+    { name = "Hyunwook (Wooky) Baek", email = "baekhw@google.com" },
+    { name = "Duy Truong", email = "duytruong@google.com" },
+    { name = "Justin Dunlap", email = "justindunlap@google.com" },
+]
+maintainers = [
+    { name = "Hyunwook (Wooky) Baek", email = "baekhw@google.com" },
+    { name = "Duy Truong", email = "duytruong@google.com" },
+    { name = "Justin Dunlap", email = "justindunlap@google.com" },
+]
+description = """\
+Vanir is a source code-based static analysis tool that automatically \
+identifies the list of missing security patches in the target system. \
+"""
+readme = "README.md"
+# This license only applies to precompiled packages of Vanir that includes
+# FuzzyC.
+license = "GPL-3.0-only"
+requires-python = "<3.14,>=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: POSIX :: Linux",
+    "Topic :: Security",
+]
+keywords = [
+  "static analysis",
+  "source code analysis",
+  "missing patch scanner",
+]
+dependencies = [
+    # Most of the dependencies here are pinned to the same version as in
+    # requirements_lock file or in MODULE.bazel to ensure consistency between
+    # Bazel and PiP setup.
+    "absl-py==2.3.1",
+    "certifi==2025.8.3",
+    "charset-normalizer==3.4.2",
+    "google-cloud-storage==3.2.0; python_version<'3.11'",
+    "google-cloud-storage==2.19.0; python_version>='3.11'",
+    "idna==3.10",
+    "jinja2==3.1.6",
+    "jsonpath_ng==1.7.0",
+    "markupsafe==3.0.2",
+    "mmh3==5.2.0",
+
+    # For Python 3.9, use 'osv==0.0.18' to avoid 'unsupported operand type(s)'
+    # error for '|' operator. For Python 3.10 and above, use the OSV version
+    # same as the one used in Bazel setup.
+    "osv==0.0.18; python_version<'3.10'",
+    "osv==0.0.21; python_version>='3.10' and python_version<'3.11'",
+    "osv==0.0.22; python_version>='3.11'",
+
+    "ply==3.11",
+
+    # For Python 3.9, use 'protobuf==3.20.3' as per the error message
+    # seen while running Vanir PiP on Python 3.9 with latest protobuf version.
+    # Reference: https://github.com/protocolbuffers/protobuf/issues/10051.
+    # For Python 3.10 and above, use the protobuf version same as the one used
+    # in Bazel setup.
+    "protobuf==3.20.3; python_version<'3.10'",
+    "protobuf==6.31.1; python_version>='3.10'",
+
+    "python-dateutil==2.9.0.post0",
+    "requests==2.32.4",
+    "tenacity==9.1.2",
+    "typing-extensions==4.14.1",
+    "unidiff==0.7.5",
+    "urllib3==2.5.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/google/vanir"
+Issues = "https://github.com/google/vanir/issues"

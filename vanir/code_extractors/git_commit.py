@@ -138,13 +138,11 @@ class GitCommit(code_extractor_base.Commit):
         self._remote, self._rev,
     ])
 
-  def _normalize_url(self, url: str) -> str:
-    remote, rev = _parse_url(url)
-    assert remote == self._remote and rev == self._rev, (
-        f'Inconsistent remote and revision: __init__ ({remote}, {rev}) != '
-        f'_normalize_url ({self._remote}, {self._rev})'
-    )
-    return url
+  def _normalize_url(self) -> str:
+    # Validation is already done in __init__(), inside _parse_url().
+    if 'github.com' in self._remote:
+      return f'{self._remote}/commit/{self._rev}'
+    return self._original_url
 
   def _extract_patch(self) -> unidiff.PatchSet:
     cmd = [

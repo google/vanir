@@ -7,9 +7,11 @@
 """Module for managing various scanning target file selection strategies."""
 
 import abc
+from collections.abc import Set
 import enum
+import functools
 import os
-from typing import Iterator, Sequence, Tuple
+from typing import Iterator, Tuple
 
 from vanir import parser
 from vanir import signature
@@ -26,11 +28,11 @@ class _Strategy(metaclass=abc.ABCMeta):
   """
 
   @abc.abstractmethod
-  def get_target_files_from_file_list(
+  def get_target_files_from_file_set(
       self,
-      file_list: Sequence[str],
+      file_set: Set[str],
       signature_bundle: signature.SignatureBundle,
-  ) -> Tuple[Sequence[str], int]:
+  ) -> Tuple[Set[str], int]:
     """Returns all selected target files and the number of unselected files.
 
     This method takes a list of files to be scanned and a bundle of signatures
@@ -38,7 +40,7 @@ class _Strategy(metaclass=abc.ABCMeta):
     current strategy as target files for further analysis.
 
     Args:
-      file_list: a list of the paths of files to be scanned. The path should be
+      file_set: a set of the paths of files to be scanned. The path should be
         a relative path having the package's top level directory as a root.
         E.g., `drivers/scsi/mac53c94.h' for the Linux SCSI driver file.
       signature_bundle: bundle of all relevant signatures.
@@ -50,7 +52,7 @@ class _Strategy(metaclass=abc.ABCMeta):
 
   def get_target_files(
       self, code_location: str, signature_bundle: signature.SignatureBundle
-  ) -> Tuple[Sequence[str], int]:
+  ) -> Tuple[Set[str], int]:
     """Returns all selected target files and the number of unselected files.
 
     This method takes the path to the target directory root |code_location| and
@@ -67,18 +69,17 @@ class _Strategy(metaclass=abc.ABCMeta):
       A sequence of absolute paths of all selected target files, and the number
       of unselected files.
     """
-    abs_file_list = list(self.walk_path_for_files(code_location))
     file_map = {}  # key: relative path, value: absolute path
-    for abs_file_path in abs_file_list:
+    for abs_file_path in self.walk_path_for_files(code_location):
       rel_file_path = os.path.relpath(abs_file_path, start=code_location)
       file_map[rel_file_path] = abs_file_path
-    selected_rel_file_list, skipped = self.get_target_files_from_file_list(
-        file_list=list(file_map.keys()), signature_bundle=signature_bundle
+    selected_rel_file_list, skipped = self.get_target_files_from_file_set(
+        file_set=file_map.keys(), signature_bundle=signature_bundle
     )
-    selected_abs_file_list = [
+    selected_abs_file_list = {
         file_map[selected_rel_file]
         for selected_rel_file in selected_rel_file_list
-    ]
+    }
     return selected_abs_file_list, skipped
 
   @classmethod
@@ -97,12 +98,12 @@ class _Strategy(metaclass=abc.ABCMeta):
 class _AllFiles(_Strategy):
   """Strategy that simply scan all files."""
 
-  def get_target_files_from_file_list(
+  def get_target_files_from_file_set(
       self,
-      file_list: Sequence[str],
+      file_set: Set[str],
       signature_bundle: signature.SignatureBundle,
-  ) -> Tuple[Sequence[str], int]:
-    return file_list, 0
+  ) -> Tuple[Set[str], int]:
+    return file_set, 0
 
 
 class _ExactPathMatch(_Strategy):
@@ -116,23 +117,39 @@ class _ExactPathMatch(_Strategy):
   its absolute path to the returning scan target list if exists.
   """
 
-  def get_target_files_from_file_list(
+  def get_target_files_from_file_set(
       self,
-      file_list: Sequence[str],
+      file_set: Set[str],
       signature_bundle: signature.SignatureBundle,
-  ) -> Tuple[Sequence[str], int]:
-    target_file_paths = set()
-    for sign in signature_bundle.signatures:
-      target_file_paths.add(sign.target_file)
-
-    to_scan = []
-    total_skipped = 0
-    for file_path in file_list:
-      if file_path in target_file_paths:
-        to_scan.append(file_path)
-      else:
-        total_skipped += 1
+  ) -> Tuple[Set[str], int]:
+    to_scan = file_set & signature_bundle.target_file_paths
+    total_skipped = len(file_set) - len(to_scan)
     return to_scan, total_skipped
+
+
+@functools.cache
+def _get_target_truncated_path_set(
+    signature_bundle: signature.SignatureBundle,
+) -> set[truncated_path.TruncatedPath]:
+  """Returns a set of truncated paths from the given signature bundle."""
+  target_truncated_path_set = set()
+  for sign in signature_bundle.signatures:
+    level = sign.truncated_path_level
+    if level is None:
+      level = min(
+          package_identifier.DEFAULT_TRUNCATED_PATH_LEVEL,
+          truncated_path.TruncatedPath.get_max_level(sign.target_file)
+      )
+    try:
+      tp = truncated_path.TruncatedPath(sign.target_file, level)
+    except truncated_path.PathLevelError as error:
+      # The signature's TP level is invalid.
+      raise ValueError(
+          'The signature %s has invalid Truncated Path Level.'
+          % (sign.signature_id)
+      ) from error
+    target_truncated_path_set.add(tp)
+  return target_truncated_path_set
 
 
 class _TruncatedPathMatch(_Strategy):
@@ -145,44 +162,23 @@ class _TruncatedPathMatch(_Strategy):
   be found from the Truncated Path module docstring.
   """
 
-  def get_target_files_from_file_list(
+  def get_target_files_from_file_set(
       self,
-      file_list: Sequence[str],
+      file_set: Set[str],
       signature_bundle: signature.SignatureBundle,
-  ) -> Tuple[Sequence[str], int]:
-    # Change target files to target truncated paths.
-    target_file_paths = set()  # For the exact path match.
-    target_truncated_path_set = set()
-    for sign in signature_bundle.signatures:
-      target_file_paths.add(sign.target_file)
-      level = sign.truncated_path_level
-      if level is None:
-        level = min(
-            package_identifier.DEFAULT_TRUNCATED_PATH_LEVEL,
-            truncated_path.TruncatedPath.get_max_level(sign.target_file)
-        )
-      try:
-        tp = truncated_path.TruncatedPath(sign.target_file, level)
-      except truncated_path.PathLevelError as error:
-        # The signature's TP level is invalid.
-        raise ValueError(
-            'The signature %s has invalid Truncated Path Level.'
-            % (sign.signature_id)
-        ) from error
-      target_truncated_path_set.add(tp)
+  ) -> Tuple[Set[str], int]:
+    target_truncated_path_set = _get_target_truncated_path_set(signature_bundle)
 
     # Compute all levels of truncated paths of files in the scanned directory
     # and check if any match.
-    to_scan = []
-    total_skipped = 0
-    for file_path in file_list:
-      # Always try exact path match first.
-      if file_path in target_file_paths:
-        to_scan.append(file_path)
-      elif truncated_path.check_inclusion(target_truncated_path_set, file_path):
-        to_scan.append(file_path)
-      else:
-        total_skipped += 1
+    # Always try exact path match first
+    to_scan = signature_bundle.target_file_paths & file_set
+    # then truncated path match.
+    to_scan.update({
+        file_path for file_path in file_set - to_scan
+        if truncated_path.check_inclusion(target_truncated_path_set, file_path)
+    })
+    total_skipped = len(file_set) - len(to_scan)
     return to_scan, total_skipped
 
 
@@ -204,16 +200,16 @@ class Strategy(enum.Enum):
 
   def get_target_files(
       self, code_location: str, signature_bundle: signature.SignatureBundle
-  ) -> Tuple[Sequence[str], int]:
+  ) -> Tuple[Set[str], int]:
     """Wrapper of the strategy object's |get_target_files()|."""
     return self.value.get_target_files(code_location, signature_bundle)
 
-  def get_target_files_from_file_list(
+  def get_target_files_from_file_set(
       self,
-      file_list: Sequence[str],
+      file_set: Set[str],
       signature_bundle: signature.SignatureBundle,
-  ) -> Tuple[Sequence[str], int]:
-    """Wrapper of the strategy object's |get_target_files_from_file_list()|."""
-    return self.value.get_target_files_from_file_list(
-        file_list, signature_bundle
+  ) -> Tuple[Set[str], int]:
+    """Wrapper of the strategy object's |get_target_files_from_file_set()|."""
+    return self.value.get_target_files_from_file_set(
+        file_set, signature_bundle
     )

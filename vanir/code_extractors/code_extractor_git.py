@@ -25,10 +25,7 @@ class GitCodeExtractor(code_extractor_base.AbstractCodeExtractor):
     # events in the affected.range.events field.
     for r in affected.to_proto().ranges:
       if r.type != vulnerability_pb2.Range.GIT:
-        raise ValueError(
-            'Unsupported affected.range type: %s' %
-            vulnerability_pb2.Range.Type.Name(r.type)
-        )
+        continue
       if not r.repo:
         raise ValueError('No affected.range.repo specified')
       range_fixes: set[Tuple[str, str]] = set()
@@ -36,6 +33,9 @@ class GitCodeExtractor(code_extractor_base.AbstractCodeExtractor):
         if event.fixed:
           range_fixes.add((r.repo, event.fixed))
       affected_fixes.update(range_fixes)
+    if not affected_fixes:
+      raise ValueError('No supported affected.range found')
+
     commits = []
     failed_commit_urls = []
     for repo, rev in affected_fixes:

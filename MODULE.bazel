@@ -14,27 +14,46 @@ bazel_dep(name = "abseil-cpp", version = "20250127.0", repo_name = "com_google_a
 bazel_dep(name = "pybind11_bazel", version = "2.13.6")
 bazel_dep(name = "pybind11_abseil", version = "202402.0")
 bazel_dep(name = "rules_proto", version = "7.1.0")
-bazel_dep(name = "protobuf", version = "29.3", repo_name = "com_google_protobuf")
+
+SUPPORTED_PYTHON_VERSIONS = [
+    "3.9",
+    "3.10",
+    "3.11",
+    "3.12",
+    "3.13",
+]
+
+DEFAULT_PYTHON_VERSION = "3.9"
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
-python.toolchain(
-    is_default = True,
-    python_version = "3.9"
-)
+[
+    python.toolchain(
+        is_default = version == DEFAULT_PYTHON_VERSION,
+        python_version = version,
+    )
+    for version in SUPPORTED_PYTHON_VERSIONS
+]
+use_repo(python, python = "python_versions")
 
 pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
-pip.parse(
-    hub_name = "vanir_deps",
-    python_version = "3.9",
-    requirements_lock = "//:requirements_lock.txt",
-)
+[
+    pip.parse(
+        hub_name = "vanir_deps",
+        python_version = version,
+        requirements_lock = "//requirements:requirements_lock_" + version + ".txt",
+    )
+    for version in SUPPORTED_PYTHON_VERSIONS
+]
 use_repo(pip, "vanir_deps")
 
-pip.parse(
-    hub_name = "antlr4_deps",
-    python_version = "3.9",
-    requirements_lock = "//:requirements_antlr4_lock.txt",
-)
+[
+    pip.parse(
+        hub_name = "antlr4_deps",
+        python_version = version,
+        requirements_lock = "//requirements:requirements_antlr4_lock_" + version + ".txt",
+    )
+    for version in SUPPORTED_PYTHON_VERSIONS
+]
 use_repo(pip, "antlr4_deps")
 
 antlr4_grammar_java_lexer_g4_extension = use_extension("//:extensions.bzl", "antlr4_grammar_java_lexer_g4_extension")
@@ -48,12 +67,6 @@ use_repo(antlr4_runtimes_extension, "antlr4_runtimes")
 
 fuzzyc_extension = use_extension("//:extensions.bzl", "fuzzyc_extension")
 use_repo(fuzzyc_extension, "fuzzyc")
-
-com_google_osv_extension = use_extension("//:extensions.bzl", "com_google_osv_extension")
-use_repo(com_google_osv_extension, "com_google_osv")
-
-jsonpath_ng_extension = use_extension("//:extensions.bzl", "jsonpath_ng_extension")
-use_repo(jsonpath_ng_extension, "jsonpath-ng-git")
 
 antlr4_entry_points_extension = use_extension("//:extensions.bzl", "antlr4_entry_points_extension")
 use_repo(antlr4_entry_points_extension, "antlr4_entry_points")

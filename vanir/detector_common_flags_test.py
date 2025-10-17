@@ -110,6 +110,36 @@ class DetectorCommonFlagsTest(parameterized.TestCase):
     with self.assertRaises(flags.IllegalFlagValueError):
       flags.FLAGS.validate_all_flags()
 
+  @parameterized.named_parameters(
+      ('offset_0', 0, datetime.datetime(2020, 6, 1)),
+      ('offset_1', 1, datetime.datetime(2020, 6, 1)),
+      ('offset_3', 3, datetime.datetime(2020, 9, 1)),
+      ('offset_minus_1', -1, datetime.datetime(2020, 6, 1)),
+      ('offset_minus_3', -3, datetime.datetime(2020, 3, 1)),
+  )
+  @flagsaver.flagsaver
+  def test_android_spl_align_to_quarter(self, offset, expected_spl):
+    # Since datetime.date is native, we can't mock datetime.date.today()
+    # We can't mock datetime.date either, because some libraries use isinstance
+    # which does not work if the type is a mock. We'll create a fake date class.
+    class MyDate(datetime.date):
+      @classmethod
+      def today(cls):
+        return datetime.date(2020, 7, 30)
+    datetime.date = MyDate
+
+    flags.FLAGS['android_spl_align_to_quarter'].parse(True)
+    flags.FLAGS['android_spl_relative_months'].parse(offset)
+
+    flags.FLAGS.validate_all_flags()
+    spl_filter = [
+        f
+        for f in detector_common_flags.generate_vulnerability_filters_from_flags()
+        if isinstance(f, vulnerability_manager.AndroidSplFilter)
+    ]
+    self.assertLen(spl_filter, 1)
+    self.assertEqual(spl_filter[0]._target_spl, expected_spl)
+
   @flagsaver.flagsaver
   def test_sign_target_path_filter(self):
     flags.FLAGS['sign_target_path_filter'].parse('foo/bar/.*')

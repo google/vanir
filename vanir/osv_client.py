@@ -19,7 +19,14 @@ import requests
 
 _OSV_PROD_URL_BASE = 'https://api.osv.dev/v1/'
 
-_OSV_API_KEY = 'AIzaSyAVJKt1YY0yNWHz2TBZU6Hj1nAJq1O-9Gc'
+_OSV_DEFAULT_API_KEY = 'AIzaSyAVJKt1YY0yNWHz2TBZU6Hj1nAJq1O-9Gc'
+
+
+_OSV_API_KEY = flags.DEFINE_string(
+    'osv_api_key',
+    _OSV_DEFAULT_API_KEY,
+    'API key to use with all requests to the OSV API.',
+)
 
 _OSV_QUERY_POSTFIX = 'query'
 _OSV_VULNERABILITY_POSTFIX = 'vulns'
@@ -61,7 +68,7 @@ class OsvClient:
 
   def __init__(self, session: Optional[requests.sessions.Session] = None):
     self._session = session or requests.session()
-    self._osv_api_key = _OSV_API_KEY
+    self._osv_api_key = _OSV_API_KEY.value
     self._osv_url_base = _OSV_PROD_URL_BASE
 
   def get_vuln(self, osv_id: str) -> Dict[str, Any]:
@@ -94,6 +101,18 @@ class OsvClient:
       }
       while True:
         response = self._session.post(osv_query_url, data=json.dumps(payload))
+        if 'code' in response.json():
+          logging.error(
+              'Failed to get OSV vulns for %s (code: %s, reason: %s)',
+              package_name,
+              response.json()['code'],
+              response.json().get('message', ''),
+          )
+          raise RuntimeError(
+              f'Failed to get OSV vulns for {package_name} (code:'
+              f' {response.json()["code"]}, reason:'
+              f' {response.json()["message"]})'
+          )
         osv_data = json.loads(response.text)
         vulnerabilities += osv_data.get(_OSV_VULNERABILITIES, [])
         next_page_token = osv_data.get(_OSV_NEXT_PAGE_TOKEN, None)

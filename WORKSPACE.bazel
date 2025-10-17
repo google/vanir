@@ -14,9 +14,9 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_r
 # Install Vanir python dependencies through PIP.
 http_archive(
     name = "rules_python",
-    sha256 = "8c15896f6686beb5c631a4459a3aa8392daccaab805ea899c9d14215074b60ef",
-    strip_prefix = "rules_python-0.17.3",
-    url = "https://github.com/bazelbuild/rules_python/archive/refs/tags/0.17.3.tar.gz",
+    sha256 = "690e0141724abb568267e003c7b6d9a54925df40c275a870a4d934161dc9dd53",
+    strip_prefix = "rules_python-0.40.0",
+    url = "https://github.com/bazelbuild/rules_python/archive/refs/tags/0.40.0.tar.gz",
 )
 
 load("@rules_python//python:repositories.bzl", "py_repositories", "python_register_toolchains")
@@ -98,9 +98,9 @@ cc_library(
     includes = ["runtime/Cpp/runtime/src"],
 )
 """,
-    sha256 = "50e87636a61daabd424d884c60f804387430920072f585a9fee2b90e2043fdcc",
-    strip_prefix = "antlr4-4.11.1",
-    urls = ["https://github.com/antlr/antlr4/archive/v4.11.1.tar.gz"],
+    sha256 = "9f18272a9b32b622835a3365f850dd1063d60f5045fb1e12ce475ae6e18a35bb",
+    strip_prefix = "antlr4-4.13.2",
+    urls = ["https://github.com/antlr/antlr4/archive/4.13.2.tar.gz"],
 )
 
 # Google absl

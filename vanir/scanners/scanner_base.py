@@ -295,8 +295,8 @@ class ScannerBase(abc.ABC):
   any necessary setup arguments.
   """
 
-  @classmethod
   @property
+  @classmethod
   @abc.abstractmethod
   def name(cls) -> str:
     """Returns the name of this scanner."""

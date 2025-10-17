@@ -191,9 +191,11 @@ def _build_pybind_extension_modules_for_python_version(
       [
           _BAZELISK_EXECUTABLE,
           'build',
+          '-c',
+          'opt',
           '//:parser',
           f'--config=py{python_version}',
-          f'--copt=-DPYBIND11_ABSEIL_STATUS_MODULE_PATH=vanir.pybind_extension_modules_artifacts.{python_version.replace('.', '_')}.pybind11_abseil.status',
+          f'--copt=-DPYBIND11_ABSEIL_STATUS_MODULE_PATH=vanir.pybind_extension_modules_artifacts.{python_version.replace(".", "_")}.pybind11_abseil.status',
       ],
       check=True,
   )

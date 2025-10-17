@@ -4,7 +4,30 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
-# This BUILD file is required to expose the requirements_lock files to Bazel.
+load("@rules_python//python:pip.bzl", "compile_pip_requirements")
+
+# This BUILD file is required to expose the requirements lock files to Bazel and contains Bazel
+# rules used to generate the requirements lock files.
 package(default_visibility = [
     "//visibility:public",
 ])
+
+SUPPORTED_PYTHON_VERSIONS = [
+    "3.9",
+    "3.10",
+    "3.11",
+    "3.12",
+    "3.13",
+]
+
+[
+    compile_pip_requirements(
+        name = "%s_%s" % (target, version),
+        srcs = ["%s.txt" % target],
+        requirements_txt = "%s_lock_%s.txt" % (target, version),
+        generate_hashes = False,
+        tags = ["manual"],
+    )
+    for target in ("requirements", "requirements_antlr4")
+    for version in SUPPORTED_PYTHON_VERSIONS
+]

@@ -164,7 +164,8 @@ class MissingPatchDetectionHermeticTest(
           'expected_signatures': test_signatures.EXPECTED_SIGNATURES_PLATFORM,
           'expected_covered_vulns': {'ASB-A-202768292'},
           'expected_unpatched_vulns': {'ASB-A-202768292'},
-      }, {
+      },
+      {
           'testcase_name': 'userspace_via_osv',
           'vuln_source_type': VulnerabilityDataSource.OSV,
           'vulns_json': _TEST_PLATFORM_VULNERABILITIES,
@@ -172,7 +173,7 @@ class MissingPatchDetectionHermeticTest(
           'expected_signatures': test_signatures.EXPECTED_SIGNATURES_PLATFORM,
           'expected_covered_vulns': {'ASB-A-202768292'},
           'expected_unpatched_vulns': {'ASB-A-202768292'},
-      }
+      },
   )
   @absltest.mock.patch.object(requests.sessions, 'Session', autospec=True)
   def test_missing_patch_detection(

@@ -27,9 +27,10 @@ class _Strategy(metaclass=abc.ABCMeta):
   order to identify the target files with its own methodology.
   """
 
+  @classmethod
   @abc.abstractmethod
   def get_target_files_from_file_set(
-      self,
+      cls,
       file_set: Set[str],
       signature_bundle: signature.SignatureBundle,
   ) -> Tuple[Set[str], int]:
@@ -50,8 +51,9 @@ class _Strategy(metaclass=abc.ABCMeta):
       of unselected files.
     """
 
+  @classmethod
   def get_target_files(
-      self, code_location: str, signature_bundle: signature.SignatureBundle
+      cls, code_location: str, signature_bundle: signature.SignatureBundle
   ) -> Tuple[Set[str], int]:
     """Returns all selected target files and the number of unselected files.
 
@@ -70,10 +72,10 @@ class _Strategy(metaclass=abc.ABCMeta):
       of unselected files.
     """
     file_map = {}  # key: relative path, value: absolute path
-    for abs_file_path in self.walk_path_for_files(code_location):
+    for abs_file_path in cls.walk_path_for_files(code_location):
       rel_file_path = os.path.relpath(abs_file_path, start=code_location)
       file_map[rel_file_path] = abs_file_path
-    selected_rel_file_list, skipped = self.get_target_files_from_file_set(
+    selected_rel_file_list, skipped = cls.get_target_files_from_file_set(
         file_set=file_map.keys(), signature_bundle=signature_bundle
     )
     selected_abs_file_list = {
@@ -98,8 +100,9 @@ class _Strategy(metaclass=abc.ABCMeta):
 class _AllFiles(_Strategy):
   """Strategy that simply scan all files."""
 
+  @classmethod
   def get_target_files_from_file_set(
-      self,
+      cls,
       file_set: Set[str],
       signature_bundle: signature.SignatureBundle,
   ) -> Tuple[Set[str], int]:
@@ -117,8 +120,9 @@ class _ExactPathMatch(_Strategy):
   its absolute path to the returning scan target list if exists.
   """
 
+  @classmethod
   def get_target_files_from_file_set(
-      self,
+      cls,
       file_set: Set[str],
       signature_bundle: signature.SignatureBundle,
   ) -> Tuple[Set[str], int]:
@@ -162,8 +166,9 @@ class _TruncatedPathMatch(_Strategy):
   be found from the Truncated Path module docstring.
   """
 
+  @classmethod
   def get_target_files_from_file_set(
-      self,
+      cls,
       file_set: Set[str],
       signature_bundle: signature.SignatureBundle,
   ) -> Tuple[Set[str], int]:
@@ -194,14 +199,16 @@ class Strategy(enum.Enum):
     Strategy.ALL_FILES.get_target_files(...)
   """
 
-  ALL_FILES = _AllFiles()
-  EXACT_PATH_MATCH = _ExactPathMatch()
-  TRUNCATED_PATH_MATCH = _TruncatedPathMatch()
+  ALL_FILES = _AllFiles
+  EXACT_PATH_MATCH = _ExactPathMatch
+  TRUNCATED_PATH_MATCH = _TruncatedPathMatch
 
   def get_target_files(
       self, code_location: str, signature_bundle: signature.SignatureBundle
   ) -> Tuple[Set[str], int]:
     """Wrapper of the strategy object's |get_target_files()|."""
+    # assert to make pytype happy; we're sure that the enum values are _Strategy
+    assert issubclass(self.value, _Strategy)
     return self.value.get_target_files(code_location, signature_bundle)
 
   def get_target_files_from_file_set(
@@ -210,6 +217,8 @@ class Strategy(enum.Enum):
       signature_bundle: signature.SignatureBundle,
   ) -> Tuple[Set[str], int]:
     """Wrapper of the strategy object's |get_target_files_from_file_set()|."""
+    # assert to make pytype happy; we're sure that the enum values are _Strategy
+    assert issubclass(self.value, _Strategy)
     return self.value.get_target_files_from_file_set(
         file_set, signature_bundle
     )

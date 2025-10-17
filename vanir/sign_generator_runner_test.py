@@ -170,7 +170,9 @@ class SignGeneratorRunnerTest(absltest.TestCase):
          'osv_package': ['pkg'], 'use_osv_android_kernel_vulns': False}
     ))
 
-  @flagsaver.flagsaver(use_osv_android_kernel_vulns=True)
+  @flagsaver.flagsaver(
+      use_osv_android_kernel_vulns=True,
+  )
   @mock.patch.object(os, 'makedirs', autospec=True)
   def test_main(self, _):
     test_datetime = datetime.datetime(2022, 10, 4, 10, 10)
@@ -200,9 +202,11 @@ class SignGeneratorRunnerTest(absltest.TestCase):
     mock_file_write = self.mock_file_open().write
     mock_file_write.assert_called_once()
 
-  @flagsaver.flagsaver(signature_file_name=_DESIGNATED_SIGNATURE_FILE_NAME)
-  @flagsaver.flagsaver(use_osv_android_kernel_vulns=True)
-  @flagsaver.flagsaver(store_signatures_in_legacy_location=True)
+  @flagsaver.flagsaver(
+      signature_file_name=_DESIGNATED_SIGNATURE_FILE_NAME,
+      use_osv_android_kernel_vulns=True,
+      store_signatures_in_legacy_location=True,
+  )
   @mock.patch.object(os, 'makedirs', autospec=True)
   def test_store_signatures_in_legacy_location(self, _):
     test_datetime = datetime.datetime(2022, 10, 4, 10, 10)
@@ -218,8 +222,10 @@ class SignGeneratorRunnerTest(absltest.TestCase):
         store_signatures_in_legacy_location=True,
     )
 
-  @flagsaver.flagsaver(signature_file_name=_DESIGNATED_SIGNATURE_FILE_NAME)
-  @flagsaver.flagsaver(use_osv_android_kernel_vulns=True)
+  @flagsaver.flagsaver(
+      signature_file_name=_DESIGNATED_SIGNATURE_FILE_NAME,
+      use_osv_android_kernel_vulns=True,
+  )
   @mock.patch.object(os, 'makedirs', autospec=True)
   def test_main_with_designated_sign_file_name(self, _):
     with mock.patch.object(builtins, 'open', self.mock_file_open):
@@ -257,9 +263,11 @@ class SignGeneratorRunnerTest(absltest.TestCase):
     args, _ = mock_isfile.call_args
     self.assertEndsWith(args[0], test_vul_file)
 
-  @flagsaver.flagsaver(signature_file_name=_DESIGNATED_SIGNATURE_FILE_NAME)
-  @flagsaver.flagsaver(use_osv_android_kernel_vulns=True)
-  @flagsaver.flagsaver(deprecated_signatures=['bad_signature.json'])
+  @flagsaver.flagsaver(
+      signature_file_name=_DESIGNATED_SIGNATURE_FILE_NAME,
+      use_osv_android_kernel_vulns=True,
+      deprecated_signatures=['bad_signature.json'],
+  )
   def test_main_with_deprecated_signature(self):
     bad_sig_file_mock_open = mock.mock_open(
         read_data=json.dumps(
@@ -282,10 +290,11 @@ class SignGeneratorRunnerTest(absltest.TestCase):
         exact_match_only_signatures=set(),
     )
 
-  @flagsaver.flagsaver(signature_file_name=_DESIGNATED_SIGNATURE_FILE_NAME)
-  @flagsaver.flagsaver(use_osv_android_kernel_vulns=True)
   @flagsaver.flagsaver(
-      exact_target_file_match_only_signatures=['strict_signatures.json'])
+      signature_file_name=_DESIGNATED_SIGNATURE_FILE_NAME,
+      use_osv_android_kernel_vulns=True,
+      exact_target_file_match_only_signatures=['strict_signatures.json'],
+  )
   def test_main_with_exact_target_match_only_signature(self):
     strict_sig_file_mock_open = mock.mock_open(
         read_data=json.dumps(

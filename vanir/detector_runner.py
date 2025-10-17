@@ -245,6 +245,8 @@ def _get_all_scanners() -> Mapping[str, Type[ScannerClass]]:
   while scanners:
     scanner = scanners.pop()
     scanners += scanner.__subclasses__()
+    if inspect.isabstract(scanner):
+      continue
     scanner_params = inspect.signature(scanner.__init__).parameters.values()
     unsupported_params = (arg for arg in scanner_params
                           if arg.kind is inspect.Parameter.KEYWORD_ONLY

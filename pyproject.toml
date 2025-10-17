@@ -12,7 +12,7 @@ build-backend = "pdm.backend"
 
 [project]
 name = "vanir"
-version = "1.0.0"
+version = "1.0.2"
 authors = [
     { name = "Hyunwook (Wooky) Baek", email = "baekhw@google.com" },
     { name = "Duy Truong", email = "duytruong@google.com" },
@@ -49,43 +49,44 @@ keywords = [
   "missing patch scanner",
 ]
 dependencies = [
-    # Most of the dependencies here are pinned to the same version as in
-    # requirements_lock file or in MODULE.bazel to ensure consistency between
-    # Bazel and PiP setup.
-    "absl-py==2.3.1",
-    "certifi==2025.8.3",
-    "charset-normalizer==3.4.2",
-    "google-cloud-storage==3.2.0; python_version<'3.11'",
-    "google-cloud-storage==2.19.0; python_version>='3.11'",
-    "idna==3.10",
-    "jinja2==3.1.6",
-    "jsonpath_ng==1.7.0",
-    "markupsafe==3.0.2",
-    "mmh3==5.2.0",
+    # Keep only direct dependencies here, same as those mentioned in the
+    # requirements.txt file. The dependencies here are kept at least on the same
+    # version as present in the requirements_lock files and less than the next
+    # major version to ensure compatibility.
+    # Ref: https://packaging.python.org/en/latest/discussions/versioning/#semantic-versioning.
+    "absl-py>=2.3.1,<3",
+    "google-api-core[grpc]>=2.25.1,<3",
+    "google-auth>=2.40.3,<3",
+    "google-cloud-iam>=2.19.1,<3",
+
+    # PiPs dependency resolution resolves to different major versions for
+    # google-cloud-storage(v2.19.0 for Python 3.11, 3.12 and v3.4.0 for Python
+    # 3.9, 3.10, 3.13) for different Python versions, hence keep the version
+    # upper limit as 4 to keep the version range inclusive and simple.
+    "google-cloud-storage>=2.19.0,<4",
+
+    "jinja2>=3.1.6,<4",
+    "jsonpath_ng>=1.7.0,<2",
+    "mmh3>=5.2.0,<6",
 
     # For Python 3.9, use 'osv==0.0.18' to avoid 'unsupported operand type(s)'
-    # error for '|' operator. For Python 3.10 and above, use the OSV version
-    # same as the one used in Bazel setup.
+    # error for '|' operator. For Python 3.10 and above, use the latest
+    # supported OSV version as per the Python version.
     "osv==0.0.18; python_version<'3.10'",
-    "osv==0.0.21; python_version>='3.10' and python_version<'3.11'",
-    "osv==0.0.22; python_version>='3.11'",
-
-    "ply==3.11",
+    "osv>=0.0.21,<0.1.0; python_version>='3.10' and python_version<'3.13'",
+    "osv>=0.1.2,<1; python_version>='3.13'",
 
     # For Python 3.9, use 'protobuf==3.20.3' as per the error message
     # seen while running Vanir PiP on Python 3.9 with latest protobuf version.
     # Reference: https://github.com/protocolbuffers/protobuf/issues/10051.
-    # For Python 3.10 and above, use the protobuf version same as the one used
-    # in Bazel setup.
     "protobuf==3.20.3; python_version<'3.10'",
-    "protobuf==6.31.1; python_version>='3.10'",
+    "protobuf>=6.32.1,<7; python_version>='3.10'",
 
-    "python-dateutil==2.9.0.post0",
-    "requests==2.32.4",
-    "tenacity==9.1.2",
-    "typing-extensions==4.14.1",
-    "unidiff==0.7.5",
-    "urllib3==2.5.0",
+    "python-dateutil>=2.9.0.post0,<3",
+    "requests>=2.32.5,<3",
+    "tenacity>=9.1.2,<10",
+    "typing-extensions>=4.15.0,<5",
+    "unidiff>=0.7.5,<1",
 ]
 
 [project.urls]

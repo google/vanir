@@ -49,9 +49,9 @@ cc_library(
     includes = ["runtime/Cpp/runtime/src"],
 )
 """,
-        sha256 = "50e87636a61daabd424d884c60f804387430920072f585a9fee2b90e2043fdcc",
-        strip_prefix = "antlr4-4.11.1",
-        urls = ["https://github.com/antlr/antlr4/archive/v4.11.1.tar.gz"],
+        sha256 = "9f18272a9b32b622835a3365f850dd1063d60f5045fb1e12ce475ae6e18a35bb",
+        strip_prefix = "antlr4-4.13.2",
+        urls = ["https://github.com/antlr/antlr4/archive/4.13.2.tar.gz"],
     )
 
 def antlr4_entry_points_repo():

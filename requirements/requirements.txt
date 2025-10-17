@@ -10,11 +10,16 @@ typing_extensions>=4,<5
 python-dateutil
 tenacity
 google-cloud-storage
+google-auth
+google-api-core
+google-cloud-iam
 
 # For Python 3.9, use 'osv==0.0.18' to avoid 'unsupported operand type(s)'
-# error for '|' operator. For Python 3.10 and above, use the latest OSV version.
+# error for '|' operator. For Python 3.10 and above, use the latest supported
+# OSV version as per the Python version.
 osv==0.0.18; python_version<'3.10'
-osv; python_version>='3.10'
+osv>=0.0.21,<0.1.0; python_version>='3.10' and python_version<'3.13'
+osv>=0.1.2,<1; python_version>='3.13'
 
 # For Python 3.9, use 'protobuf==3.20.3' as per the error message
 # seen while running Vanir PiP on Python 3.9 with latest protobuf version.

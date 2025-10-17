@@ -116,21 +116,8 @@ class TestScanner(scanner_base.ScannerBase):
     return findings, stats, override_vuln_manager
 
 
-class TestScanner2(scanner_base.ScannerBase):
-  """TestScanner2 class doc."""
-
-  def __init__(
-      self,
-      req_arg: str,
-      *req_vararg: str,
-      optional_kw_only: Optional[str] = None
-  ):
-    """TestScanner2 init doc."""
-    pass
-
-  @classmethod
-  def name(cls) -> str:
-    return 'test_scanner2'
+class InterimTestScanner(scanner_base.ScannerBase):
+  """InterimTestScanner class doc."""
 
   def scan(
       self,
@@ -153,6 +140,24 @@ class TestScanner2(scanner_base.ScannerBase):
   ]:
     return ({}, scanner_base.ScannedFileStats(0, 0),
             vulnerability_manager.generate_from_json_string('[]'))
+
+
+class TestScanner2(InterimTestScanner):
+  """TestScanner2 class doc."""
+
+  def __init__(
+      self,
+      req_arg: str,
+      *req_vararg: str,
+      optional_kw_only: Optional[str] = None
+  ):
+    """TestScanner2 init doc."""
+    del req_arg, req_vararg, optional_kw_only
+    super().__init__()
+
+  @classmethod
+  def name(cls) -> str:
+    return 'test_scanner2'
 
 
 class TestNonCliScanner(scanner_base.ScannerBase):

@@ -56,6 +56,7 @@ _ANDROID_MIN_SEVERITY_LEVEL = flags.DEFINE_enum(
     case_sensitive=False
 )
 
+
 _ANDROID_SPL = flags.DEFINE_string(
     'android_spl', None, 'The Security Patch Level (SPL) for the scanning. '
     'Vulnerabilities with SPL after this value will be excluded. The SPL '
@@ -65,11 +66,18 @@ _ANDROID_SPL = flags.DEFINE_string(
 _ANDROID_SPL_RELATIVE_MONTHS = flags.DEFINE_integer(
     'android_spl_relative_months',
     None,
-    'The Security Patch Level (SPL) for scanning. Vulnerabilities with SPL '
-    'after today\'s date plus this number of months will be excluded. Example: '
-    '--android_spl_relative_months=1 will exclude vulnerabilities with SPL '
-    'after next month. The offset can be negative. Mutually exclusive with '
-    '--android_spl.',
+    'Alternative way to specify the Security Patch Level (SPL) for scanning.'
+    " Vulnerabilities with SPL after today's date plus this number of months"
+    ' will be excluded. Example: --android_spl_relative_months=1 will exclude'
+    ' vulnerabilities with SPL after next month. The offset can be negative.'
+    ' Mutually exclusive with --android_spl.',
+)
+
+_ANDROID_SPL_ALIGN_TO_QUARTER = flags.DEFINE_bool(
+    'android_spl_align_to_quarter',
+    False,
+    'If True, the effective SPL date, after any relative month offset, will be'
+    ' aligned to the most recent quarter start (Mar, Jun, Sep, Dec).',
 )
 
 _SIGN_TARGET_PATH_FILTER = flags.DEFINE_multi_string(
@@ -185,6 +193,32 @@ flags.register_validator(
 )
 
 
+def _floor_to_quarter(
+    date: datetime.date, preserve_day: bool = False
+) -> datetime.date:
+  """Floors the date to the most recent quarter start date.
+
+  Args:
+    date: The date to floor.
+    preserve_day: If True, the original day of the month is preserved.
+      Otherwise, the day is set to 1.
+
+  Returns:
+    The floored date.
+  """
+  y = date.year
+  m = date.month
+  d = date.day if preserve_day else 1
+
+  if m >= 9:
+    return datetime.date(y, 9, d)
+  if m >= 6:
+    return datetime.date(y, 6, d)
+  if m >= 3:
+    return datetime.date(y, 3, d)
+  return datetime.date(y - 1, 12, d)
+
+
 def generate_vulnerability_filters_from_flags(
 ) -> Sequence[vulnerability_manager.VulnerabilityFilter]:
   """Parses vulnerability filter flags for detector and returns filters."""
@@ -209,14 +243,33 @@ def generate_vulnerability_filters_from_flags(
         vulnerability_manager.AndroidSeverityFilter(
             vulnerability_manager.AndroidSeverityLevel[
                 _ANDROID_MIN_SEVERITY_LEVEL.value]))
+
+  spl_date = None
   if _ANDROID_SPL.value:
-    vfilters.append(vulnerability_manager.AndroidSplFilter(_ANDROID_SPL.value))
+    spl_date = datetime.datetime.strptime(
+        _ANDROID_SPL.value, vulnerability_manager.SPL_FORMAT
+    ).date()
   elif _ANDROID_SPL_RELATIVE_MONTHS.present:
     today = datetime.date.today()
     offset = _ANDROID_SPL_RELATIVE_MONTHS.value
     offset_delta = dateutil.relativedelta.relativedelta(months=offset)
-    spl = (today + offset_delta).strftime(vulnerability_manager.SPL_FORMAT)
-    vfilters.append(vulnerability_manager.AndroidSplFilter(spl))
+    # Convert to datetime for robust addition with relativedelta
+    spl_date = today + offset_delta
+
+  if _ANDROID_SPL_ALIGN_TO_QUARTER.value:
+    if not spl_date:
+      spl_date = datetime.date.today()
+    spl_date = _floor_to_quarter(
+        spl_date, preserve_day=bool(_ANDROID_SPL.value)
+    )
+
+  if spl_date:
+    vfilters.append(
+        vulnerability_manager.AndroidSplFilter(
+            spl_date.strftime(vulnerability_manager.SPL_FORMAT)
+        )
+    )
+
   if _SIGN_TARGET_PATH_FILTER.value:
     for path_pattern_str in set(_SIGN_TARGET_PATH_FILTER.value):
       path_pattern = re.compile(path_pattern_str)

@@ -177,7 +177,7 @@ requiring a build config.
 
 The extracted code blocks and structural information are passed to the
 **normalizer** and **hasher** components. The normalizer abstracts away
-security-insensitive tokens and the hahser convert the group of tokens into a
+security-insensitive tokens and the hasher convert the group of tokens into a
 128-bit hash. The normalizer and hasher process each code block using two
 different signature generation techniques:
 

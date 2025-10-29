@@ -27,6 +27,15 @@ _NORMALIZED_URL_PATTERN = re.compile(r'(?P<remote>[^@]+)@(?P<rev>[^/]+)')
 _GENERIC_URL_PATTERN = re.compile(
     r'(?P<remote>[^:]+://[^/]+/.+)/(?P<rev>[^/]+)'
 )
+# https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/commit/?id=382c27f4ed28f803b1f1473ac2d8db0afc795a1b
+_LINUX_KERNEL_PATTERN = re.compile(
+    r'(?P<remote>[^:]+://git.kernel.org/pub/scm/linux/kernel/git/[^/]+/[^.]+.git)/commit/\?id=(?P<rev>[^/]+)'
+)
+# https://git.kernel.org/linus/1eff70a9abd46f175defafd29bc17ad456f398a7
+# https://git.kernel.org/stable/c/47f82395f04a976d4fa97de7f2acffa1c1096571
+_LINUX_KERNEL_PATTERN_SHORT = re.compile(
+    r'(?P<remote>[^:]+://git.kernel.org/)(?P<name>[^/]+)/(c/)?(?P<rev>[^/]+)'
+)
 
 
 @functools.cache
@@ -36,11 +45,22 @@ def _parse_url(url: str) -> Tuple[str, str]:
       _NORMALIZED_URL_PATTERN,
       _GITILES_URL_PATTERN,
       _GITHUB_URL_PATTERN,
+      _LINUX_KERNEL_PATTERN,
+      _LINUX_KERNEL_PATTERN_SHORT,
       _GENERIC_URL_PATTERN,
   ):
     match = pattern.fullmatch(url)
     if match:
-      return (match.group('remote'), match.group('rev'))
+      if pattern == _LINUX_KERNEL_PATTERN_SHORT:
+        # the shortened url does not contain the complete remote
+        if match.group('name') == 'linus':
+          remote = 'https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git'
+          return (remote, match.group('rev'))
+        elif match.group('name') == 'stable':
+          remote = 'https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git'
+          return (remote, match.group('rev'))
+      else:
+        return (match.group('remote'), match.group('rev'))
   raise code_extractor_base.IncompatibleUrlError(f'Unrecognized git URL: {url}')
 
 

@@ -20,6 +20,7 @@ from vanir import vulnerability
 from vanir.code_extractors import code_extractor_android
 from vanir.code_extractors import code_extractor_base
 from vanir.code_extractors import code_extractor_git
+from vanir.code_extractors import code_extractor_linux
 # pylint: enable=unused-import
 
 _P = TypeVar('_P', bound=code_extractor_base.AbstractCodeExtractor)

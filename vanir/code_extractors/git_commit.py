@@ -140,7 +140,15 @@ class GitCommit(code_extractor_base.Commit):
     self._run_git(['config', '--add', 'gc.auto', '0'])
     for src, dest in git_instead_ofs:
       self._run_git(['config', '--add', f'url.{dest}.insteadOf', src])
-    self._fetch()
+    if self._rev_valid():
+      self._fetch()
+    else:
+      # possible failure reason is a shortened commit hash
+      # which can be fixed by fetching all revisions
+      logging.info(
+          'Revision is not valid. Is the commit hash shortened? Fetching all sources.'
+      )
+      self._fetch_all()
     parents = self._run_git(
         ['rev-parse', f'{self._rev}^@']
     ).decode('utf-8').strip().split()
@@ -157,6 +165,22 @@ class GitCommit(code_extractor_base.Commit):
         'fetch', '--quiet', '--filter=blob:none', '--no-tags', '--depth=2',
         self._remote, self._rev,
     ])
+
+  def _fetch_all(self):
+    return self._run_git_with_retry([
+        'fetch', '--quiet', '--no-tags',
+        self._remote,
+    ])
+
+  def _rev_valid(self) -> bool:
+    try:
+      self._run_git(
+          ['rev-parse', f'{self._rev}']
+      )
+    except code_extractor_base.CommitDataFetchError as e:
+      return False
+    else:
+      return True
 
   def _normalize_url(self) -> str:
     # Validation is already done in __init__(), inside _parse_url().

@@ -34,6 +34,7 @@ class SignatureTest(parameterized.TestCase):
         exact_target_file_match_only=False,
         match_only_versions=None,
         truncated_path_level=None,
+        affected_entry_versions=None,
         line_hashes=[123, 456],
         threshold=0.9,
     )
@@ -46,6 +47,7 @@ class SignatureTest(parameterized.TestCase):
         exact_target_file_match_only=False,
         match_only_versions=None,
         truncated_path_level=None,
+        affected_entry_versions=None,
         function_hash=11111,
         length=5,
         target_function='',

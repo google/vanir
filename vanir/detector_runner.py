@@ -528,7 +528,9 @@ def main(argv: Sequence[str]) -> None:
   )
   finding_filters = (
       [scanner_base.ShortFunctionFilter()]
-      + list(detector_common_flags.generate_finding_filters_from_flags())
+      + list(detector_common_flags.generate_finding_filters_from_flags(
+                vuln_manager.get_vulnerabilities())
+            )
   )
   findings = scanner_base.ShortFunctionFilter().filter(findings)
   for finding_filter in finding_filters:

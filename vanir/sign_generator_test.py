@@ -55,6 +55,7 @@ class SignGeneratorTest(absltest.TestCase):
         exact_target_file_match_only=False,
         match_only_versions=None,
         truncated_path_level=None,
+        affected_entry_versions=None,
         function_hash='12345',
         length=10,
         target_function='func',
@@ -68,6 +69,7 @@ class SignGeneratorTest(absltest.TestCase):
         exact_target_file_match_only=False,
         match_only_versions=None,
         truncated_path_level=None,
+        affected_entry_versions=None,
         line_hashes=['12345'],
         threshold=0.5,
     )

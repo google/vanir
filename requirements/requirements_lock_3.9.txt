@@ -103,7 +103,7 @@ protobuf==3.20.3 ; python_version < "3.10"
     #   grpc-google-iam-v1
     #   grpcio-status
     #   proto-plus
-pyasn1==0.6.1
+pyasn1==0.6.3
     # via
     #   pyasn1-modules
     #   rsa
@@ -151,5 +151,5 @@ typing-extensions==4.15.0
     #   referencing
 unidiff==0.7.5
     # via -r requirements/requirements.txt
-urllib3==2.5.0
+urllib3==2.6.3
     # via requests

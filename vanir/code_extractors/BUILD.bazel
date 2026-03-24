@@ -29,6 +29,7 @@ py_library(
         ":code_extractor_android",
         ":code_extractor_base",
         ":code_extractor_git",
+        ":code_extractor_linux",
         "//:vulnerability",
         requirement("requests"),
     ],
@@ -54,6 +55,17 @@ py_library(
         ":git_commit",
         "//:vulnerability",
         requirement("osv"),
+    ],
+)
+
+py_library(
+    name = "code_extractor_linux",
+    srcs = ["code_extractor_linux.py"],
+    deps = [
+        ":code_extractor_base",
+        ":git_commit",
+        ":gitiles_commit",
+        "//:vulnerability",
     ],
 )
 
@@ -128,6 +140,21 @@ py_test(
     deps = [
         ":code_extractor_base",
         ":code_extractor_git",
+        ":git_commit",
+        "//:vulnerability",
+        requirement("absl-py"),
+    ],
+)
+
+py_test(
+    name = "code_extractor_linux_test",
+    srcs = ["code_extractor_linux_test.py"],
+    data = [
+        "//vanir/testdata:test_patch_set",
+    ],
+    deps = [
+        ":code_extractor_linux",
+        ":code_extractor_base",
         ":git_commit",
         "//:vulnerability",
         requirement("absl-py"),

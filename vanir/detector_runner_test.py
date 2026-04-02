@@ -506,6 +506,13 @@ class DetectorRunnerTest(absltest.TestCase):
         </pre>
         </td>
       </tr>
+      <tr>
+        <th>Ignored CVEs</th>
+        <td>
+        <pre>
+        </pre>
+        </td>
+      </tr>
     </table>
     <h3 onclick="toggle(this);" class="expand-toggle">
     Missing Patches in Target Files (in 1 vuln)</h3>

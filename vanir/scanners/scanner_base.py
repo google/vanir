@@ -136,12 +136,15 @@ class PathPrefixFilter(FindingsFilter):
   def filter(self, findings: Findings) -> Findings:
     filtered_findings = {}
     for sign, chunks in findings.items():
-      filtered_findings[sign] = list(
+      filtered_chunks = list(
           filter(
               lambda chunk: not chunk.target_file.startswith(self._prefix),
               chunks,
           )
       )
+      # only add findings if chunks not empty
+      if filtered_chunks:
+        filtered_findings[sign] = filtered_chunks
     return filtered_findings
 
 

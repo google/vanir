@@ -189,13 +189,13 @@ class SignGeneratorRunnerTest(absltest.TestCase):
     )
     self.mock_get_vulns_for_packages.assert_called_once()
     self.mock_generate_signatures.assert_called_once_with(
-        session=mock.ANY,
         generator=mock.ANY,
         deprecated_signatures=set(),
         deprecated_patch_urls=set(),
         deprecated_vulns=set(),
         exact_match_only_signatures=set(),
         exact_match_only_patch_urls=set(),
+        extractor_config=mock.ANY,
     )
     expected_output_file = '/tmp/vanir/signature-20221004101000.json'
     self.mock_file_open.assert_has_calls([mock.call(expected_output_file, 'w')])
@@ -281,13 +281,13 @@ class SignGeneratorRunnerTest(absltest.TestCase):
     with mock.patch.object(builtins, 'open', bad_sig_file_mock_open):
       sign_generator_runner.main([])
     self.mock_generate_signatures.assert_called_once_with(
-        session=mock.ANY,
         generator=mock.ANY,
         deprecated_signatures={_TEST_SIGN_ID_1},
         deprecated_vulns={_TEST_OSV_ID},
         deprecated_patch_urls={'patch1', 'patch2'},
         exact_match_only_patch_urls=set(),
         exact_match_only_signatures=set(),
+        extractor_config=mock.ANY,
     )
 
   @flagsaver.flagsaver(
@@ -307,13 +307,13 @@ class SignGeneratorRunnerTest(absltest.TestCase):
     with mock.patch.object(builtins, 'open', strict_sig_file_mock_open):
       sign_generator_runner.main([])
     self.mock_generate_signatures.assert_called_once_with(
-        session=mock.ANY,
         generator=mock.ANY,
         deprecated_signatures=set(),
         deprecated_vulns=set(),
         deprecated_patch_urls=set(),
         exact_match_only_signatures={_TEST_SIGN_ID_2},
         exact_match_only_patch_urls={'patch1', 'patch2'},
+        extractor_config=mock.ANY,
     )
 
   def test_main_with_designated_vul_file_fails_with_invalid_vul_file(self):

@@ -96,6 +96,8 @@ class GitCommitTest(parameterized.TestCase):
     added_tmp_file = commit.get_file_at_rev('added.bin')
     with open(added_tmp_file, 'rb') as f:
       self.assertEqual(f.read(), b'\x00\x01')
+    # The commit.patch is a copy, so its mutation shouldn't affect the original.
+    self.assertNotEqual(commit.patch.clear(), commit._patch)
 
   def test_init_with_instead_of(self):
     commit = git_commit.GitCommit(
@@ -227,6 +229,19 @@ class GitCommitTest(parameterized.TestCase):
       commit.get_file_at_rev('deleted')
     with self.assertRaises(code_extractor_base.CommitDataFetchError):
       commit.get_file_at_rev('nonexistent')
+
+  def test_init_with_unrelated_args(self):
+    url = f'file://{self.git_repo_dir}@{self.test_commit_id}'
+    commit = git_commit.GitCommit(
+        url,
+        git_path=self.git_bin,
+        git_exec_path=self.exec_path,
+        git_working_dir=self.create_tempdir().full_path,
+        unrelated_arg='some_value',
+    )
+    self.assertEqual(commit.url, url)
+    self.assertEqual(commit.patched_files.keys(), {'modified.txt', 'added.bin'})
+    self.assertEqual(commit.unpatched_files.keys(), {'modified.txt', 'deleted'})
 
 
 if __name__ == '__main__':

@@ -18,6 +18,7 @@ py_library(
     deps = [
         "//:file_path_utils",
         "//:vulnerability",
+        requirement("requests"),
         requirement("unidiff"),
     ],
 )
@@ -30,7 +31,6 @@ py_library(
         ":code_extractor_base",
         ":code_extractor_git",
         "//:vulnerability",
-        requirement("requests"),
     ],
 )
 

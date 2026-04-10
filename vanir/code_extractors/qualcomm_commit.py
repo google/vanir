@@ -11,11 +11,10 @@ import json
 import logging
 import os
 import re
-from typing import Any, Optional, Mapping, Union
+from typing import Any, Mapping, Optional, Union
 import urllib
 
 import requests
-import unidiff
 from vanir.code_extractors import code_extractor_base
 
 HTTP_PREFIX_PATTERN = r'^https?://'
@@ -44,7 +43,7 @@ class QualcommCommit(code_extractor_base.Commit):
       url: str,
       *,
       requests_session: Optional[requests.Session] = None,
-      **kwargs
+      **kwargs,
   ):
     self._session = requests_session or requests.Session()
     super().__init__(url, **kwargs)
@@ -55,7 +54,8 @@ class QualcommCommit(code_extractor_base.Commit):
       normal_url = self._convert_aurora_to_linaro(self._original_url)
       logging.info(
           'Converted Code Aurora URL %s to Code Linaro URL %s',
-          self._original_url, normal_url,
+          self._original_url,
+          normal_url,
       )
       return normal_url
     elif schemeless_url.startswith(self.code_linaro_repo_prefix):
@@ -84,10 +84,13 @@ class QualcommCommit(code_extractor_base.Commit):
     """
     
     # Repos in 'quic/le' are migrated to project group 'la'.
-    url = aurora_url.replace(cls.code_aurora_quic_repo_prefix + '/le/',
-                             cls.code_aurora_quic_repo_prefix + '/la/')
-    url = url.replace(cls.code_aurora_quic_repo_prefix,
-                      cls.code_linaro_repo_prefix)
+    url = aurora_url.replace(
+        cls.code_aurora_quic_repo_prefix + '/le/',
+        cls.code_aurora_quic_repo_prefix + '/la/',
+    )
+    url = url.replace(
+        cls.code_aurora_quic_repo_prefix, cls.code_linaro_repo_prefix
+    )
     url_prefix, url_commit_suffix = url.split('/commit')
     match = re.search('id=[a-f0-9]{7,40}', url_commit_suffix)
     if match is None:
@@ -119,27 +122,31 @@ class QualcommCommit(code_extractor_base.Commit):
         ValueError,
     ) as e:
       raise code_extractor_base.CommitDataFetchError(
-          'Failed to fetch valid commit data from %s' % url) from e
+          'Failed to fetch valid commit data from %s' % url
+      ) from e
     return response.text
 
   @functools.cached_property
   def _commit_info(self) -> Mapping[str, Any]:
     """Retrieves commit info through Linaro REST API for commit info."""
     path_with_namespace, url_commit_suffix = re.sub(
-        'http[s]*://git.codelinaro.org/', '', self.url).split('/commit/')
+        'http[s]*://git.codelinaro.org/', '', self.url
+    ).split('/commit/')
     path_with_namespace = urllib.parse.quote(path_with_namespace, safe='')
     match = re.search('[a-f0-9]{7,40}', url_commit_suffix)
     if match is None:
       raise ValueError('Invalid Code Linaro commit URL: %s' % self.url)
     commit_hash = match.group()
-    api_format = ('https://git.codelinaro.org/api/v4/projects/%s/repository/'
-                  'commits/%s')
+    api_format = (
+        'https://git.codelinaro.org/api/v4/projects/%s/repository/commits/%s'
+    )
     commit_info_api = api_format % (path_with_namespace, commit_hash)
     commit_info = json.loads(self._get_text(commit_info_api))
     if 'id' not in commit_info:
       raise code_extractor_base.CommitDataFetchError(
-          'Failed to get valid commit info for URL: %s (received: %s)'
-          % (self.url, commit_info))
+          f'Failed to get valid commit info for URL: {self.url} (received:'
+          f' {commit_info})'
+      )
     return commit_info
 
   @property
@@ -147,22 +154,13 @@ class QualcommCommit(code_extractor_base.Commit):
     parent_commit_hashes = self._commit_info.get('parent_ids', None)
     if not parent_commit_hashes:
       raise code_extractor_base.CommitDataFetchError(
-          'Failed to find parent commit for %s' % self.url)
+          f'Failed to find parent commit for {self.url}'
+      )
     if len(parent_commit_hashes) > 1:
       raise code_extractor_base.CommitDataFetchError(
-          'git-merge commit: %s' % self.url)
+          f'git-merge commit: {self.url}'
+      )
     return parent_commit_hashes[0]
-
-  def _extract_patch(self) -> unidiff.PatchSet:
-    """Extracts the patch for the commit."""
-    logging.info('Retrieving patch source: %s', self.url)
-    patch_url = self.url + '.diff'
-    raw_patch = self._get_text(patch_url)
-    patch = unidiff.PatchSet.from_string(raw_patch)
-    if not patch:
-      raise code_extractor_base.CommitDataFetchError(
-          'Patch for this commit is invalid. Source: %s' % patch_url)
-    return patch
 
   def _extract_patched_files(self) -> Mapping[str, str]:
     """Extracts patched files affected by the commit.
@@ -181,7 +179,8 @@ class QualcommCommit(code_extractor_base.Commit):
     patched_files = {}
     for file_path in patched_file_paths:
       patched_file_url = ''.join(
-          [self.url.replace('commit', 'raw'), '/', file_path])
+          [self.url.replace('commit', 'raw'), '/', file_path]
+      )
       patched_files[file_path] = self._create_temp_file(
           self._get_text(patched_file_url),
           suffix=f'_{os.path.basename(file_path)}',
@@ -209,7 +208,10 @@ class QualcommCommit(code_extractor_base.Commit):
     unpatched_files = {}
     for file_path in unpatched_file_paths:
       unpatched_file_url = ''.join([
-          base_url.replace('commit', 'raw'), self._parent_commit, '/', file_path
+          base_url.replace('commit', 'raw'),
+          self._parent_commit,
+          '/',
+          file_path,
       ])
       unpatched_files[file_path] = self._create_temp_file(
           self._get_text(unpatched_file_url),
@@ -224,3 +226,14 @@ class QualcommCommit(code_extractor_base.Commit):
         suffix=f'_{os.path.basename(file_path)}',
     )
     return tempfile
+
+  def get_commit_time(self) -> int | None:
+    return None
+
+  def _fetch_raw_patch(self) -> str:
+    """Returns the raw patch string."""
+    patch_url = self.url + '.diff'
+    text = self._get_text(patch_url)
+    if isinstance(text, bytes):
+      return text.decode('utf-8')
+    return text

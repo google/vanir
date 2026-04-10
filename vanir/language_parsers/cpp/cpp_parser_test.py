@@ -9,6 +9,7 @@
 from unittest import mock
 
 from absl import logging
+from vanir.language_parsers import abstract_language_parser
 from vanir.language_parsers.cpp import cpp_parser
 
 from absl.testing import absltest
@@ -108,9 +109,7 @@ class ParserCoreTest(absltest.TestCase):
       results = parser.get_chunks([(5, 7)])
       self.assertEmpty(results.parse_errors)
       self.assertLen(results.function_chunks, 1)
-    self.assertIn(
-        'is not encoded in UTF-8. Trying altneratives.', logs.output[0]
-    )
+    self.assertRegex(logs.output[0], r'Converting.*to UTF-8.')
 
   def test_cpp_parser_with_known_encoding_file(self):
     latin1_str = '  // \xE0'
@@ -120,8 +119,10 @@ class ParserCoreTest(absltest.TestCase):
         encoding='LATIN-1',
     )
     # Delete latin-1 from the alternative encoding.
-    with mock.patch.object(cpp_parser, '_ALTNERNATIVE_ENCODINGS', []):
-      with self.assertRaisesRegex(ValueError, 'Failed to deocde'):
+    with mock.patch.object(
+        abstract_language_parser, '_ALTERNATIVE_ENCODINGS', [],
+    ):
+      with self.assertRaisesRegex(ValueError, 'Failed to decode'):
         cpp_parser.CppParser(testfile.full_path)
 
 

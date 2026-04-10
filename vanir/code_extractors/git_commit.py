@@ -9,7 +9,6 @@ import tempfile
 from typing import Mapping, Optional, Sequence, Tuple
 
 import tenacity
-import unidiff
 from vanir.code_extractors import code_extractor_base
 
 
@@ -30,7 +29,7 @@ _GENERIC_URL_PATTERN = re.compile(
 
 
 @functools.cache
-def _parse_url(url: str) -> Tuple[str, str]:
+def parse_url(url: str) -> Tuple[str, str]:
   """Extracts git remote and revision strings from a commit URL."""
   for pattern in (
       _NORMALIZED_URL_PATTERN,
@@ -65,6 +64,7 @@ class GitCommit(code_extractor_base.Commit):
     object is deleted.
   - git_instead_ofs: a list of (source, destination) tuples, where the source
     URL will be redirected to the destination URL in git's insteadOf config.
+  - **kwargs: additional arguments, currently unused.
   """
 
   def _run_git(self, cmd: Sequence[str]) -> bytes:
@@ -78,7 +78,10 @@ class GitCommit(code_extractor_base.Commit):
       env = os.environ.copy()
       env['GIT_TERMINAL_PROMPT'] = '0'
       return subprocess.run(
-          git_cmd, capture_output=True, check=True, env=env,
+          git_cmd,
+          capture_output=True,
+          check=True,
+          env=env,
       ).stdout
     except subprocess.CalledProcessError as e:
       logging.debug('git command failed: %d: %s', e.returncode, e.stderr)
@@ -105,7 +108,7 @@ class GitCommit(code_extractor_base.Commit):
       **kwargs,
   ):
     del kwargs  # unused
-    self._remote, self._rev = _parse_url(url)
+    self._remote, self._rev = parse_url(url)
     self._git_path = git_path or 'git'
     self._git_exec_path = git_exec_path
     if git_working_dir:
@@ -121,9 +124,12 @@ class GitCommit(code_extractor_base.Commit):
     for src, dest in git_instead_ofs:
       self._run_git(['config', '--add', f'url.{dest}.insteadOf', src])
     self._fetch()
-    parents = self._run_git(
-        ['rev-parse', f'{self._rev}^@']
-    ).decode('utf-8').strip().split()
+    parents = (
+        self._run_git(['rev-parse', f'{self._rev}^@'])
+        .decode('utf-8')
+        .strip()
+        .split()
+    )
     if len(parents) != 1:
       raise code_extractor_base.CommitDataFetchError(
           f'Failed to determine parent commit for {url}. '
@@ -134,8 +140,13 @@ class GitCommit(code_extractor_base.Commit):
 
   def _fetch(self):
     return self._run_git_with_retry([
-        'fetch', '--quiet', '--filter=blob:none', '--no-tags', '--depth=2',
-        self._remote, self._rev,
+        'fetch',
+        '--quiet',
+        '--filter=blob:none',
+        '--no-tags',
+        '--depth=2',
+        self._remote,
+        self._rev,
     ])
 
   def _normalize_url(self) -> str:
@@ -144,13 +155,24 @@ class GitCommit(code_extractor_base.Commit):
       return f'{self._remote}/commit/{self._rev}'
     return self._original_url
 
-  def _extract_patch(self) -> unidiff.PatchSet:
+  def _fetch_raw_patch(self) -> str:
+    """Returns the raw string output of git format-patch."""
     cmd = [
-        'format-patch', '--stdout', '-1', '--no-binary', '--no-signature',
+        'format-patch',
+        '--stdout',
+        '-1',
+        '--no-binary',
+        '--no-signature',
         self._rev,
     ]
-    return unidiff.PatchSet.from_string(
-        self._run_git_with_retry(cmd).decode('utf-8')
+    return self._run_git_with_retry(cmd).decode('utf-8')
+
+  def get_commit_time(self) -> int:
+    """Returns the commit timestamp."""
+    return int(
+        self._run_git_with_retry(
+            ['show', '-s', '--format=%ct', self._rev]
+        ).strip()
     )
 
   def _get_file(self, revision: str, path: str) -> str:

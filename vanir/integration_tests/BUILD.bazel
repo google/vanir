@@ -27,6 +27,7 @@ py_test(
         "//:vanir_test_base",
         "//:vulnerability",
         "//:vulnerability_manager",
+        "//vanir/code_extractors:code_extractor_base",
         "//vanir/scanners:scanner_base",
         "//vanir/scanners:target_selection_strategy",
         "//vanir/testdata:test_signatures",

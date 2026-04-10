@@ -13,6 +13,7 @@ import re
 import tarfile
 from typing import Any, Callable, Collection
 from unittest import mock
+
 from absl import logging
 from absl.testing import parameterized
 import requests
@@ -24,9 +25,12 @@ from vanir import vanir_test_base
 from vanir import vulnerability
 from vanir import vulnerability_manager
 from vanir.code_extractors import code_extractor_android
+from vanir.code_extractors import code_extractor_base
 from vanir.scanners import scanner_base
 from vanir.testdata import test_signatures
+
 from absl.testing import absltest
+
 
 _TESTDATA_DIR = file_path_utils.get_root_file_path('testdata/')
 _GITILES_TESTDATA_DIR = _TESTDATA_DIR + 'gitiles/'
@@ -211,7 +215,11 @@ class MissingPatchDetectionHermeticTest(
             'Android', vulnerability.MetaPackage.ANDROID_KERNEL)
 
     with self.runtime_reporter('sign_gen'):
-      vul_manager.generate_signatures()
+      vul_manager.generate_signatures(
+          extractor_config=code_extractor_base.ExtractorConfig(
+              requests_session=mock_session(),
+          ),
+      )
 
     signatures = vul_manager.signatures
     self._compare_signatures(signatures, expected_signatures)

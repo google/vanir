@@ -14,6 +14,7 @@
 #include <variant>
 #include <vector>
 #include "absl/log/check.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "vanir/language_parsers/java/JavaLexer.h"
 #include "vanir/language_parsers/java/JavaParser.h"
@@ -125,9 +126,13 @@ ParserCore::Parse(
         absl::StrCat("Failed to open: ", file_path_));
   }
 
+  std::unique_ptr<antlr4::ANTLRInputStream> input_stream;
+  try {
+    input_stream = std::make_unique<antlr4::ANTLRInputStream>(file_stream);
+  } catch (const antlr4::IllegalArgumentException& e) {
+    return absl::InvalidArgumentError(e.what());
+  }  JavaLexer java_lexer(input_stream.get());
   ErrorListener lexer_error_listener("JavaLexer");
-  antlr4::ANTLRInputStream input_stream(file_stream);
-  JavaLexer java_lexer(&input_stream);
   java_lexer.removeErrorListeners();  // Remove default logger error listener
   java_lexer.addErrorListener(&lexer_error_listener);
 

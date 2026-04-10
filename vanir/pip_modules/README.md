@@ -17,7 +17,7 @@ package.
 ### Key Responsibilities:
 
 *   **Builds Pybind Extension Modules**: Compiles C++ extensions (for C++ and
-Java parsers) for various Python versions (e.g., 3.9, 3.10, 3.11, 3.12, 3.13).
+Java parsers) for various Python versions (e.g., 3.10, 3.11, 3.12, 3.13).
 *   **Updates Import Statements**: Temporarily modifies import statements
 corresponding to pybind extension modules within the Vanir source code to ensure
 correct functioning in a PiP environment.
@@ -40,7 +40,7 @@ python vanir/pip_modules/build_pip_package.py <python_version1> <python_version2
 For example:
 
 ```sh
-python vanir/pip_modules/build_pip_package.py 3.9 3.10 3.11 3.12 3.13
+python vanir/pip_modules/build_pip_package.py 3.10 3.11 3.12 3.13
 ```
 
 ## Testing the Vanir PiP Package

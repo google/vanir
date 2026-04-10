@@ -10,7 +10,7 @@ Run the following in `requirements/` to generate the requirements lock files for
 all supported Python versions:
 
 ```sh
-for pyver in 3.9 3.10 3.11 3.12 3.13; do
+for pyver in 3.10 3.11 3.12 3.13; do
   for target in requirements requirements_antlr4; do
     truncate --size=0 "${target}_lock_${pyver}.txt"
     bazel run "//requirements:${target}_${pyver}.update" --config "py${pyver}"
@@ -22,8 +22,10 @@ done
 
 The existing requirements lock files generated in Bzlmod setup are compatible
 with the Workspace setup. However, if required, the requirements lock files can
-be generated in Workspace setup as well using the above commands for only
-Python 3.9(since we do not support other Python versions in Workspace setup).
+be generated in Workspace setup as well using the above commands (along with
+appropriate configs 'bazel7.0-7.1' or 'bazel7.2-latest' as mentioned in the
+.bazelrc file) for only Python 3.10 (since we do not support other Python
+versions in Workspace setup).
 
 ## Using pip-compile
 
@@ -36,11 +38,11 @@ used in [rules_python](https://github.com/bazel-contrib/rules_python/blob/main/p
 dependency declared in WORKSPACE.bazel/MODULE.bazel.
 2. [pip-tools](https://pypi.org/project/pip-tools) is installed.
 
-and run the following commands in `requirements/` e.g. for Python 3.9:
+and run the following commands in `requirements/` e.g. for Python 3.10:
 
 ```sh
-pip-compile --output-file=requirements_lock_3.9.txt requirements.txt
-pip-compile --output-file=requirements_antlr4_lock_3.9.txt requirements_antlr4.txt
+pip-compile --output-file=requirements_lock_3.10.txt requirements.txt
+pip-compile --output-file=requirements_antlr4_lock_3.10.txt requirements_antlr4.txt
 ```
 
 Requirements lock files for other Python versions can be generated similarly.

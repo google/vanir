@@ -34,10 +34,13 @@ Alternatively, follow the steps below to use the version from GitHub.
 
 ### Clone Vanir from GitHub
 > [!CAUTION]
-> This instruction is written based on systems using Bazel >= 8. For Bazel 7.1
-> and 7.0, edit .bazelrc to enable workspace and disable bzlmod.
-> For Bazel 6, remove or comment out the line `common --enable_workspace=False`
-> as this flag is not supported.
+> These instructions are written based on systems using Bazel >= 8.0. For older
+> Bazel versions, a `--config` flag needs to be added to the Bazel commands:
+>
+> * **Bazel 7.2.0 - latest 7.x:** Use `bazel <command> --config=bazel7.2-latest`
+> * **Bazel 7.0.0 - 7.1.0:** Use `bazel <command> --config=bazel7.0-7.1`
+>
+> See `.bazelrc` for details.
 
 1. Install the following [prerequisite](#prerequisite) tools in a Linux machine
 if not already installed:
@@ -60,6 +63,8 @@ if not already installed:
 3. To scan your Android repo project located at `~/my/android/repo`, run:
 
     ```posix-terminal
+    # Adjust with --config if using Bazel 7.x, e.g.,
+    # bazel build //:detector_runner --config=bazel7.2-latest
     bazel build //:detector_runner
     ./bazel-bin/detector_runner repo_scanner Android ~/my/android/repo
     ```
@@ -337,8 +342,12 @@ files ([WORKSPACE.bazel](./WORKSPACE.bazel) and [BUILD.bazel](./BUILD.bazel)) sp
 dependencies and build targets. To understand the complete list of dependencies,
  please refer to the Bazel configuration files.
 
-Vanir has been tested with only **Bazel >= 6.0**. The Bazel installation guide
+Vanir has been tested with only **Bazel >= 7.0**. The Bazel installation guide
 can be found from https://bazel.build/install.
+
+> [!NOTE]
+> While Vanir may still build with **Bazel 6.x**, we no longer actively
+> test with this version and recommend upgrading to the latest LTS.
 
 Alternatively, you can install and maintain Bazel through Bazelisk. For further
 information on how to install Bazel through Bazelisk, please refer to the
@@ -366,7 +375,7 @@ sudo apt install openjdk-11-jre
 
 ##### Other Tools
 
-Vanir targets Python3.9 and C++17. For Python, if you use Bazel, Bazel will
+Vanir targets Python3.10 and C++17. For Python, if you use Bazel, Bazel will
 internally create a repository and register the toolchain for running Vanir. For
  C++, Bazel will not install C++ toolchain but uses the system-installed
  toolchain. When you build Vanir, Bazel will implicitly pass the Vanir default
@@ -386,6 +395,12 @@ In this tutorial, we will assume that you downloaded Vanir at `~/vanir`.
 > `/tmp/vanir` is used for storing temporary files for Vanir unit tests, and
 > the test would fail due to the Bazel sandboxing rule if you use the
 > `/tmp/vanir` also for storing Vanir source.
+
+To run all Bazel tests, you can use the following command:
+
+```sh
+bazel test //...
+```
 
 If test is successful, you will see the result similar to the following:
 

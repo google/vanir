@@ -70,7 +70,10 @@ class OfflineDirectoryScanner(scanner_base.ScannerBase):
         [override_vuln_manager],
         vulnerability_filters=extra_vulnerability_filters,
     )
-    logging.info('Scanning %s against all signatures...', self._code_location)
+    logging.info(
+        'Scanning %s against %d signatures...',
+        self._code_location, len(vuln_manager.signatures)
+    )
     findings, stats = self.scan_offline_directory(vuln_manager, strategy)
 
     return findings, stats, vuln_manager

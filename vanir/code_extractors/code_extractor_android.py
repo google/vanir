@@ -9,7 +9,7 @@
 
 import functools
 import logging
-from typing import Collection, FrozenSet, Mapping, Sequence, Tuple
+from typing import Collection, FrozenSet, Mapping, Optional, Sequence, Tuple
 
 from vanir import vulnerability
 from vanir.code_extractors import code_extractor_base
@@ -32,6 +32,7 @@ class AndroidTipOfBranchCommit(gitiles_commit.GitilesCommit):
   ):
     self._files = files
     self._extract_patch = lambda: []
+    self._fetch_raw_patch = lambda: ''
     self._extract_unpatched_files = lambda: {}
     self._compute_affected_line_ranges = lambda: {}
     super().__init__(f'https://{self._HOST}/{project}/+/{branch}', **kwargs)
@@ -107,10 +108,10 @@ def _generate_commit(url: str, **kwargs) -> code_extractor_base.Commit:
 class AndroidCodeExtractor(code_extractor_base.AbstractCodeExtractor):
   """Code extractor for Android affected packages."""
   VERSION_BRANCH_MAP = {
-      '15-next': 'main',
+      '16-next': 'main',
+      '16': 'android16-security-release',
       '15': 'android15-security-release',
       '14': 'android14-security-release',
-      '13': 'android13-security-release',
   }
 
   @classmethod
@@ -118,7 +119,9 @@ class AndroidCodeExtractor(code_extractor_base.AbstractCodeExtractor):
     return ecosystem in {'Android', 'Pixel', 'Wear'}
 
   def extract_commits_for_affected_entry(
-      self, affected: vulnerability.AffectedEntry, **kwargs,
+      self,
+      affected: vulnerability.AffectedEntry,
+      extractor_config: Optional[code_extractor_base.ExtractorConfig] = None,
   ) -> Tuple[Sequence[code_extractor_base.Commit],
              Sequence[code_extractor_base.FailedCommitUrl]]:
     commits = []
@@ -126,7 +129,8 @@ class AndroidCodeExtractor(code_extractor_base.AbstractCodeExtractor):
     for fix_url in _get_android_fix_urls(affected):
       logging.info('Analyzing fix: %s', fix_url)
       try:
-        commit = _generate_commit(fix_url, **kwargs)
+        conf = vars(extractor_config) if extractor_config else {}
+        commit = _generate_commit(fix_url, **conf)
         commits.append(commit)
       except (ValueError, code_extractor_base.CommitDataFetchError) as e:
         failed_commit_urls.append(
@@ -138,7 +142,7 @@ class AndroidCodeExtractor(code_extractor_base.AbstractCodeExtractor):
       package_name: str,
       affected_versions: Collection[str],
       files: Collection[str],
-      **kwargs,
+      extractor_config: Optional[code_extractor_base.ExtractorConfig] = None,
   ) -> Tuple[
       Sequence[code_extractor_base.Commit],
       Sequence[code_extractor_base.FailedCommitUrl],
@@ -165,9 +169,8 @@ class AndroidCodeExtractor(code_extractor_base.AbstractCodeExtractor):
     failed_commit_urls = []
     for branch in missing_branches:
       try:
-        commit = _get_commit_at_tip(
-            package_name, branch, files, **kwargs,
-        )
+        conf = vars(extractor_config) if extractor_config else {}
+        commit = _get_commit_at_tip(package_name, branch, files, **conf)
         tip_commits.append(commit)
       except (ValueError, code_extractor_base.CommitDataFetchError) as e:
         failed_commit_urls.append(

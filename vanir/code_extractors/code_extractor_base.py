@@ -11,10 +11,14 @@ CodeExtractor abstract classes.
 """
 
 import abc
+import copy
 import dataclasses
+import functools
+import logging
 import tempfile
 from typing import Collection, Mapping, Optional, Sequence, Tuple, Union
 
+import requests
 import unidiff
 from vanir import vulnerability
 
@@ -27,14 +31,39 @@ class IncompatibleUrlError(ValueError):
   """An error when the given URL does not conform with known URL patterns."""
 
 
+@dataclasses.dataclass(frozen=True)
+class ExtractorConfig:
+  """Possible configuration options for code extractors.
+
+  Which of these are actually used depends on the code extractor class used.
+  Attributes:
+    requests_session: Python requests session to use for retrieving files and
+      patches. If None, a new session will be used.
+    git_path: custom path to the git executable (e.g. '/usr/bin/git').
+    git_exec_path: path to where the core Git programs are installed; to be
+      passed to git's --exec-path (e.g. '/usr/lib/git-core').
+    git_working_dir: path to the local git repo directory to clone to. If not
+      provided, a temporary directory will be used.
+    git_instead_ofs: a list of (source, destination) tuples, where the source
+      URL will be redirected to the destination URL in git's insteadOf config.
+  """
+  requests_session: Optional[requests.sessions.Session] = None
+  git_path: Optional[str] = None
+  git_exec_path: Optional[str] = None
+  git_working_dir: Optional[str] = None
+  git_instead_ofs: Sequence[Tuple[str, str]] = ()
+
+
 class Commit(metaclass=abc.ABCMeta):
   """Class to extract commit files/patches/messages for the given commit URL."""
 
-  def __init__(self, url: str, **kwargs):
+  def __init__(self, url: str, lazy_load: bool = False, **kwargs):
     """Sets up a commit object for the given |url| address.
 
     Args:
       url: URL of a commit.
+      lazy_load: whether to lazy load commit metadata. If False, all commit
+        metadata will be fetched immediately.
       **kwargs: additional arguments to pass to the Commit objects' constructor.
 
     Raises:
@@ -45,16 +74,36 @@ class Commit(metaclass=abc.ABCMeta):
       ValueError: when the given URL is pointing a compatible source repo but
         malformatted.
     """
+
     del kwargs  # Unused.
     # self._working_dir is used to store all files created by _create_temp_file.
     # It will be deleted when the object is destroyed.
     self._working_dir = tempfile.TemporaryDirectory()
     self._original_url = url
     self._url = self._normalize_url()
-    self._patch = self._extract_patch()
-    self._affected_line_ranges = self._compute_affected_line_ranges()
-    self._patched_files = self._extract_patched_files()
-    self._unpatched_files = self._extract_unpatched_files()
+
+    if not lazy_load:
+      _ = self.raw_patch
+      _ = self._patch
+      _ = self._affected_line_ranges
+      _ = self._patched_files
+      _ = self._unpatched_files
+
+  @functools.cached_property
+  def _patch(self) -> unidiff.PatchSet:
+    return self._extract_patch()
+
+  @functools.cached_property
+  def _affected_line_ranges(self) -> Mapping[str, Sequence[Tuple[int, int]]]:
+    return self._compute_affected_line_ranges()
+
+  @functools.cached_property
+  def _patched_files(self) -> Mapping[str, str]:
+    return self._extract_patched_files()
+
+  @functools.cached_property
+  def _unpatched_files(self) -> Mapping[str, str]:
+    return self._extract_unpatched_files()
 
   def _create_temp_file(
       self, file_content: Union[bytes, str], suffix: Optional[str] = None
@@ -76,8 +125,22 @@ class Commit(metaclass=abc.ABCMeta):
       return f.name
 
   @abc.abstractmethod
+  def _fetch_raw_patch(self) -> str:
+    """Returns the raw patch string.
+
+    The string includes verbose commit metadata (such as commit author,
+    submit timestamp, etc.) required for `git am` operations.
+    """
+
   def _extract_patch(self) -> unidiff.PatchSet:
     """Extracts a |unidiff.PatchSet| object corresponding to this commit."""
+    logging.info('Retrieving patch source: %s', self.url)
+    patch = unidiff.PatchSet.from_string(self.raw_patch)
+    if not patch:
+      raise CommitDataFetchError(
+          f'Patch for this commit is invalid or empty. Source: {self.url}'
+      )
+    return patch
 
   @abc.abstractmethod
   def _extract_patched_files(self) -> Mapping[str, str]:
@@ -185,6 +248,18 @@ class Commit(metaclass=abc.ABCMeta):
     """
     return self._affected_line_ranges.get(file_path, [])
 
+  
+  @functools.cached_property
+  def raw_patch(self) -> str:
+    """Returns the raw patch string of the given commit."""
+    return self._fetch_raw_patch()
+
+  @property
+  def patch(self) -> unidiff.PatchSet:
+    """Returns the unidiff.PatchSet object of the given commit."""
+    # PatchSet is mutable. Return a copy instead.
+    return copy.deepcopy(self._patch)
+
   @property
   def patched_files(self) -> Mapping[str, str]:
     """Returns modified version of the files patched by the given commit.
@@ -216,6 +291,10 @@ class Commit(metaclass=abc.ABCMeta):
       Local path to the temp file.
     """
 
+  @abc.abstractmethod
+  def get_commit_time(self) -> int | None:
+    """Returns the commit timestamp."""
+
 
 @dataclasses.dataclass(frozen=True)
 class FailedCommitUrl:
@@ -240,14 +319,17 @@ class AbstractCodeExtractor(abc.ABC):
 
   @abc.abstractmethod
   def extract_commits_for_affected_entry(
-      self, affected: vulnerability.AffectedEntry, **kwargs,
+      self,
+      affected: vulnerability.AffectedEntry,
+      extractor_config: Optional[ExtractorConfig] = None,
   ) -> Tuple[Sequence[Commit], Sequence[FailedCommitUrl]]:
     """For the given package of the given CVE, download the unpatched files.
 
     Args:
       affected: the Affected object to extract fix commits from, in the OSV CVE
         dictionary format
-      **kwargs: additional arguments to pass to the Commit objects' constructor.
+      extractor_config: additional arguments to pass to the Commit objects'
+        constructor.
 
     Returns:
       A tuple where the first item is the list of |Commit| objects pertaining
@@ -263,20 +345,22 @@ class AbstractCodeExtractor(abc.ABC):
       package_name: str,
       versions: Sequence[str],
       files: Collection[str],
-      **kwargs,
+      extractor_config: Optional[ExtractorConfig] = None,
   ) -> Tuple[Sequence[Commit], Sequence[FailedCommitUrl]]:
     """Extracts files tip of unaffected versions of the given package.
 
     This method checks the list of given versions and determine the active tips
     of branches that are not mentioned in the list and extract the listed files
-    at the those tips.
+    at the those tips. If the extractor does not support version-specific
+    signatures, it should return a tuple of empty lists.
 
     Args:
       package_name: the name of the package.
       versions: the list of versions of the package. Tip of versions not in this
         list will be extracted.
       files: the list of files to include.
-      **kwargs: additional arguments to pass to the Commit objects' constructor.
+      extractor_config: additional arguments to pass to the Commit objects'
+        constructor.
 
     Returns:
       A tuple where the first item is the list of |Commit| objects pertaining

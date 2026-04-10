@@ -11,10 +11,9 @@ import functools
 import logging
 import os
 import re
-from typing import Optional, Mapping, Union
+from typing import Mapping, Optional, Union
 
 import requests
-import unidiff
 from vanir.code_extractors import code_extractor_base
 
 COMMIT_HASH_PATTERN = r'[a-f0-9]{40}'
@@ -33,7 +32,9 @@ class GitilesCommit(code_extractor_base.Commit):
   """
 
   
-  _KNOWN_GITILES_HOSTS = ('android.googlesource.com',)
+  _KNOWN_GITILES_HOSTS = (
+      'android.googlesource.com',
+  )
 
   def __init__(
       self,
@@ -104,24 +105,6 @@ class GitilesCommit(code_extractor_base.Commit):
         'Failed to fetch valid commit data from %s' % url
     )
 
-  def _extract_patch(self) -> unidiff.PatchSet:
-    """Extracts |unidiff.PatchSet| corresponding to this Gitiles commit.
-
-    Raises:
-      ValueError: when the downloaded fetch text is malformatted or empty.
-      CommitDataFetchError: when fails to extract valid patch text from the web.
-    Returns:
-      PatchSet object wrapping the extracted patch.
-    """
-    logging.info('Retrieving patch source: %s', self.url)
-    patch_url = self.url + '^!'
-    raw_patch = self._get_text(patch_url)
-    patch = unidiff.PatchSet.from_string(raw_patch)
-    if not patch:
-      raise code_extractor_base.CommitDataFetchError(
-          'Patch for this commit is invalid. Source: %s' % patch_url)
-    return patch
-
   def _extract_patched_files(self) -> Mapping[str, str]:
     """Extracts patched files affected by the commit.
 
@@ -179,3 +162,13 @@ class GitilesCommit(code_extractor_base.Commit):
         suffix=f'_{os.path.basename(file_path)}',
     )
     return tempfile
+
+  def get_commit_time(self) -> int | None:
+    return None
+
+  def _fetch_raw_patch(self) -> str:
+    # Gitiles uses url + '^!' to retrieve the commit patch.
+    text = self._get_text(self.url + '^!')
+    if isinstance(text, bytes):
+      text = text.decode('utf-8')
+    return text

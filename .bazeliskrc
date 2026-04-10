@@ -5,4 +5,4 @@
 # https://developers.google.com/open-source/licenses/bsd
 
 # Refer to https://github.com/bazelbuild/bazelisk for more details.
-USE_BAZEL_VERSION=8.3.1
+USE_BAZEL_VERSION=9.0.0

@@ -9,11 +9,16 @@
 This module implements an AbstractLanguageParser that handles all .java files.
 """
 
+import os
 from typing import Iterable, Optional, Sequence, Tuple
 
 from vanir.language_parsers import abstract_language_parser
 from vanir.language_parsers import common
 from vanir.language_parsers.java.python import parser_core
+
+from pybind11_abseil import status
+
+_ANTLR4_DECODE_ERROR = 'UTF-8 string contains an illegal byte sequence'
 
 
 class JavaParser(abstract_language_parser.AbstractLanguageParser):
@@ -23,7 +28,7 @@ class JavaParser(abstract_language_parser.AbstractLanguageParser):
   """
 
   def __init__(self, filename: str):
-    self.parser = parser_core.ParserCore(filename)
+    self._filename = filename
 
   @classmethod
   def get_supported_extensions(cls) -> Iterable[str]:
@@ -38,8 +43,27 @@ class JavaParser(abstract_language_parser.AbstractLanguageParser):
     if not affected_line_ranges_for_functions:
       affected_line_ranges_for_functions = []
 
-    function_chunks_raw, line_chunk_raw, errors_raw = self.parser.parse(
-        affected_line_ranges_for_functions)
+    try:
+      parser = parser_core.ParserCore(self._filename)
+      function_chunks_raw, line_chunk_raw, errors_raw = parser.parse(
+          affected_line_ranges_for_functions)
+    except status.StatusNotOk as e:
+      if (
+          e.code == status.StatusCode.INVALID_ARGUMENT.value
+          and e.message == _ANTLR4_DECODE_ERROR
+      ):
+        # If encoding problem, try again after converting to UTF-8.
+        temp_filename = self._convert_to_utf8(self._filename)
+        try:
+          parser = parser_core.ParserCore(temp_filename)
+          function_chunks_raw, line_chunk_raw, errors_raw = parser.parse(
+              affected_line_ranges_for_functions
+          )
+        finally:
+          os.remove(temp_filename)
+      else:
+        raise e
+
     function_chunks = []
     for function_chunk_raw in function_chunks_raw:
       function_chunks.append(

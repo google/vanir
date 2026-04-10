@@ -4,6 +4,7 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
+load("@rules_cc//cc:defs.bzl", "cc_library")
 load("@rules_python//python:defs.bzl", "py_library", "py_test")
 load("@vanir_deps//:requirements.bzl", "requirement")
 load(":antlr4.external.bzl", "antlr4_cc_gen")
@@ -12,7 +13,7 @@ package(default_visibility = [
     "//visibility:public",
 ])
 
-ANTLR4_VER = "4.11.1"
+ANTLR4_VER = "4.13.2"
 
 antlr4_cc_gen(
     name = "java_cc_lexer",

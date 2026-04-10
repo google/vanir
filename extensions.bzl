@@ -13,6 +13,7 @@ load(
     "antlr4_grammar_java_parser_g4_repo",
     "antlr4_runtimes_repo",
     "fuzzyc_repo",
+    "pybind11_abseil_repo",
 )
 
 def _antlr4_grammar_java_lexer_g4_impl(_ctx):
@@ -43,3 +44,8 @@ def _antlr4_entry_points_impl(_ctx):
     antlr4_entry_points_repo()
 
 antlr4_entry_points_extension = module_extension(implementation = _antlr4_entry_points_impl)
+
+def _pybind11_abseil_impl(_ctx):
+    pybind11_abseil_repo()
+
+pybind11_abseil_extension = module_extension(implementation = _pybind11_abseil_impl)

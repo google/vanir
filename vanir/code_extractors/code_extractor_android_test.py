@@ -38,6 +38,9 @@ class CodeExtractorAndroidTest(parameterized.TestCase):
       self.enter_context(
           mock.patch.object(cls, '_extract_patch', autospec=True)
       ).return_value = []
+      self.enter_context(
+          mock.patch.object(cls, '_fetch_raw_patch', autospec=True)
+      ).return_value = ''
     # special mock for git operations done in GitCommit's constructor
     self.enter_context(
         mock.patch.object(git_commit.GitCommit, '_run_git', autospec=True)

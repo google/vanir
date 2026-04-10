@@ -21,7 +21,7 @@ via pip. It performs the following steps:
 This module is intended to be run directly as a script.
 
 Example usage:
-  python vanir/pip_modules/build_pip_package.py 3.9 3.10 3.11 3.12 3.13
+  python vanir/pip_modules/build_pip_package.py 3.10 3.11 3.12 3.13
 """
 
 import logging
@@ -96,7 +96,21 @@ def _update_import_statements(import_map: Mapping[str, str]) -> None:
     import_map: A mapping where keys are the old import statements and values
       are the new import statements.
   """
-  for file_path in _get_vanir_python_source_files():
+  # Get all Python source files in the 'vanir' directory.
+  python_files = _get_vanir_python_source_files()
+
+  # 'pip_modules' directory contains Python files that are not part of the core
+  # Vanir logic and are used only for PiP packaging/in PiP setup. Hence, remove
+  # files that are in the 'pip_modules' directory from the list of target files
+  # to update.
+  target_file_paths = [
+      file_path
+      for file_path in python_files
+      if 'pip_modules' not in file_path.split(os.sep)
+  ]
+
+  # Update import statements in Python source files.
+  for file_path in target_file_paths:
     with open(file_path, 'r') as f:
       content = f.read()
     original_content = content
@@ -170,7 +184,7 @@ def _build_pybind_extension_modules_for_python_version(
   directory.
 
   Args:
-    python_version: The Python version (e.g., 3.9, 3.10) for which pybind
+    python_version: The Python version (e.g., 3.10, 3.11) for which pybind
       extension modules are to be built.
   """
   logging.info(
@@ -218,7 +232,7 @@ def _build_pybind_extension_modules_for_python_version(
 
   # Copy pybind extension artifacts to the created directory.
   shutil.copy(
-      'bazel-bin/external/pybind11_abseil+/pybind11_abseil/status.so',
+      'bazel-bin/external/+pybind11_abseil_extension+pybind11_abseil/pybind11_abseil/status.so',
       pybind11_abseil_path,
   )
   shutil.copy(
@@ -243,7 +257,7 @@ def main(python_versions: Sequence[str]) -> None:
   import statements, creating a virtual environment and building the package.
 
   Args:
-    python_versions: A sequence of Python version strings (e.g., "3.9", "3.10")
+    python_versions: A sequence of Python version strings (e.g., "3.10", "3.11")
       for which pybind extensions modules are to be built.
 
   Raises:
@@ -257,16 +271,16 @@ def main(python_versions: Sequence[str]) -> None:
     raise ValueError(
         'Usage: python vanir/pip_modules/build_pip_package.py <python_version1>'
         ' <python_version2> ...\nExample: python'
-        ' vanir/pip_modules/build_pip_package.py 3.9 3.10 3.11 3.12 3.13'
+        ' vanir/pip_modules/build_pip_package.py 3.10 3.11 3.12 3.13'
     )
 
-  # Check if Python versions provided as arguments are in the form 3.x or 3.xx.
+  # Check if Python versions provided as arguments are in the form 3.xx.
   for python_version in python_versions:
-    if not re.fullmatch(r'^3\.\d+', python_version):
+    if not re.fullmatch(r'^3\.[1-9]\d+$', python_version):
 
       raise ValueError(
           f'Invalid Python version: {python_version}. Must be in '
-          'the form 3.x or 3.xx (e.g., 3.9, 3.10).'
+          'the form 3.xx (e.g., 3.10).'
       )
 
   # Check if Bazelisk is installed.

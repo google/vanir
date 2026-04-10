@@ -119,7 +119,7 @@ class CodeExtractorTest(parameterized.TestCase):
 
     commits, failures = (
         code_extractor.extract_files_at_tip_of_unaffected_versions(
-            'test_ecosystem', 'test_package', ['1.0.0'], ['file1'], None,
+            'test_ecosystem', 'test_package', ['1.0.0'], ['file1'],
         )
     )
     self.assertEmpty(failures)
@@ -130,7 +130,7 @@ class CodeExtractorTest(parameterized.TestCase):
   ):
     with self.assertRaises(NotImplementedError):
       code_extractor.extract_files_at_tip_of_unaffected_versions(
-          'test_ecosystem', 'test_package', ['1.0.0'], ['file1', 'file2'], None,
+          'test_ecosystem', 'test_package', ['1.0.0'], ['file1', 'file2'],
       )
 
 

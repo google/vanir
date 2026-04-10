@@ -21,6 +21,7 @@ from vanir import file_list_manager
 from vanir import sign_generator
 from vanir import vulnerability
 from vanir import vulnerability_manager
+from vanir.code_extractors import code_extractor_base
 
 _SIGNATURE_FILE_NAME = flags.DEFINE_string(
     'signature_file_name', None,
@@ -224,16 +225,17 @@ def main(argv: Sequence[str]) -> None:
   generator = sign_generator.SignGenerator(
       filters=filters,
       truncated_path_level_finder=tp_level_finder,
-      session=session,
   )
   vuln_manager.generate_signatures(
-      session=session,
       generator=generator,
       deprecated_signatures=deprecated_signs,
       deprecated_vulns=deprecated_vulns,
       deprecated_patch_urls=deprecated_patches,
       exact_match_only_signatures=exact_match_only_signs,
       exact_match_only_patch_urls=exact_match_only_patches,
+      extractor_config=code_extractor_base.ExtractorConfig(
+          requests_session=session,
+      )
   )
 
   with open(output_file, 'w') as f:

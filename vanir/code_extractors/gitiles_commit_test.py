@@ -1,8 +1,7 @@
-
 import base64
 from unittest import mock
-import requests
 
+import requests
 from vanir import file_path_utils
 from vanir.code_extractors import code_extractor_base
 from vanir.code_extractors import gitiles_commit
@@ -116,8 +115,10 @@ class GitilesCommitTest(parameterized.TestCase):
       ('short_commit', _TEST_COMMIT_URL[:-30]),
   )
   def test_commit_init_under_network_failure(self, url):
+
     def mock_raise_for_status():
       raise requests.RequestException('bad network')
+
     side_effect = lambda _: mock.Mock(raise_for_status=mock_raise_for_status)
     self._mock_session.get.side_effect = side_effect
     with self.assertRaisesRegex(
@@ -134,7 +135,8 @@ class GitilesCommitTest(parameterized.TestCase):
         'Failed to fetch valid commit data from.*',
     ):
       gitiles_commit.GitilesCommit(
-          _TEST_COMMIT_URL, requests_session=self._mock_session,
+          _TEST_COMMIT_URL,
+          requests_session=self._mock_session,
       )
 
   def test_commit_init_with_flaky_android_commit_message(self):
@@ -163,7 +165,8 @@ class GitilesCommitTest(parameterized.TestCase):
         'Failed to fetch valid commit data from.*',
     ):
       gitiles_commit.GitilesCommit(
-          _TEST_COMMIT_URL, requests_session=self._mock_session,
+          _TEST_COMMIT_URL,
+          requests_session=self._mock_session,
       )
 
   def test_commit_init_with_bad_patch(self):
@@ -172,10 +175,11 @@ class GitilesCommitTest(parameterized.TestCase):
 
     with self.assertRaisesRegex(
         code_extractor_base.CommitDataFetchError,
-        'Patch for this commit is invalid. Source:.*',
+        'Patch for this commit is invalid or empty. Source:.*',
     ):
       gitiles_commit.GitilesCommit(
-          _TEST_COMMIT_URL, requests_session=self._mock_session,
+          _TEST_COMMIT_URL,
+          requests_session=self._mock_session,
       )
 
   def test_commit_init_with_missing_parent_info(self):
@@ -185,7 +189,8 @@ class GitilesCommitTest(parameterized.TestCase):
         code_extractor_base.CommitDataFetchError, 'Failed to find parent.*'
     ):
       gitiles_commit.GitilesCommit(
-          _TEST_COMMIT_URL, requests_session=self._mock_session,
+          _TEST_COMMIT_URL,
+          requests_session=self._mock_session,
       )
 
   def test_commit_init_with_git_merge_commit(self):
@@ -200,7 +205,8 @@ class GitilesCommitTest(parameterized.TestCase):
         code_extractor_base.CommitDataFetchError, '.*git-merge.*'
     ):
       gitiles_commit.GitilesCommit(
-          _TEST_COMMIT_URL, requests_session=self._mock_session,
+          _TEST_COMMIT_URL,
+          requests_session=self._mock_session,
       )
 
   def test_android_get_file_at_rev(self):
@@ -214,6 +220,17 @@ class GitilesCommitTest(parameterized.TestCase):
     del commit
     with self.assertRaises(FileNotFoundError):
       open(file_tmp_path, 'r')
+
+  def test_init_with_unrelated_args(self):
+    commit = gitiles_commit.GitilesCommit(
+        _TEST_COMMIT_URL,
+        requests_session=self._mock_session,
+        unrelated_arg='some_value',
+    )
+    self.assertEqual(commit.url, _TEST_COMMIT_URL)
+    self.assertEqual(commit.patched_files.keys(), {'modified.txt', 'added.bin'})
+    self.assertEqual(commit.unpatched_files.keys(), {'modified.txt'})
+
 
 if __name__ == '__main__':
   absltest.main()

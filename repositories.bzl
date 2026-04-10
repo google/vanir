@@ -33,7 +33,7 @@ def antlr4_grammar_java_lexer_g4_repo():
 def fuzzyc_repo():
     git_repository(
         name = "fuzzyc",
-        commit = "f227d19e433a53e264ec6151c66dd85ec53b4c71",
+        commit = "3ae06d957f47c124b188583420a8b799a5388fee",
         remote = "https://third-party-mirror.googlesource.com/fuzzyc",
     )
 
@@ -42,6 +42,7 @@ def antlr4_runtimes_repo():
         name = "antlr4_runtimes",
         build_file_content = """
 package(default_visibility = ["//visibility:public"])
+load("@rules_cc//cc:defs.bzl", "cc_library")
 cc_library(
     name = "cpp",
     srcs = glob(["runtime/Cpp/runtime/src/**/*.cpp"]),
@@ -68,4 +69,12 @@ py_console_script_binary(
     visibility =  ["//visibility:public"],
 )
 """,
+    )
+
+def pybind11_abseil_repo():
+    http_archive(
+        name = "pybind11_abseil",
+        strip_prefix = "pybind11_abseil-54b34dd0e8afb8a4febb9508c69410e708b43515",
+        urls = ["https://github.com/pybind/pybind11_abseil/archive/54b34dd0e8afb8a4febb9508c69410e708b43515.tar.gz"],
+        sha256 = "26328a74f367208ae8d490dc640030111df4ba0869619c6445bb4a1c5964e2a7",
     )

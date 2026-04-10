@@ -143,7 +143,8 @@ class QualcommCommitTest(parameterized.TestCase):
         'Failed to fetch valid commit data from.*',
     ):
       qualcomm_commit.QualcommCommit(
-          commit_url, requests_session=self._mock_session,
+          commit_url,
+          requests_session=self._mock_session,
       )
 
   def test_commit_init_with_bad_commit_info(self):
@@ -156,7 +157,8 @@ class QualcommCommitTest(parameterized.TestCase):
         'Failed to get valid commit info for URL:.*',
     ):
       qualcomm_commit.QualcommCommit(
-          _TEST_COMMIT_URL, requests_session=self._mock_session,
+          _TEST_COMMIT_URL,
+          requests_session=self._mock_session,
       )
 
   def test_commit_init_with_bad_patch(self):
@@ -164,15 +166,16 @@ class QualcommCommitTest(parameterized.TestCase):
     self._mock_get_returnval_map[patch_url] = 'a meaningless patch file'
     with self.assertRaisesRegex(
         code_extractor_base.CommitDataFetchError,
-        'Patch for this commit is invalid. Source:.*',
+        'Patch for this commit is invalid or empty. Source:.*',
     ):
       qualcomm_commit.QualcommCommit(
-          _TEST_COMMIT_URL, requests_session=self._mock_session,
+          _TEST_COMMIT_URL,
+          requests_session=self._mock_session,
       )
 
   def test_commit_init_missing_parent_info(self):
-    self._mock_get_returnval_map[_TEST_QUALCOMM_COMMIT_API_URL] = (
-        json.dumps({'id': _TEST_COMMIT, 'parent_ids': []})
+    self._mock_get_returnval_map[_TEST_QUALCOMM_COMMIT_API_URL] = json.dumps(
+        {'id': _TEST_COMMIT, 'parent_ids': []}
     )
     with self.assertRaisesRegex(
         code_extractor_base.CommitDataFetchError, 'Failed to find parent.*',
@@ -182,15 +185,13 @@ class QualcommCommitTest(parameterized.TestCase):
       )
 
   def test_commit_init_with_git_merge_commit(self):
-    self._mock_get_returnval_map[_TEST_QUALCOMM_COMMIT_API_URL] = (
-        json.dumps({
-            'id': _TEST_COMMIT,
-            'parent_ids': [
-                '2d73c5c3470933184df35ca4d93ec5f62f0d8fa4',
-                '245f15a48cdc4d5a90902e140392dc151e528ab8',
-            ]
-        })
-    )
+    self._mock_get_returnval_map[_TEST_QUALCOMM_COMMIT_API_URL] = json.dumps({
+        'id': _TEST_COMMIT,
+        'parent_ids': [
+            '2d73c5c3470933184df35ca4d93ec5f62f0d8fa4',
+            '245f15a48cdc4d5a90902e140392dc151e528ab8',
+        ],
+    })
     with self.assertRaisesRegex(
         code_extractor_base.CommitDataFetchError, '.*git-merge.*'
     ):
@@ -209,6 +210,16 @@ class QualcommCommitTest(parameterized.TestCase):
     del commit
     with self.assertRaises(FileNotFoundError):
       open(file_tmp_path, 'r')
+
+  def test_init_with_unrelated_args(self):
+    commit = qualcomm_commit.QualcommCommit(
+        _TEST_COMMIT_URL,
+        requests_session=self._mock_session,
+        unrelated_arg='some_value',
+    )
+    self.assertEqual(commit.url, _TEST_COMMIT_URL)
+    self.assertEqual(commit.patched_files.keys(), {'modified.txt', 'added.bin'})
+    self.assertEqual(commit.unpatched_files.keys(), {'modified.txt'})
 
 
 if __name__ == '__main__':

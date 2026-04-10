@@ -5,7 +5,7 @@
 # https://developers.google.com/open-source/licenses/bsd
 
 # Bazel build rules for Vanir.
-load("@rules_python//python:defs.bzl", "py_library", "py_test")
+load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
 load("@vanir_deps//:requirements.bzl", "requirement")
 
 package(default_visibility = [
@@ -92,14 +92,6 @@ py_library(
         ":signature",
         requirement("osv"),
         requirement("protobuf"),
-        
-        # This is not a direct dependency but is added to resolve dependency errors. For Python 3.9,
-        # the version of google-cloud-datastore used is 1.15.5 and dependency on six module in
-        # google-cloud-datastore was removed in version 2.1.0 as per
-        # https://github.com/googleapis/python-datastore/pull/120.
-        # This is a temporary fix required only for Python 3.9 and can be removed once Python 3.9 is
-        # out-of-support in 2025-10 as per https://devguide.python.org/versions/#supported-versions.
-        requirement("six"),
     ],
 )
 
@@ -114,6 +106,7 @@ py_library(
         ":vulnerability",
         ":vulnerability_overwriter",
         "//vanir/code_extractors:code_extractor",
+        "//vanir/code_extractors:code_extractor_base",
         requirement("absl-py"),
         requirement("python-dateutil"),
         requirement("requests"),
@@ -131,7 +124,6 @@ py_library(
         ":truncated_path",
         "//vanir/code_extractors:code_extractor_base",
         requirement("absl-py"),
-        requirement("requests"),
     ],
 )
 
@@ -145,6 +137,7 @@ py_binary(
         ":sign_generator",
         ":vulnerability",
         ":vulnerability_manager",
+        "//vanir/code_extractors:code_extractor_base",
         requirement("absl-py"),
         requirement("requests"),
     ],

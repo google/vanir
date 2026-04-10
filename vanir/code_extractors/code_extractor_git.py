@@ -1,11 +1,12 @@
 """Code extractor for OSV GIT ecosystem vulns."""
 
-from typing import Collection, Sequence, Tuple
+from typing import Collection, Optional, Sequence, Tuple
 
-from osv import vulnerability_pb2
 from vanir import vulnerability
 from vanir.code_extractors import code_extractor_base
 from vanir.code_extractors import git_commit
+
+from osv import vulnerability_pb2
 
 
 class GitCodeExtractor(code_extractor_base.AbstractCodeExtractor):
@@ -17,7 +18,9 @@ class GitCodeExtractor(code_extractor_base.AbstractCodeExtractor):
     return not ecosystem
 
   def extract_commits_for_affected_entry(
-      self, affected: vulnerability.AffectedEntry, **kwargs,
+      self,
+      affected: vulnerability.AffectedEntry,
+      extractor_config: Optional[code_extractor_base.ExtractorConfig] = None,
   ) -> Tuple[Sequence[code_extractor_base.Commit],
              Sequence[code_extractor_base.FailedCommitUrl]]:
     affected_fixes: set[Tuple[str, str]] = set()
@@ -40,7 +43,18 @@ class GitCodeExtractor(code_extractor_base.AbstractCodeExtractor):
     failed_commit_urls = []
     for repo, rev in affected_fixes:
       try:
-        commits.append(git_commit.GitCommit(f'{repo}@{rev}', **kwargs))
+        if extractor_config:
+          commits.append(
+              git_commit.GitCommit(
+                  url=f'{repo}@{rev}',
+                  git_path=extractor_config.git_path,
+                  git_exec_path=extractor_config.git_exec_path,
+                  git_working_dir=extractor_config.git_working_dir,
+                  git_instead_ofs=extractor_config.git_instead_ofs,
+              )
+          )
+        else:
+          commits.append(git_commit.GitCommit(url=f'{repo}@{rev}'))
       except (
           code_extractor_base.CommitDataFetchError,
           code_extractor_base.IncompatibleUrlError
@@ -55,7 +69,7 @@ class GitCodeExtractor(code_extractor_base.AbstractCodeExtractor):
       package_name: str,
       versions: Sequence[str],
       files: Collection[str],
-      **kwargs,
+      extractor_config: Optional[code_extractor_base.ExtractorConfig] = None,
   ) -> Tuple[Sequence[code_extractor_base.Commit],
              Sequence[code_extractor_base.FailedCommitUrl]]:
     # GIT ecosystem does not support version-specific signatures.

@@ -7,6 +7,7 @@
 """Starlark macro to wrap Antlr4 code and library generation from grammar files."""
 
 load("@antlr4_deps//:requirements.bzl", "requirement")
+load("@rules_cc//cc:defs.bzl", "cc_library")
 
 def antlr4_cc_gen(name, srcs, cc_namespace, cc_files_prefix, antlr4_ver, listener):
     """Generates the C++ source corresponding to an Antlr4 lexer definition.
@@ -58,7 +59,7 @@ def antlr4_cc_gen(name, srcs, cc_namespace, cc_files_prefix, antlr4_ver, listene
             "@antlr4_entry_points//:antlr4",
         ],
     )
-    native.cc_library(
+    cc_library(
         name = name,
         srcs = [(":" + f) for f in out_src_files if f.endswith(".cpp")],
         hdrs = [(":" + f) for f in out_src_files if f.endswith(".h")],

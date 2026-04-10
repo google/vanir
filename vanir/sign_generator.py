@@ -17,7 +17,6 @@ import re
 from typing import Mapping, Optional, Sequence, Tuple
 
 from absl import logging
-import requests
 from vanir import parser
 from vanir import signature
 from vanir import truncated_path
@@ -178,7 +177,6 @@ class SignGenerator:
       custom_line_signature_thresholds: Optional[
           Sequence[CustomLineSignatureThreshold]
       ] = (),
-      session: Optional[requests.sessions.Session] = None,
       filters: Sequence[FileFilter] = (),
       truncated_path_level_finder: Optional[TruncatedPathLevelFinder] = None,
   ):
@@ -190,8 +188,6 @@ class SignGenerator:
         line signature thresholds. Each individual entry of the sequence
         specifies a threshold value for a line signature. Init will fail if
         there are multiple thresholds set for a line signature.
-      session: request session to use for retrieving vulns and patches. If none,
-        a new session will be used.
       filters: optional list of filters to be used during generation.
       truncated_path_level_finder: TruncatedPathLevelFinder instance. If set,
         the instance will be utilized to update truncated path level field of
@@ -213,7 +209,6 @@ class SignGenerator:
       self._custom_line_signature_threshold_map[key] = (
           custom_threshold.threshold
       )
-    self._session = session or requests.sessions.Session()
     self._filters = filters
     self._tp_level_finder = truncated_path_level_finder
     # Cache for parsed files. Key is a tuple of (commit_url, target_file).

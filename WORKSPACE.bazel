@@ -25,17 +25,19 @@ py_repositories()
 
 
 python_register_toolchains(
-    name = "python3_9",
-    python_version = "3.9",
+    name = "python3_10",
+    python_version = "3.10",
+
+    ignore_root_user_error = True,
 )
 
 load("@rules_python//python:pip.bzl", "pip_parse")
-load("@python3_9//:defs.bzl", "interpreter")
+load("@python3_10//:defs.bzl", "interpreter")
 
 pip_parse(
     name = "vanir_deps",
     python_interpreter_target = interpreter,
-    requirements_lock = "//:requirements/requirements_lock_3.9.txt",
+    requirements_lock = "//:requirements/requirements_lock_3.10.txt",
 )
 
 load("@vanir_deps//:requirements.bzl", "install_deps")
@@ -45,7 +47,7 @@ install_deps()
 # Install Fuzzyc and its transitive dependencies.
 git_repository(
     name = "fuzzyc",
-    commit = "0f00ba6804c56f5b6d91bc214a91bb05fd17fcda",
+    commit = "3ae06d957f47c124b188583420a8b799a5388fee",
     remote = "https://third-party-mirror.googlesource.com/fuzzyc",
 )
 
@@ -53,7 +55,7 @@ git_repository(
 pip_parse(
     name = "antlr4_deps",
     python_interpreter_target = interpreter,
-    requirements_lock = "//:requirements/requirements_antlr4_lock_3.9.txt",
+    requirements_lock = "//:requirements/requirements_antlr4_lock_3.13.txt",
 )
 
 load("@antlr4_deps//:requirements.bzl", install_antlr4_deps = "install_deps")

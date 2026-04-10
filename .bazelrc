@@ -4,20 +4,19 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
-# The following file specifies the Bazel configuration. Currently, Vanir is
-# only tested with Bazel >= 6.0.0. For Bazel >= 7.2.0, Vanir runs
-# without any changes in this file. For earlier versions, following
-# configuration changes are needed.
+# Default Bazel configuration for Vanir.
+# Tested with Bazel >= 7.0.0.
+# Vanir runs without any special config on Bazel >= 8.0.0.
+# For Bazel 7, however, use the --config flag to apply specific settings:
+#
+# Bazel 7.2.0 to latest 7.x: bazel <command> --config=bazel7.2-latest
+# Bazel 7.0.0 to 7.1.0: bazel <command> --config=bazel7.0-7.1
 
-# In order to run on Bazel <= 7.1.0, following line needs to be
-# commented as bzlmod build does not work on Bazel 7.1 and earlier.
+# Configuration for Bazel versions 7.2.0 to the latest 7.x version
+common:bazel7.2-latest --noenable_workspace
 
-common --enable_workspace=False
-
-# Additionally, for Bazel 7.1.0 and 7.0.0, following line needs
-# to be uncommented.
-
-# common --enable_bzlmod=False
+# Configuration for Bazel versions 7.0.0 and 7.1.0
+common:bazel7.0-7.1 --noenable_bzlmod
 
 build --cxxopt=-std=c++17 --cxxopt=-fexceptions --cxxopt=-Wno-nonnull --cxxopt=-Wno-sign-compare --cxxopt=-Wno-parentheses --cxxopt=-Wno-deprecated-declarations
 
@@ -25,7 +24,6 @@ build --cxxopt=-std=c++17 --cxxopt=-fexceptions --cxxopt=-Wno-nonnull --cxxopt=-
 # versions. These settings are only supported on Bzlmod setup(not supported on
 # WORKSPACE setup) and are used for building pybind extension modules in Vanir
 # PiP packaging.
-build:py3.9 --@rules_python//python/config_settings:python_version=3.9
 build:py3.10 --@rules_python//python/config_settings:python_version=3.10
 build:py3.11 --@rules_python//python/config_settings:python_version=3.11
 build:py3.12 --@rules_python//python/config_settings:python_version=3.12

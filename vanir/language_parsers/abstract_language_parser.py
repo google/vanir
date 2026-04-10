@@ -8,9 +8,14 @@
 """
 
 import abc
+import tempfile
 from typing import Optional, Sequence, Tuple
 
+from absl import logging
+
 from vanir.language_parsers import common
+
+_ALTERNATIVE_ENCODINGS = ['LATIN-1']
 
 
 class AbstractLanguageParser(abc.ABC):
@@ -52,3 +57,23 @@ class AbstractLanguageParser(abc.ABC):
         affected_line_ranges_for_functions is empty, return all functions.
     Return: A ParseResults object containing all the parsing output.
     """
+
+  @classmethod
+  def _convert_to_utf8(cls, filename) -> str:
+    """Creates a new file with UTF-8 encoding and returns the file name."""
+    logging.info('Converting %s to UTF-8.', filename)
+    for encoding in _ALTERNATIVE_ENCODINGS:
+      try:
+        with open(filename, encoding=encoding, mode='r') as file:
+          new_file = tempfile.NamedTemporaryFile(
+              encoding='UTF-8', mode='w', delete=False,
+          )
+          new_file.write(file.read())
+          new_file.close()
+          return new_file.name
+      except ValueError:  # Try other encodings on decoding failure
+        continue
+    raise ValueError(
+        'Failed to decode %s. Tried encodings: UTF-8, %s'
+        % (filename, ', '.join(_ALTERNATIVE_ENCODINGS))
+    )

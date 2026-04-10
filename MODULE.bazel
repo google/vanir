@@ -8,22 +8,21 @@
 
 module(name = "vanir")
 
-bazel_dep(name = "rules_python", version = "1.1.0")
-bazel_dep(name = "platforms", version = "0.0.11")
-bazel_dep(name = "abseil-cpp", version = "20250127.0", repo_name = "com_google_absl")
-bazel_dep(name = "pybind11_bazel", version = "2.13.6")
-bazel_dep(name = "pybind11_abseil", version = "202402.0")
+bazel_dep(name = "rules_cc", version = "0.2.16")
+bazel_dep(name = "rules_python", version = "1.8.4")
+bazel_dep(name = "platforms", version = "1.0.0")
+bazel_dep(name = "abseil-cpp", version = "20260107.1", repo_name = "com_google_absl")
+bazel_dep(name = "pybind11_bazel", version = "3.0.0")
 bazel_dep(name = "rules_proto", version = "7.1.0")
 
 SUPPORTED_PYTHON_VERSIONS = [
-    "3.9",
     "3.10",
     "3.11",
     "3.12",
     "3.13",
 ]
 
-DEFAULT_PYTHON_VERSION = "3.9"
+DEFAULT_PYTHON_VERSION = "3.10"
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 [
@@ -70,3 +69,6 @@ use_repo(fuzzyc_extension, "fuzzyc")
 
 antlr4_entry_points_extension = use_extension("//:extensions.bzl", "antlr4_entry_points_extension")
 use_repo(antlr4_entry_points_extension, "antlr4_entry_points")
+
+pybind11_abseil_extension = use_extension("//:extensions.bzl", "pybind11_abseil_extension")
+use_repo(pybind11_abseil_extension, "pybind11_abseil")

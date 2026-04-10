@@ -12,7 +12,6 @@ metadata of CVEs such as patch files (i.e., file diff) and unpatched files.
 
 from typing import Collection, Optional, Sequence, Tuple, Type, TypeVar
 
-import requests
 from vanir import vulnerability
 # Simply importing the extractors will register them as subclasses of the
 # abstract extractor class and therefore available for use.
@@ -58,7 +57,7 @@ def _get_extractor_class(ecosystem: str) -> Optional[Type[_P]]:
 
 def extract_for_affected_entry(
     affected: vulnerability.AffectedEntry,
-    session: Optional[requests.sessions.Session] = None,
+    extractor_config: Optional[code_extractor_base.ExtractorConfig] = None,
 ) -> Tuple[Sequence[code_extractor_base.Commit],
            Sequence[code_extractor_base.FailedCommitUrl]]:
   """Extracts fix commit data for the given Vulnerability.
@@ -70,8 +69,7 @@ def extract_for_affected_entry(
 
   Args:
     affected: the OSV affected entry to extract fixes for.
-    session: requests session to use for retrieving files and patches. If
-      None, a new session will be used.
+    extractor_config: additional arguments to pass to the code extractor.
 
   Returns:
     A tuple where the first item is the list of |Commit| objects pertaining
@@ -82,7 +80,7 @@ def extract_for_affected_entry(
   if not extractor_class:
     raise NotImplementedError(f'Unsupported ecosystem: {affected.ecosystem}')
   return extractor_class().extract_commits_for_affected_entry(
-      affected, requests_session=session
+      affected, extractor_config,
   )
 
 
@@ -91,7 +89,7 @@ def extract_files_at_tip_of_unaffected_versions(
     package_name: str,
     affected_versions: Sequence[str],
     files: Collection[str],
-    session: Optional[requests.sessions.Session] = None,
+    extractor_config: Optional[code_extractor_base.ExtractorConfig] = None,
 ) -> Tuple[
     Sequence[code_extractor_base.Commit],
     Sequence[code_extractor_base.FailedCommitUrl],
@@ -108,8 +106,7 @@ def extract_files_at_tip_of_unaffected_versions(
     affected_versions: the list of affected versions of the package. Tip of
       versions not in this list will be extracted.
     files: the list of files to include.
-    session: requests session to use for retrieving files and patches. If
-      None, a new session will be used.
+    extractor_config: additional arguments to pass to the code extractor.
 
   Returns:
     A tuple where the first item is the list of |Commit| objects pertaining
@@ -120,5 +117,5 @@ def extract_files_at_tip_of_unaffected_versions(
   if not extractor_class:
     raise NotImplementedError(f'Unsupported ecosystem: {ecosystem}')
   return extractor_class().extract_files_at_tip_of_unaffected_versions(
-      package_name, affected_versions, files, requests_session=session,
+      package_name, affected_versions, files, extractor_config,
   )

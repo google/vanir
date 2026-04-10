@@ -6,8 +6,13 @@
 
 """Tests for Vanir Java parser."""
 
+from unittest import mock
+
+from absl import logging
+from vanir.language_parsers import abstract_language_parser
 from vanir.language_parsers import common
 from vanir.language_parsers.java import java_parser
+
 from absl.testing import absltest
 from pybind11_abseil import status
 
@@ -16,7 +21,7 @@ class JavaParserTest(absltest.TestCase):
 
   def setUp(self):
     super().setUp()
-    testcode = """
+    self.testcode = """
         /* This code is for testing Vanir parser.
           It is taken from frameworks/base's AudioPolicy.java. */
         package android.media.audiopolicy;
@@ -43,7 +48,7 @@ class JavaParserTest(absltest.TestCase):
             }
         }
     """
-    self.testfile = self.create_tempfile('testfile.java', content=testcode)
+    self.testfile = self.create_tempfile('testfile.java', content=self.testcode)
     self.expected_tokens = {
         4: ['package', 'android', '.', 'media', '.', 'audiopolicy', ';'],
         5: ['import', 'android', '.', 'annotation', '.', 'IntDef', ';'],
@@ -230,6 +235,33 @@ class JavaParserTest(absltest.TestCase):
     )
     results = java_parser.JavaParser(error_testfile.full_path).get_chunks()
     self.assertIn(expected_parse_error, results.parse_errors)
+
+  def test_java_parser_with_non_utf8_file(self):
+    latin1_str = '  // \xE0'
+    testfile = self.create_tempfile(
+        'testfile_latein1.java',
+        content=self.testcode + latin1_str,
+        encoding='LATIN-1',
+    )
+    with self.assertLogs(level=logging.INFO) as logs:
+      parser = java_parser.JavaParser(testfile.full_path)
+      results = parser.get_chunks()
+      self.assertEmpty(results.parse_errors)
+    self.assertRegex(logs.output[0], r'Converting.*to UTF-8.')
+
+  def test_java_parser_with_known_encoding_file(self):
+    latin1_str = '  // \xE0'
+    testfile = self.create_tempfile(
+        'testfile_latein1.java',
+        content=self.testcode + latin1_str,
+        encoding='LATIN-1',
+    )
+    # Delete latin-1 from the alternative encoding.
+    with mock.patch.object(
+        abstract_language_parser, '_ALTERNATIVE_ENCODINGS', [],
+    ):
+      with self.assertRaisesRegex(ValueError, 'Failed to decode'):
+        java_parser.JavaParser(testfile.full_path).get_chunks()
 
 if __name__ == '__main__':
   absltest.main()

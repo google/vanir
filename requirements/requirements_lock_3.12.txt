@@ -182,7 +182,7 @@ typing-extensions==4.15.0
     #   referencing
 unidiff==0.7.5
     # via -r requirements/requirements.txt
-urllib3==2.6.3
+urllib3==2.7.0
     # via requests
 zipp==3.23.0
     # via importlib-metadata

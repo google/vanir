@@ -312,6 +312,11 @@ class Commit(metaclass=abc.ABCMeta):
   def get_commit_time(self) -> int | None:
     """Returns the commit timestamp."""
 
+  def cleanup(self):
+    """Explicitly cleans up temporary directories used by this commit."""
+    if hasattr(self, '_working_dir'):
+      self._working_dir.cleanup()
+
 
 @dataclasses.dataclass(frozen=True)
 class FailedCommitUrl:

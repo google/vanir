@@ -95,6 +95,7 @@ py_library(
     srcs = ["vanir/vulnerability.py"],
     deps = [
         ":signature",
+        "@com_google_absl_py//absl/logging",
         "@ossf_osv_schema//:vulnerability_py_pb2",
         "@vanir_deps//protobuf",
     ],

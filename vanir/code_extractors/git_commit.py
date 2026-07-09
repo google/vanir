@@ -7,6 +7,8 @@ import re
 import subprocess
 import tempfile
 from typing import Mapping, Optional, Sequence, Tuple
+import urllib.error
+import urllib.request
 
 import tenacity
 from vanir.code_extractors import code_extractor_base
@@ -26,15 +28,46 @@ _NORMALIZED_URL_PATTERN = re.compile(r'(?P<remote>[^@]+)@(?P<rev>[^/]+)')
 _GENERIC_URL_PATTERN = re.compile(
     r'(?P<remote>[^:]+://[^/]+/.+)/(?P<rev>[^/]+)'
 )
+# https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=dc59e4fea9d8
+# https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/commit/?id=dc59e4fea9d8
+# https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/commit/?id=26490a375cb9
+_CGIT_URL_PATTERN = re.compile(
+    r'(?P<remote>[^:]+://[^/]+/.+\.git)/commit/\?id=(?P<rev>[^/]+)'
+)
+# https://git.kernel.org/linus/dc59e4fea9d8
+# https://git.kernel.org/torvalds/c/dc59e4fea9d8
+# https://git.kernel.org/stable/c/dc59e4fea9d8
+# https://git.kernel.org/bpf/bpf/c/26490a375cb9
+_GIT_KERNEL_SHORT_PATTERN = re.compile(
+    r'(?P<remote>[^:]+://git\.kernel\.org/)(?P<path>[^/]+(/(?!c/)[^/]+){0,2})/(c/)?(?P<rev>[0-9a-fA-F]+)'
+)
+
+# Matches the first line of a CGit patch, e.g.:
+# From dc59e4fea9d83f03bad6bddf3fa2e52491777482 Mon Sep 17 00:00:00 2001
+_CGIT_PATCH_FROM_PATTERN = re.compile(r'^From\s+(?P<rev>[0-9a-fA-F]{40})\b')
 
 
 @functools.cache
 def parse_url(url: str) -> Tuple[str, str]:
   """Extracts git remote and revision strings from a commit URL."""
+  # Resolve git.kernel.org short URLs (e.g., <developer> like torvalds,
+  # stable trees using this convention) to their full long URLs using
+  # HTTP redirects. This is necessary because these short URLs cannot be
+  # used for cloning or fetching directly as they lack the full repository path.
+  if _GIT_KERNEL_SHORT_PATTERN.fullmatch(url):
+    try:
+      req = urllib.request.Request(url, method='HEAD')
+      with urllib.request.urlopen(req, timeout=10) as response:
+        url = response.url
+    except urllib.error.URLError as e:
+      raise code_extractor_base.CommitDataFetchError(
+          f'Failed to resolve redirect for CGit shortlink {url}: {e}'
+      ) from e
   for pattern in (
       _NORMALIZED_URL_PATTERN,
       _GITILES_URL_PATTERN,
       _GITHUB_URL_PATTERN,
+      _CGIT_URL_PATTERN,
       _GENERIC_URL_PATTERN,
   ):
     match = pattern.fullmatch(url)
@@ -123,6 +156,9 @@ class GitCommit(code_extractor_base.Commit):
     self._run_git(['config', '--add', 'gc.auto', '0'])
     for src, dest in git_instead_ofs:
       self._run_git(['config', '--add', f'url.{dest}.insteadOf', src])
+    # git fetch requires a full 40-character hash, so expand short hashes from
+    # CGit before fetching.
+    self._expand_short_rev_if_cgit(url)
     self._fetch()
     parents = (
         self._run_git(['rev-parse', f'{self._rev}^@'])
@@ -148,6 +184,31 @@ class GitCommit(code_extractor_base.Commit):
         self._remote,
         self._rev,
     ])
+
+  def _expand_short_rev_if_cgit(self, url: str):
+    """Expands a short commit hash to a full 40-character hash via HTTP."""
+    if len(self._rev) < 40 and (
+        _CGIT_URL_PATTERN.fullmatch(url)
+        or _GIT_KERNEL_SHORT_PATTERN.fullmatch(url)
+    ):
+      patch_url = f'{self._remote}/patch/?id={self._rev}'
+      try:
+        with urllib.request.urlopen(patch_url, timeout=10) as response:
+          first_line = response.readline().decode('utf-8')
+          match = _CGIT_PATCH_FROM_PATTERN.match(first_line)
+          if match:
+            full_rev = match.group('rev')
+            logging.info('Expanded short hash %s to %s', self._rev, full_rev)
+            self._rev = full_rev
+          else:
+            raise code_extractor_base.CommitDataFetchError(
+                f'CGit patch at {patch_url} did not start with a valid From'
+                ' line. (e.g. From <full_commit_hash>...)'
+            )
+      except urllib.error.URLError as e:
+        raise code_extractor_base.CommitDataFetchError(
+            f'Failed to fetch patch URL {patch_url}: {e}'
+        ) from e
 
   def _normalize_url(self) -> str:
     # Validation is already done in __init__(), inside _parse_url().
@@ -200,3 +261,10 @@ class GitCommit(code_extractor_base.Commit):
   def get_file_at_rev(self, file_path: str) -> str:
     """Downloads a file at the commit's revision and returns the local path."""
     return self._get_file(self._rev, file_path)
+
+  def cleanup(self):
+    """Explicitly cleans up temporary directories used by this commit."""
+    # Clean up the temporary directory managed by the base Commit class.
+    super().cleanup()
+    if hasattr(self, '_working_root_dir_obj'):
+      self._working_root_dir_obj.cleanup()

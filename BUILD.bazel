@@ -4,13 +4,17 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
-# Bazel build rules for Vanir.
-load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
-load("@vanir_deps//:requirements.bzl", "requirement")
+# BUILD rules for Vanir.
 
-package(default_visibility = [
-    "//visibility:public",
-])
+load("@rules_license//rules:license.bzl", "license")
+load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
+
+package(
+    default_applicable_licenses = [":license"],
+    default_visibility = ["//visibility:public"],
+)
+
+license(name = "license")
 
 licenses(["notice"])
 
@@ -20,9 +24,10 @@ py_library(
     name = "osv_client",
     srcs = ["vanir/osv_client.py"],
     deps = [
-        requirement("absl-py"),
-        requirement("requests"),
-        requirement("google-cloud-storage"),
+        "@com_google_absl_py//absl/flags",
+        "@com_google_absl_py//absl/logging",
+        "@vanir_deps//google_cloud_storage",
+        "@vanir_deps//requests",
     ],
 )
 
@@ -31,8 +36,8 @@ py_library(
     srcs = ["vanir/parser.py"],
     deps = [
         ":signature",
-        requirement("absl-py"),
         "//vanir/language_parsers",
+        "@com_google_absl_py//absl/logging",
     ],
 )
 
@@ -48,8 +53,8 @@ py_library(
     name = "hasher",
     srcs = ["vanir/hasher.py"],
     deps = [
-        requirement("absl-py"),
-        requirement("mmh3"),
+        "@com_google_absl_py//absl/logging",
+        "@vanir_deps//mmh3",
     ],
 )
 
@@ -61,7 +66,7 @@ py_library(
         ":parser",
         ":signature",
         "//vanir/code_extractors:code_extractor_base",
-        requirement("absl-py"),
+        "@com_google_absl_py//absl/logging",
     ],
 )
 
@@ -72,8 +77,8 @@ py_library(
         ":hasher",
         ":normalizer",
         "//vanir/language_parsers:common",
-        requirement("absl-py"),
-        requirement("typing_extensions"),
+        "@com_google_absl_py//absl/logging",
+        "@vanir_deps//typing_extensions",
     ],
 )
 
@@ -81,7 +86,7 @@ py_library(
     name = "version_extractor",
     srcs = ["vanir/version_extractor.py"],
     deps = [
-        requirement("absl-py"),
+        "@com_google_absl_py//absl/logging",
     ],
 )
 
@@ -90,8 +95,8 @@ py_library(
     srcs = ["vanir/vulnerability.py"],
     deps = [
         ":signature",
-        requirement("osv"),
-        requirement("protobuf"),
+        "@ossf_osv_schema//:vulnerability_py_pb2",
+        "@vanir_deps//protobuf",
     ],
 )
 
@@ -107,9 +112,9 @@ py_library(
         ":vulnerability_overwriter",
         "//vanir/code_extractors:code_extractor",
         "//vanir/code_extractors:code_extractor_base",
-        requirement("absl-py"),
-        requirement("python-dateutil"),
-        requirement("requests"),
+        "@com_google_absl_py//absl/logging",
+        "@vanir_deps//python_dateutil",
+        "@vanir_deps//requests",
     ],
 )
 
@@ -118,12 +123,11 @@ py_library(
     srcs = ["vanir/sign_generator.py"],
     data = ["@pybind11_abseil//pybind11_abseil:status.so"],
     deps = [
-        ":osv_client",
         ":parser",
         ":signature",
         ":truncated_path",
         "//vanir/code_extractors:code_extractor_base",
-        requirement("absl-py"),
+        "@com_google_absl_py//absl/logging",
     ],
 )
 
@@ -138,8 +142,10 @@ py_binary(
         ":vulnerability",
         ":vulnerability_manager",
         "//vanir/code_extractors:code_extractor_base",
-        requirement("absl-py"),
-        requirement("requests"),
+        "@com_google_absl_py//absl:app",
+        "@com_google_absl_py//absl/flags",
+        "@com_google_absl_py//absl/logging",
+        "@vanir_deps//requests",
     ],
 )
 
@@ -150,11 +156,15 @@ py_library(
         "vanir/sign_generator_runner.py",
     ],
     deps = [
+        ":file_list_manager",
         ":sign_generator",
         ":vulnerability",
         ":vulnerability_manager",
-        requirement("absl-py"),
-        requirement("requests"),
+        "//vanir/code_extractors:code_extractor_base",
+        "@com_google_absl_py//absl:app",
+        "@com_google_absl_py//absl/flags",
+        "@com_google_absl_py//absl/logging",
+        "@vanir_deps//requests",
     ],
 )
 
@@ -162,11 +172,13 @@ py_library(
     name = "detector_common_flags",
     srcs = ["vanir/detector_common_flags.py"],
     deps = [
+        ":file_path_utils",
         ":vulnerability_manager",
         ":vulnerability_overwriter",
         "//vanir/scanners:scanner_base",
         "//vanir/scanners:target_selection_strategy",
-        requirement("absl-py"),
+        "@com_google_absl_py//absl/flags",
+        "@vanir_deps//python_dateutil",
     ],
 )
 
@@ -176,274 +188,13 @@ py_library(
     deps = [
         ":vulnerability_manager",
         "//vanir/scanners:scanner_base",
-        requirement("absl-py"),
-    ],
-)
-
-py_library(
-    name = "truncated_path",
-    srcs = ["vanir/truncated_path.py"],
-)
-
-py_library(
-    name = "file_list_manager",
-    srcs = ["vanir/file_list_manager.py"],
-    data = [
-        "@pybind11_abseil//pybind11_abseil:status.so",
-    ],
-    deps = [
-        ":parser",
-        "//vanir/cache:ecosystem_file_lists",
-    ],
-)
-
-py_binary(
-    name = "detector_runner",
-    srcs = ["vanir/detector_runner.py"],
-    deps = [
-        ":detector_common_flags",
-        ":osv_client",
-        ":reporter",
-        ":vulnerability_manager",
-        "//vanir/scanners:android_kernel_scanner",
-        "//vanir/scanners:offline_directory_scanner",
-        "//vanir/scanners:package_scanner",
-        "//vanir/scanners:repo_scanner",
-        "//vanir/scanners:scanner_base",
-        requirement("absl-py"),
-        requirement("jinja2"),
-        requirement("requests"),
-    ],
-)
-
-py_library(
-    name = "detector_runner.testonly_lib",
-    testonly = True,
-    srcs = ["vanir/detector_runner.py"],
-    deps = [
-        ":detector_common_flags",
-        ":osv_client",
-        ":reporter",
-        ":vulnerability_manager",
-        "//vanir/scanners:android_kernel_scanner",
-        "//vanir/scanners:offline_directory_scanner",
-        "//vanir/scanners:package_scanner",
-        "//vanir/scanners:repo_scanner",
-        "//vanir/scanners:scanner_base",
-        requirement("absl-py"),
-        requirement("jinja2"),
-        requirement("requests"),
     ],
 )
 
 py_library(
     name = "vulnerability_overwriter",
     srcs = ["vanir/vulnerability_overwriter.py"],
-    deps = [
-        requirement("jsonpath_ng"),
-    ],
-)
-
-py_library(
-    name = "vanir_test_base",
-    testonly = True,
-    srcs = ["vanir/vanir_test_base.py"],
-    deps = [
-        requirement("absl-py"),
-    ],
-)
-
-py_library(
-    name = "file_path_utils",
-    srcs = ["vanir/file_path_utils.py"],
-)
-
-py_test(
-    name = "parser_test",
-    size = "small",
-    srcs = ["vanir/parser_test.py"],
-    data = ["@pybind11_abseil//pybind11_abseil:status.so"],
-    deps = [
-        ":parser",
-        requirement("absl-py"),
-    ],
-)
-
-py_test(
-    name = "normalizer_test",
-    size = "small",
-    srcs = ["vanir/normalizer_test.py"],
-    deps = [
-        ":normalizer",
-        "//vanir/language_parsers:common",
-        requirement("absl-py"),
-    ],
-)
-
-py_test(
-    name = "hasher_test",
-    size = "small",
-    srcs = ["vanir/hasher_test.py"],
-    deps = [
-        ":hasher",
-        requirement("absl-py"),
-        requirement("mmh3"),
-    ],
-)
-
-py_test(
-    name = "signature_test",
-    size = "small",
-    srcs = ["vanir/signature_test.py"],
-    deps = [
-        ":signature",
-        requirement("absl-py"),
-    ],
-)
-
-py_test(
-    name = "version_extractor_test",
-    srcs = ["vanir/version_extractor_test.py"],
-    deps = [
-        ":version_extractor",
-    ],
-)
-
-py_test(
-    name = "vulnerability_test",
-    size = "small",
-    srcs = ["vanir/vulnerability_test.py"],
-    deps = [
-        ":signature",
-        ":vulnerability",
-        requirement("absl-py"),
-        requirement("osv"),
-        requirement("protobuf"),
-    ],
-)
-
-py_test(
-    name = "vulnerability_manager_test",
-    size = "small",
-    srcs = ["vanir/vulnerability_manager_test.py"],
-    deps = [
-        ":osv_client",
-        ":refiner",
-        ":sign_generator",
-        ":signature",
-        ":vulnerability",
-        ":vulnerability_manager",
-        "//vanir/code_extractors:code_extractor",
-        "//vanir/code_extractors:code_extractor_base",
-        requirement("absl-py"),
-    ],
-)
-
-py_test(
-    name = "sign_generator_test",
-    size = "small",
-    srcs = ["vanir/sign_generator_test.py"],
-    data = ["@pybind11_abseil//pybind11_abseil:status.so"],
-    deps = [
-        ":parser",
-        ":sign_generator",
-        ":signature",
-        "//vanir/code_extractors:code_extractor_base",
-        requirement("absl-py"),
-    ],
-)
-
-py_test(
-    name = "sign_generator_runner_test",
-    size = "small",
-    srcs = ["vanir/sign_generator_runner_test.py"],
-    deps = [
-        ":file_list_manager",
-        ":osv_client",
-        ":sign_generator_runner.testonly_lib",
-        ":signature",
-        ":vulnerability",
-        ":vulnerability_manager",
-        requirement("absl-py"),
-    ],
-)
-
-py_test(
-    name = "detector_common_flags_test",
-    size = "small",
-    srcs = ["vanir/detector_common_flags_test.py"],
-    data = [
-        "//vanir/testdata:test_overwrite_specs.json",
-    ],
-    deps = [
-        ":detector_common_flags",
-        ":file_path_utils",
-        ":vulnerability_manager",
-        "//vanir/scanners:scanner_base",
-        "//vanir/scanners:target_selection_strategy",
-        requirement("absl-py"),
-    ],
-)
-
-py_test(
-    name = "reporter_test",
-    size = "small",
-    srcs = ["vanir/reporter_test.py"],
-    deps = [
-        ":reporter",
-        ":vulnerability_manager",
-        requirement("absl-py"),
-    ],
-)
-
-py_test(
-    name = "detector_runner_test",
-    size = "small",
-    srcs = ["vanir/detector_runner_test.py"],
-    deps = [
-        ":detector_runner.testonly_lib",
-        ":osv_client",
-        ":signature",
-        ":vulnerability_manager",
-        "//vanir/language_parsers:common",
-        "//vanir/scanners:scanner_base",
-        "//vanir/scanners:target_selection_strategy",
-        requirement("absl-py"),
-    ],
-)
-
-py_test(
-    name = "refiner_test",
-    size = "small",
-    srcs = ["vanir/refiner_test.py"],
-    data = ["@pybind11_abseil//pybind11_abseil:status.so"],
-    deps = [
-        ":parser",
-        ":refiner",
-        ":signature",
-        "//vanir/code_extractors:code_extractor_base",
-        requirement("absl-py"),
-        requirement("mmh3"),
-    ],
-)
-
-py_test(
-    name = "truncated_path_test",
-    srcs = ["vanir/truncated_path_test.py"],
-    deps = [
-        ":truncated_path",
-        requirement("absl-py"),
-    ],
-)
-
-py_test(
-    name = "file_list_manager_test",
-    srcs = ["vanir/file_list_manager_test.py"],
-    data = ["@pybind11_abseil//pybind11_abseil:status.so"],
-    deps = [
-        ":file_list_manager",
-        requirement("absl-py"),
-    ],
+    deps = ["@vanir_deps//jsonpath_ng"],
 )
 
 py_test(
@@ -455,7 +206,9 @@ py_test(
     deps = [
         ":file_path_utils",
         ":vulnerability_overwriter",
-        requirement("absl-py"),
+        "@com_google_absl_py//absl/testing:absltest",
+        "@com_google_absl_py//absl/testing:parameterized",
+        "@vanir_deps//jsonpath_ng",
     ],
 )
 
@@ -482,6 +235,287 @@ py_binary(
     ],
     deps = [
         "//:vulnerability_overwriter",
-        requirement("absl-py"),
+        "@com_google_absl_py//absl/flags",
+        "@com_google_absl_py//absl/testing:absltest",
+    ],
+)
+
+py_library(
+    name = "truncated_path",
+    srcs = ["vanir/truncated_path.py"],
+)
+
+py_library(
+    name = "file_list_manager",
+    srcs = ["vanir/file_list_manager.py"],
+    data = [
+        "//vanir/cache:ecosystem_file_lists",
+    ],
+    deps = [
+        ":file_path_utils",
+        ":parser",
+    ],
+)
+
+py_binary(
+    name = "detector_runner",
+    srcs = ["vanir/detector_runner.py"],
+    deps = [
+        ":detector_common_flags",
+        ":osv_client",
+        ":reporter",
+        "//vanir/scanners:android_kernel_scanner",
+        "//vanir/scanners:offline_directory_scanner",
+        "//vanir/scanners:package_scanner",
+        "//vanir/scanners:repo_scanner",
+        "//vanir/scanners:scanner_base",
+        "@com_google_absl_py//absl:app",
+        "@com_google_absl_py//absl/flags",
+        "@com_google_absl_py//absl/logging",
+        "@vanir_deps//jinja2",
+        "@vanir_deps//requests",
+    ],
+)
+
+py_library(
+    name = "detector_runner.testonly_lib",
+    testonly = True,
+    srcs = ["vanir/detector_runner.py"],
+    deps = [
+        ":detector_common_flags",
+        ":osv_client",
+        ":reporter",
+        "//vanir/scanners:android_kernel_scanner",
+        "//vanir/scanners:offline_directory_scanner",
+        "//vanir/scanners:package_scanner",
+        "//vanir/scanners:repo_scanner",
+        "//vanir/scanners:scanner_base",
+        "@com_google_absl_py//absl:app",
+        "@com_google_absl_py//absl/flags",
+        "@com_google_absl_py//absl/logging",
+        "@vanir_deps//jinja2",
+        "@vanir_deps//requests",
+    ],
+)
+
+
+py_library(
+    name = "vanir_test_base",
+    testonly = True,
+    srcs = ["vanir/vanir_test_base.py"],
+    deps = [
+        "@com_google_absl_py//absl/logging",
+        "@com_google_absl_py//absl/testing:absltest",
+    ],
+)
+
+py_library(
+    name = "file_path_utils",
+    srcs = ["vanir/file_path_utils.py"],
+)
+
+# Unit tests and Integration tests
+
+py_test(
+    name = "parser_test",
+    size = "small",
+    srcs = ["vanir/parser_test.py"],
+    data = ["@pybind11_abseil//pybind11_abseil:status.so"],
+    deps = [
+        ":parser",
+        "@com_google_absl_py//absl/testing:absltest",
+    ],
+)
+
+py_test(
+    name = "normalizer_test",
+    size = "small",
+    srcs = ["vanir/normalizer_test.py"],
+    deps = [
+        ":normalizer",
+        "//vanir/language_parsers:common",
+        "@com_google_absl_py//absl/testing:absltest",
+    ],
+)
+
+py_test(
+    name = "hasher_test",
+    size = "small",
+    srcs = ["vanir/hasher_test.py"],
+    deps = [
+        ":hasher",
+        "@com_google_absl_py//absl/logging",
+        "@com_google_absl_py//absl/testing:absltest",
+        "@com_google_absl_py//absl/testing:parameterized",
+        "@vanir_deps//mmh3",
+    ],
+)
+
+py_test(
+    name = "refiner_test",
+    size = "small",
+    srcs = ["vanir/refiner_test.py"],
+    data = ["@pybind11_abseil//pybind11_abseil:status.so"],
+    deps = [
+        ":parser",
+        ":refiner",
+        ":signature",
+        "//vanir/code_extractors:code_extractor_base",
+        "@com_google_absl_py//absl/testing:absltest",
+        "@vanir_deps//mmh3",
+    ],
+)
+
+py_test(
+    name = "signature_test",
+    srcs = ["vanir/signature_test.py"],
+    deps = [
+        ":signature",
+        "@com_google_absl_py//absl/logging",
+        "@com_google_absl_py//absl/testing:absltest",
+        "@com_google_absl_py//absl/testing:parameterized",
+    ],
+)
+
+py_test(
+    name = "version_extractor_test",
+    srcs = ["vanir/version_extractor_test.py"],
+    deps = [
+        ":version_extractor",
+        "@com_google_absl_py//absl/testing:absltest",
+        "@com_google_absl_py//absl/testing:parameterized",
+    ],
+)
+
+py_test(
+    name = "vulnerability_test",
+    size = "small",
+    srcs = ["vanir/vulnerability_test.py"],
+    deps = [
+        ":signature",
+        ":vulnerability",
+        "@com_google_absl_py//absl/testing:absltest",
+        "@ossf_osv_schema//:vulnerability_py_pb2",
+        "@vanir_deps//protobuf",
+    ],
+)
+
+py_test(
+    name = "vulnerability_manager_test",
+    size = "small",
+    srcs = ["vanir/vulnerability_manager_test.py"],
+    deps = [
+        ":osv_client",
+        ":refiner",
+        ":sign_generator",
+        ":signature",
+        ":vulnerability",
+        ":vulnerability_manager",
+        "//vanir/code_extractors:code_extractor",
+        "//vanir/code_extractors:code_extractor_base",
+        "@com_google_absl_py//absl/logging",
+        "@com_google_absl_py//absl/testing:absltest",
+        "@com_google_absl_py//absl/testing:flagsaver",
+    ],
+)
+
+py_test(
+    name = "sign_generator_test",
+    size = "small",
+    srcs = ["vanir/sign_generator_test.py"],
+    data = ["@pybind11_abseil//pybind11_abseil:status.so"],
+    deps = [
+        ":parser",
+        ":sign_generator",
+        ":signature",
+        "//vanir/code_extractors:code_extractor_base",
+        "@com_google_absl_py//absl/logging",
+        "@com_google_absl_py//absl/testing:absltest",
+    ],
+)
+
+py_test(
+    name = "sign_generator_runner_test",
+    size = "small",
+    srcs = ["vanir/sign_generator_runner_test.py"],
+    deps = [
+        ":file_list_manager",
+        ":osv_client",
+        ":sign_generator_runner.testonly_lib",
+        ":signature",
+        ":vulnerability",
+        ":vulnerability_manager",
+        "@com_google_absl_py//absl:app",
+        "@com_google_absl_py//absl/testing:absltest",
+        "@com_google_absl_py//absl/testing:flagsaver",
+    ],
+)
+
+py_test(
+    name = "detector_common_flags_test",
+    size = "small",
+    srcs = ["vanir/detector_common_flags_test.py"],
+    data = [
+        "//vanir/testdata:test_overwrite_specs.json",
+        "//vanir/testdata:test_vulnerabilities",
+    ],
+    deps = [
+        ":detector_common_flags",
+        ":vulnerability_manager",
+        "//vanir/scanners:scanner_base",
+        "//vanir/scanners:target_selection_strategy",
+        "@com_google_absl_py//absl/flags",
+        "@com_google_absl_py//absl/testing:absltest",
+        "@com_google_absl_py//absl/testing:flagsaver",
+        "@com_google_absl_py//absl/testing:parameterized",
+    ],
+)
+
+py_test(
+    name = "reporter_test",
+    size = "small",
+    srcs = ["vanir/reporter_test.py"],
+    deps = [
+        ":reporter",
+        ":vulnerability_manager",
+        "@com_google_absl_py//absl/testing:absltest",
+    ],
+)
+
+py_test(
+    name = "detector_runner_test",
+    size = "small",
+    srcs = ["vanir/detector_runner_test.py"],
+    deps = [
+        ":detector_runner.testonly_lib",
+        ":osv_client",
+        ":signature",
+        ":vulnerability_manager",
+        ":vulnerability_overwriter",
+        "//vanir/language_parsers:common",
+        "//vanir/scanners:scanner_base",
+        "//vanir/scanners:target_selection_strategy",
+        "@com_google_absl_py//absl:app",
+        "@com_google_absl_py//absl/testing:absltest",
+        "@com_google_absl_py//absl/testing:flagsaver",
+    ],
+)
+
+
+py_test(
+    name = "truncated_path_test",
+    srcs = ["vanir/truncated_path_test.py"],
+    deps = [
+        ":truncated_path",
+        "@com_google_absl_py//absl/testing:absltest",
+    ],
+)
+
+py_test(
+    name = "file_list_manager_test",
+    srcs = ["vanir/file_list_manager_test.py"],
+    deps = [
+        ":file_list_manager",
+        "@com_google_absl_py//absl/testing:absltest",
     ],
 )

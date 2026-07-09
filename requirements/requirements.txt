@@ -2,7 +2,6 @@
 # Update pyproject.toml accordingly when updating the requirements_lock files as
 # per this file.
 requests
-absl-py
 mmh3
 unidiff
 jinja2
@@ -13,11 +12,6 @@ google-cloud-storage
 google-auth
 google-api-core
 google-cloud-iam
-
-# Use the latest supported OSV version as per the Python version.
-osv>=0.0.21,<0.1.0; python_version>='3.10' and python_version<'3.13'
-osv>=0.1.2,<1; python_version>='3.13'
-
 protobuf
 jsonpath_ng
 

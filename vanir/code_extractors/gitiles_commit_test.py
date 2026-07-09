@@ -6,6 +6,7 @@ from vanir import file_path_utils
 from vanir.code_extractors import code_extractor_base
 from vanir.code_extractors import gitiles_commit
 
+from importlib import resources
 from absl.testing import absltest
 from absl.testing import parameterized
 
@@ -15,14 +16,24 @@ _TEST_PARENT_COMMIT = 'fedcba1111111111111111111111111111111111'
 _TEST_PROJECT = 'platform/frameworks/base'
 
 # patch file containing modified /modified.txt text file & added /added.bin file
-_TEST_PATCH_FILE_PATH = file_path_utils.get_root_file_path('testdata/test_patch_file')
+_TEST_PATCH_FILE_PATH = (
+    file_path_utils.get_root_file_path('testdata/test_patch_file')
+)
 _TEST_PATCH_AFFECTED_RANGES = [
     (1, 1), (17, 17), (40, 44), (114, 116), (138, 138), (155, 155),
 ]
-_TEST_PATCHED_FILE_PATH = file_path_utils.get_root_file_path('testdata/test_patched_file')
-_TEST_PATCHED_BINARY_FILE_PATH = file_path_utils.get_root_file_path('testdata/test_patched_binary_file.png')
-_TEST_UNPATCHED_FILE_PATH = file_path_utils.get_root_file_path('testdata/test_unpatched_file')
-_TEST_UNRELATED_FILE_PATH = file_path_utils.get_root_file_path('testdata/test_unrelated_file')
+_TEST_PATCHED_FILE_PATH = (
+    file_path_utils.get_root_file_path('testdata/test_patched_file')
+)
+_TEST_PATCHED_BINARY_FILE_PATH = (
+    file_path_utils.get_root_file_path('testdata/test_patched_binary_file.png')
+)
+_TEST_UNPATCHED_FILE_PATH = (
+    file_path_utils.get_root_file_path('testdata/test_unpatched_file')
+)
+_TEST_UNRELATED_FILE_PATH = (
+    file_path_utils.get_root_file_path('testdata/test_unrelated_file')
+)
 _URL_BASE = 'https://android.googlesource.com'
 
 
@@ -40,13 +51,13 @@ class GitilesCommitTest(parameterized.TestCase):
 
   def setUp(self):
     super().setUp()
-    self._test_patch_file = open(_TEST_PATCH_FILE_PATH, mode='rb').read()
-    self._test_patched_file = open(_TEST_PATCHED_FILE_PATH, mode='rb').read()
-    self._test_patched_binary_file = open(
+    self._test_patch_file = resources.files('vanir').joinpath(_TEST_PATCH_FILE_PATH).read_bytes()
+    self._test_patched_file = resources.files('vanir').joinpath(_TEST_PATCHED_FILE_PATH).read_bytes()
+    self._test_patched_binary_file = resources.files('vanir').joinpath(
         _TEST_PATCHED_BINARY_FILE_PATH
-    , mode='rb').read()
-    self._test_unpatched_file = open(_TEST_UNPATCHED_FILE_PATH, mode='rb').read()
-    self._test_unrelated_file = open(_TEST_UNRELATED_FILE_PATH, mode='rb').read()
+    ).read_bytes()
+    self._test_unpatched_file = resources.files('vanir').joinpath(_TEST_UNPATCHED_FILE_PATH).read_bytes()
+    self._test_unrelated_file = resources.files('vanir').joinpath(_TEST_UNRELATED_FILE_PATH).read_bytes()
     self._test_commit_message = 'parent %s' % _TEST_PARENT_COMMIT
 
     self._mock_get_returnval_map = {

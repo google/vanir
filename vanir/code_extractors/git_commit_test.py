@@ -14,6 +14,7 @@ import tenacity
 from vanir.code_extractors import code_extractor_base
 from vanir.code_extractors import git_commit
 
+from importlib import resources
 from absl.testing import absltest
 from absl.testing import parameterized
 

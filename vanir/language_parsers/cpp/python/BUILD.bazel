@@ -8,9 +8,10 @@
 
 load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
 
-package(default_visibility = [
-    "//visibility:public",
-])
+package(
+    default_applicable_licenses = ["//:license"],
+    default_visibility = ["//visibility:public"],
+)
 
 pybind_extension(
     name = "parser_core",

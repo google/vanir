@@ -24,28 +24,40 @@ from vanir import vulnerability_overwriter
 from vanir.scanners import scanner_base
 from vanir.scanners import target_selection_strategy
 
+from importlib import resources
 
 
-_OSV_ID_IGNORE_LIST = flags.DEFINE_list(
-    'osv_id_ignore_list', [], 'Comma-separated list of OSV IDs of the'
-    'vulnerabilities to exclude from scanning. '
-    'E.g., \'--osv_id_ignore_list=ASB-A-1234,ASB-A-4567\''
+_VULN_ID_IGNORE_LIST = flags.DEFINE_list(
+    'vuln_id_ignore_list', [], 'Comma-separated list of vulnerability IDs or '
+    'aliases to exclude from scanning. '
+    'E.g., \'--vuln_id_ignore_list=ASB-A-1234,CVE-2020-1234\''
 )
 
-_OSV_ID_ALLOWED_PREFIX = flags.DEFINE_list(
-    'osv_id_allowed_prefix',
+_VULN_ID_ALLOWED_PREFIX = flags.DEFINE_list(
+    'vuln_id_allowed_prefix',
     None,
-    'Comma-separated list of OSV ID prefixes of the vulnerabilities to include'
+    'Comma-separated list of vulnerability ID or alias prefixes to include'
     ' from scanning. All other vulnerabilities will be excluded. E.g., '
-    '\'--osv_id_allowed_prefix=ASB-A-,PUB-A-\' for limiting the scanning to'
+    '\'--vuln_id_allowed_prefix=ASB-A-,PUB-A-\' for limiting the scanning to'
     'Android Security Bulletin and Pixel Security Bulletin vulnerabilities.',
 )
 
-_CVE_ID_IGNORE_LIST = flags.DEFINE_list(
-    'cve_id_ignore_list', [], 'Comma-separated list of CVE IDs of the'
-    'vulnerabilities to exclude from scanning. '
-    'E.g., \'--cve_id_ignore_list=CVE-1234-12345,CVE-4567-45678\''
+_SIGNATURE_IDS = flags.DEFINE_list(
+    'signature_ids',
+    [],
+    'Comma-separated list of signature IDs to limit '
+    'scanning to. If specified, only signatures with these IDs will be used.',
 )
+
+
+_VULN_IDS = flags.DEFINE_list(
+    'vuln_ids',
+    [],
+    'Comma-separated list of vulnerability IDs or aliases to limit scanning '
+    'to. If specified, only vulnerabilities with these IDs or aliases will '
+    'be used.',
+)
+
 
 _ANDROID_MIN_SEVERITY_LEVEL = flags.DEFINE_enum(
     'android_min_severity_level',
@@ -93,7 +105,7 @@ _SIGN_TARGET_PATH_FILTER = flags.DEFINE_multi_string(
 
 _SIGN_TARGET_ARCH = flags.DEFINE_multi_enum(
     'sign_target_arch', [],
-    [arch.name for arch in list(vulnerability_manager.Architecture)],
+    list(vulnerability_manager.Architecture.__members__),
     'Flag to exclude architecture-specific signatures other than the target '
     'architecture. Multiple flags are allowed. E.g., '
     '\'--sign_target_arch=arm --sign_target_arch=arm64\' will exclude '
@@ -223,18 +235,16 @@ def generate_vulnerability_filters_from_flags(
 ) -> Sequence[vulnerability_manager.VulnerabilityFilter]:
   """Parses vulnerability filter flags for detector and returns filters."""
   vfilters = []
-  if _OSV_ID_IGNORE_LIST.value:
+  if _VULN_ID_IGNORE_LIST.value:
     vfilters.append(
-        vulnerability_manager.OsvIdFilter(_OSV_ID_IGNORE_LIST.value))
-  if _OSV_ID_ALLOWED_PREFIX.value:
+        vulnerability_manager.VulnIdIgnoreFilter(_VULN_ID_IGNORE_LIST.value)
+    )
+  if _VULN_ID_ALLOWED_PREFIX.value:
     vfilters.append(
-        vulnerability_manager.OsvIdAllowedPrefixFilter(
-            _OSV_ID_ALLOWED_PREFIX.value
+        vulnerability_manager.VulnIdAllowedPrefixFilter(
+            _VULN_ID_ALLOWED_PREFIX.value
         )
     )
-  if _CVE_ID_IGNORE_LIST.value:
-    vfilters.append(
-        vulnerability_manager.CveIdFilter(_CVE_ID_IGNORE_LIST.value))
   if (_ANDROID_MIN_SEVERITY_LEVEL.value and
       vulnerability_manager.AndroidSeverityLevel[
           _ANDROID_MIN_SEVERITY_LEVEL.value] !=
@@ -283,6 +293,12 @@ def generate_vulnerability_filters_from_flags(
     vfilters.append(vulnerability_manager.ArchitectureFilter(allowed_arches))
   if not _INCLUDE_DEPRECATED_SIGNATURES.value:
     vfilters.append(vulnerability_manager.DeprecatedSignatureFilter())
+  if _SIGNATURE_IDS.value:
+    vfilters.append(
+        vulnerability_manager.SignatureIdFilter(_SIGNATURE_IDS.value)
+    )
+  if _VULN_IDS.value:
+    vfilters.append(vulnerability_manager.VulnIdFilter(_VULN_IDS.value))
   return vfilters
 
 
@@ -300,33 +316,41 @@ def generate_overwrite_specs_from_flags() -> (
 
 def generate_vuln_manager_from_flags(
 ) -> Optional[vulnerability_manager.VulnerabilityManager]:
-  """Create and return vuln manager containing vulns from vulnerability_file_name flag.
+  """Create and return vuln manager containing vulns from flags.
 
   Returns:
     The |VulnerabilityManager| object containing the vulns found in files
     specified in the flag, with the optional filter applied. Return None if
     vulnerability_file_name flag was not set.
   """
+  vulnerability_overwrite_specs = generate_overwrite_specs_from_flags()
+  vulnerability_filters = generate_vulnerability_filters_from_flags()
+
   if not _VULNERABILITY_FILE_NAMES.value:
     return None
 
-  vulnerability_overwrite_specs = generate_overwrite_specs_from_flags()
   vuln_managers = []
   for vuln_file_name in _VULNERABILITY_FILE_NAMES.value:
     vuln_file_path = os.path.abspath(vuln_file_name)
     if not os.path.isfile(vuln_file_path):
-      raise ValueError(
-          f'Failed to find vulnerability file at {vuln_file_path}')
+      raise ValueError(f'Failed to find vulnerability file at {vuln_file_path}')
     vuln_managers.append(
         vulnerability_manager.generate_from_file(
             vuln_file_path,
             vulnerability_overwrite_specs=vulnerability_overwrite_specs,
         )
     )
-  return vulnerability_manager.generate_from_managers(
+  manager = vulnerability_manager.generate_from_managers(
       vuln_managers,
       overwrite_older_duplicate=True,
-      vulnerability_filters=generate_vulnerability_filters_from_flags())
+      vulnerability_filters=vulnerability_filters,
+  )
+  if not manager.vulnerabilities:
+    raise ValueError(
+        'All vulnerabilities were filtered out. This might be due to '
+        'conflicting filter flags.'
+    )
+  return manager
 
 
 def generate_finding_filters_from_flags(

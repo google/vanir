@@ -4,132 +4,75 @@
 #
 #    bazel run //requirements:requirements_3.10.update
 #
-absl-py==2.4.0
-    # via -r requirements/requirements.txt
-async-timeout==5.0.1
-    # via redis
-attrs==26.1.0
-    # via
-    #   jsonschema
-    #   osv
-    #   referencing
-certifi==2026.2.25
+
+certifi==2026.5.20
     # via requests
 cffi==2.0.0
-    # via
-    #   cryptography
-    #   pygit2
+    # via cryptography
 charset-normalizer==3.4.7
     # via requests
-cryptography==46.0.7
+cryptography==48.0.1
     # via google-auth
-google-api-core[grpc]==2.30.2
+google-api-core[grpc]==2.31.0
     # via
     #   -r requirements/requirements.txt
-    #   google-cloud-appengine-logging
     #   google-cloud-core
-    #   google-cloud-datastore
     #   google-cloud-iam
-    #   google-cloud-logging
-    #   google-cloud-ndb
     #   google-cloud-storage
-google-auth==2.49.1
+google-auth==2.53.0
     # via
     #   -r requirements/requirements.txt
     #   google-api-core
-    #   google-cloud-appengine-logging
     #   google-cloud-core
-    #   google-cloud-datastore
     #   google-cloud-iam
-    #   google-cloud-logging
     #   google-cloud-storage
-google-cloud-appengine-logging==1.9.0
-    # via google-cloud-logging
-google-cloud-audit-log==0.5.0
-    # via google-cloud-logging
-google-cloud-core==2.5.1
-    # via
-    #   google-cloud-datastore
-    #   google-cloud-logging
-    #   google-cloud-storage
-google-cloud-datastore==2.24.0
-    # via google-cloud-ndb
-google-cloud-iam==2.22.0
+google-cloud-core==2.6.0
+    # via google-cloud-storage
+google-cloud-iam==2.23.0
     # via -r requirements/requirements.txt
-google-cloud-logging==3.15.0
-    # via osv
-google-cloud-ndb==2.4.2
-    # via osv
-google-cloud-storage==3.10.1
+google-cloud-storage==3.11.0
     # via -r requirements/requirements.txt
 google-crc32c==1.8.0
     # via
     #   google-cloud-storage
     #   google-resumable-media
-google-resumable-media==2.8.2
+google-resumable-media==2.10.0
     # via google-cloud-storage
-googleapis-common-protos[grpc]==1.74.0
+googleapis-common-protos[grpc]==1.75.0
     # via
     #   google-api-core
-    #   google-cloud-audit-log
     #   grpc-google-iam-v1
     #   grpcio-status
 grpc-google-iam-v1==0.14.4
-    # via
-    #   google-cloud-iam
-    #   google-cloud-logging
-grpcio==1.80.0
+    # via google-cloud-iam
+grpcio==1.81.1
     # via
     #   google-api-core
-    #   google-cloud-appengine-logging
-    #   google-cloud-datastore
     #   google-cloud-iam
-    #   google-cloud-logging
     #   googleapis-common-protos
     #   grpc-google-iam-v1
     #   grpcio-status
-    #   osv
-grpcio-status==1.80.0
+grpcio-status==1.81.1
     # via google-api-core
-idna==3.11
+idna==3.18
     # via requests
-importlib-metadata==8.7.1
-    # via opentelemetry-api
 jinja2==3.1.6
     # via -r requirements/requirements.txt
 jsonpath-ng==1.8.0
     # via -r requirements/requirements.txt
-jsonschema==4.26.0
-    # via osv
-jsonschema-specifications==2025.9.1
-    # via jsonschema
 markupsafe==3.0.3
     # via jinja2
 mmh3==5.2.1
     # via -r requirements/requirements.txt
-opentelemetry-api==1.40.0
-    # via google-cloud-logging
-osv==0.0.21 ; python_version >= "3.10" and python_version < "3.13"
-    # via -r requirements/requirements.txt
-packaging==21.3
-    # via osv
-proto-plus==1.27.2
+proto-plus==1.28.0
     # via
     #   google-api-core
-    #   google-cloud-appengine-logging
-    #   google-cloud-datastore
     #   google-cloud-iam
-    #   google-cloud-logging
-protobuf==6.33.6
+protobuf==7.35.1
     # via
     #   -r requirements/requirements.txt
     #   google-api-core
-    #   google-cloud-appengine-logging
-    #   google-cloud-audit-log
-    #   google-cloud-datastore
     #   google-cloud-iam
-    #   google-cloud-logging
-    #   google-cloud-ndb
     #   googleapis-common-protos
     #   grpc-google-iam-v1
     #   grpcio-status
@@ -140,35 +83,13 @@ pyasn1-modules==0.4.2
     # via google-auth
 pycparser==3.0
     # via cffi
-pygit2==1.18.2
-    # via osv
-pymemcache==4.0.0
-    # via google-cloud-ndb
-pyparsing==3.3.2
-    # via packaging
 python-dateutil==2.9.0.post0
     # via -r requirements/requirements.txt
-pytz==2026.1.post1
-    # via google-cloud-ndb
-pyyaml==6.0.3
-    # via osv
-redis==7.4.0
-    # via google-cloud-ndb
-referencing==0.37.0
-    # via
-    #   jsonschema
-    #   jsonschema-specifications
-requests==2.33.1
+requests==2.34.2
     # via
     #   -r requirements/requirements.txt
     #   google-api-core
     #   google-cloud-storage
-rpds-py==0.30.0
-    # via
-    #   jsonschema
-    #   referencing
-semver==3.0.4
-    # via osv
 six==1.17.0
     # via python-dateutil
 tenacity==9.1.4
@@ -178,11 +99,7 @@ typing-extensions==4.15.0
     #   -r requirements/requirements.txt
     #   cryptography
     #   grpcio
-    #   opentelemetry-api
-    #   referencing
 unidiff==0.7.5
     # via -r requirements/requirements.txt
-urllib3==2.6.3
+urllib3==2.7.0
     # via requests
-zipp==3.23.0
-    # via importlib-metadata

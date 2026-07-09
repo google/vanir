@@ -167,6 +167,10 @@ class GitCommit(code_extractor_base.Commit):
     ]
     return self._run_git_with_retry(cmd).decode('utf-8')
 
+  def _get_description(self) -> Optional[str]:
+    cmd = ['show', '-s', '--format=%B', self._rev]
+    return self._run_git_with_retry(cmd).decode('utf-8').strip() or None
+
   def get_commit_time(self) -> int:
     """Returns the commit timestamp."""
     return int(

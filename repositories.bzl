@@ -4,11 +4,14 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
-"""Repositories for Vanir."""
+"""External repository definitions shared between WORKSPACE and Bzlmod (MODULE.bazel).
+
+Only repositories that are loaded identically under both legacy WORKSPACE and
+modern Bzlmod systems should be defined in this file.
+"""
 
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file")
-load("@bazel_tools//tools/build_defs/repo:local.bzl", "new_local_repository")
 
 ANTLR4_JAVA_REV = "c85ec510bd7cfba4649aec1ac2cf66bebd8ce2ed"
 
@@ -53,28 +56,4 @@ cc_library(
         sha256 = "9f18272a9b32b622835a3365f850dd1063d60f5045fb1e12ce475ae6e18a35bb",
         strip_prefix = "antlr4-4.13.2",
         urls = ["https://github.com/antlr/antlr4/archive/4.13.2.tar.gz"],
-    )
-
-def antlr4_entry_points_repo():
-    new_local_repository(
-        name = "antlr4_entry_points",
-        path = "vanir/language_parsers/java",
-        build_file_content = """
-load("@rules_python//python/entry_points:py_console_script_binary.bzl", "py_console_script_binary")
-
-py_console_script_binary(
-    name = "antlr4",
-    pkg = "@antlr4_deps//antlr4_tools",
-    script = "antlr4",
-    visibility =  ["//visibility:public"],
-)
-""",
-    )
-
-def pybind11_abseil_repo():
-    http_archive(
-        name = "pybind11_abseil",
-        strip_prefix = "pybind11_abseil-54b34dd0e8afb8a4febb9508c69410e708b43515",
-        urls = ["https://github.com/pybind/pybind11_abseil/archive/54b34dd0e8afb8a4febb9508c69410e708b43515.tar.gz"],
-        sha256 = "26328a74f367208ae8d490dc640030111df4ba0869619c6445bb4a1c5964e2a7",
     )

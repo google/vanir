@@ -4,13 +4,14 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
-# Build rule for binding C++ parser core to python using Pybind.
+# Build rules for Pybind bindings for Java parser
 
 load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
 
-package(default_visibility = [
-    "//visibility:public",
-])
+package(
+    default_applicable_licenses = ["//:license"],
+    default_visibility = ["//visibility:public"],
+)
 
 pybind_extension(
     name = "parser_core",

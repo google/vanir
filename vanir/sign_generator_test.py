@@ -162,10 +162,10 @@ class SignGeneratorTest(absltest.TestCase):
         _TEST_ECOSYSTEM, _TEST_PACKAGE_NAME, self.mock_commit,
         signature_factory=self.mock_default_sign_factory,
     )
-    self.mock_default_sign_factory.create_from_function_chunk.assert_called_once_with(
-        self.mock_func_chunk, mock.ANY, None
-    )
-    self.mock_default_sign_factory.create_from_line_chunk.assert_called_once_with(
+    mock_default_sign_factory = self.mock_default_sign_factory
+    create_func = mock_default_sign_factory.create_from_function_chunk
+    create_func.assert_called_once_with(self.mock_func_chunk, mock.ANY, None)
+    mock_default_sign_factory.create_from_line_chunk.assert_called_once_with(
         self.mock_line_chunk, mock.ANY, test_threshold, None
     )
     self.assertEqual(signatures, [self.test_sign1, self.test_sign2])
@@ -179,13 +179,14 @@ class SignGeneratorTest(absltest.TestCase):
         _TEST_ECOSYSTEM, _TEST_PACKAGE_NAME, self.mock_commit,
         signature_factory=self.mock_sign_factory,
     )
-    self.mock_default_sign_factory.create_from_function_chunk.assert_not_called(
-    )
-    self.mock_default_sign_factory.create_from_line_chunk.assert_not_called()
-    self.mock_sign_factory.create_from_function_chunk.assert_called_once_with(
+    mock_default_sign_factory = self.mock_default_sign_factory
+    mock_default_sign_factory.create_from_function_chunk.assert_not_called()
+    mock_default_sign_factory.create_from_line_chunk.assert_not_called()
+    mock_sign_factory = self.mock_sign_factory
+    mock_sign_factory.create_from_function_chunk.assert_called_once_with(
         self.mock_func_chunk, mock.ANY, None
     )
-    self.mock_sign_factory.create_from_line_chunk.assert_called_once_with(
+    mock_sign_factory.create_from_line_chunk.assert_called_once_with(
         self.mock_line_chunk, mock.ANY, test_threshold, None
     )
     self.assertEqual(signatures, [self.test_sign1, self.test_sign2])
@@ -204,7 +205,8 @@ class SignGeneratorTest(absltest.TestCase):
         _TEST_ECOSYSTEM, _TEST_PACKAGE_NAME, self.mock_commit,
         self.mock_default_sign_factory,
     )
-    self.mock_default_sign_factory.create_from_line_chunk.assert_called_once_with(
+    mock_default_sign_factory = self.mock_default_sign_factory
+    mock_default_sign_factory.create_from_line_chunk.assert_called_once_with(
         self.mock_line_chunk, mock.ANY, test_threshold, None
     )
 
@@ -270,11 +272,18 @@ class SignGeneratorTest(absltest.TestCase):
         _TEST_ECOSYSTEM, _TEST_PACKAGE_NAME, self.mock_commit,
         self.mock_default_sign_factory,
     )
-    self.mock_default_sign_factory.create_from_function_chunk.assert_called_once_with(
-        self.mock_func_chunk, mock.ANY, expected_tp_level,
+    mock_default_sign_factory = self.mock_default_sign_factory
+    create_func = mock_default_sign_factory.create_from_function_chunk
+    create_func.assert_called_once_with(
+        self.mock_func_chunk,
+        mock.ANY,
+        expected_tp_level,
     )
-    self.mock_default_sign_factory.create_from_line_chunk.assert_called_once_with(
-        self.mock_line_chunk, mock.ANY, mock.ANY, expected_tp_level,
+    mock_default_sign_factory.create_from_line_chunk.assert_called_once_with(
+        self.mock_line_chunk,
+        mock.ANY,
+        mock.ANY,
+        expected_tp_level,
     )
     self.assertEqual(signatures, [self.test_sign1, self.test_sign2])
 

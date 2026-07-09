@@ -9,12 +9,18 @@
 module(name = "vanir")
 
 bazel_dep(name = "rules_cc", version = "0.2.16")
+bazel_dep(name = "rules_license", version = "1.0.0")
 bazel_dep(name = "rules_python", version = "1.8.4")
 bazel_dep(name = "platforms", version = "1.0.0")
 bazel_dep(name = "abseil-cpp", version = "20260107.1", repo_name = "com_google_absl")
 bazel_dep(name = "pybind11_bazel", version = "3.0.0")
 bazel_dep(name = "rules_proto", version = "7.1.0")
-
+# Pin protobuf to 33.4. Bumping to 35.0 (or newer) causes Kokoro CI failures
+# because the managed image only provides Android SDK build tools version 33.0.0,
+# whereas the newer rules_android version requested by protobuf 35.0+ requires
+# version 35.0.0 or newer.
+bazel_dep(name = "protobuf", version = "33.4", repo_name = "com_google_protobuf")
+bazel_dep(name = "abseil-py", version = "2.4.0", repo_name = "com_google_absl_py")
 SUPPORTED_PYTHON_VERSIONS = [
     "3.10",
     "3.11",
@@ -72,3 +78,6 @@ use_repo(antlr4_entry_points_extension, "antlr4_entry_points")
 
 pybind11_abseil_extension = use_extension("//:extensions.bzl", "pybind11_abseil_extension")
 use_repo(pybind11_abseil_extension, "pybind11_abseil")
+
+ossf_osv_schema_extension = use_extension("//:extensions.bzl", "ossf_osv_schema_extension")
+use_repo(ossf_osv_schema_extension, "ossf_osv_schema")

@@ -4,12 +4,12 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
-"""Vanir detector scanner that scans vulns pertaining to one OSV package.
-"""
+"""Vanir detector scanner that scans vulns pertaining to one OSV package."""
 
 from typing import Optional, Sequence, Tuple
 
 from absl import logging
+from vanir import osv_client
 from vanir import vulnerability
 from vanir import vulnerability_manager
 from vanir import vulnerability_overwriter
@@ -52,6 +52,7 @@ class PackageScanner(offline_directory_scanner.OfflineDirectoryScanner):
       vulnerability_overwrite_specs: Optional[
           Sequence[vulnerability_overwriter.OverwriteSpec]
       ] = None,
+      osv_api: Optional['osv_client.OsvApiType'] = None,
   ) -> Tuple[
       scanner_base.Findings,
       scanner_base.ScannedFileStats,
@@ -84,11 +85,14 @@ class PackageScanner(offline_directory_scanner.OfflineDirectoryScanner):
           self._package if is_meta_package else [self._package],
           vulnerability_filters=vfilters,
           vulnerability_overwrite_specs=vulnerability_overwrite_specs,
+          osv_api=osv_api,
       )
 
     logging.info(
         'Scanning %s against signatures for %s...',
-        self._code_location, self._package)
+        self._code_location,
+        self._package,
+    )
     findings, stats = self.scan_offline_directory(vuln_manager, strategy)
 
     return findings, stats, vuln_manager

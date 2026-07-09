@@ -4,14 +4,15 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
-# Bazel build rules for Vanir parser core.
+# Build rule for Vanir C++ parser core.
+
 load("@rules_cc//cc:defs.bzl", "cc_library")
 load("@rules_python//python:defs.bzl", "py_library", "py_test")
-load("@vanir_deps//:requirements.bzl", "requirement")
 
-package(default_visibility = [
-    "//visibility:public",
-])
+package(
+    default_applicable_licenses = ["//:license"],
+    default_visibility = ["//visibility:public"],
+)
 
 cc_library(
     name = "parser_core",
@@ -41,7 +42,6 @@ py_library(
     deps = [
         "//vanir/language_parsers:abstract_language_parser",
         "//vanir/language_parsers:common",
-        requirement("absl-py"),
     ],
 )
 
@@ -52,6 +52,8 @@ py_test(
     data = ["@pybind11_abseil//pybind11_abseil:status.so"],
     deps = [
         ":cpp_parser",
-        requirement("absl-py"),
+        "//vanir/language_parsers:abstract_language_parser",
+        "@com_google_absl_py//absl/logging",
+        "@com_google_absl_py//absl/testing:absltest",
     ],
 )

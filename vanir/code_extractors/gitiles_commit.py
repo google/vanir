@@ -58,7 +58,7 @@ class GitilesCommit(code_extractor_base.Commit):
   @functools.cached_property
   def _parent_commit(self) -> str:
     commit_message = self._get_text(self.url)
-    matches = re.findall(
+    matches = re.findall(  # pyrefly: ignore[no-matching-overload]
         r'(?:\n|^)(?:parent )(' + COMMIT_HASH_PATTERN + r')(?=\n|$)',
         commit_message)
     if not matches:
@@ -172,3 +172,34 @@ class GitilesCommit(code_extractor_base.Commit):
     if isinstance(text, bytes):
       text = text.decode('utf-8')
     return text
+
+  def _get_description(self) -> Optional[str]:
+    text = self._get_text(self.url)
+    if isinstance(text, bytes):
+      text = text.decode('utf-8')
+
+    lines = text.splitlines()
+    body_lines = []
+    headers_ended = False
+    for line in lines:
+      if not headers_ended:
+        if not line.strip():
+          headers_ended = True
+          continue
+        if line.startswith(
+            ('commit ', 'author ', 'committer ', 'tree ', 'parent ')
+        ):
+          continue
+      else:
+        if line.strip() == '---':
+          break
+        body_lines.append(line)
+
+    non_empty_lines = [l for l in body_lines if l.strip()]
+    if non_empty_lines:
+      min_spaces = min(len(l) - len(l.lstrip(' ')) for l in non_empty_lines)
+      body_lines = [
+          l[min_spaces:] if len(l) >= min_spaces else l.lstrip(' ')
+          for l in body_lines
+      ]
+    return '\n'.join(body_lines).strip() or None

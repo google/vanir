@@ -4,12 +4,12 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
-"""Vanir detector scanner that scans a given directory against given signatures.
-"""
+"""Vanir detector scanner that scans a given directory against given signatures."""
 
 from typing import Optional, Sequence, Tuple
 
 from absl import logging
+from vanir import osv_client
 from vanir import signature
 from vanir import vulnerability_manager
 from vanir import vulnerability_overwriter
@@ -58,6 +58,7 @@ class OfflineDirectoryScanner(scanner_base.ScannerBase):
       vulnerability_overwrite_specs: Optional[
           Sequence[vulnerability_overwriter.OverwriteSpec]
       ] = None,
+      osv_api: Optional['osv_client.OsvApiType'] = None,
   ) -> Tuple[
       scanner_base.Findings,
       scanner_base.ScannedFileStats,
@@ -65,14 +66,16 @@ class OfflineDirectoryScanner(scanner_base.ScannerBase):
   ]:
     if override_vuln_manager is None:
       raise ValueError(
-          f'{self.name()} requires at least one --vulnerability_file_name')
+          f'{self.name()} requires at least one --vulnerability_file_name'
+      )
     vuln_manager = vulnerability_manager.generate_from_managers(
         [override_vuln_manager],
         vulnerability_filters=extra_vulnerability_filters,
     )
     logging.info(
         'Scanning %s against %d signatures...',
-        self._code_location, len(vuln_manager.signatures)
+        self._code_location,
+        len(vuln_manager.signatures),
     )
     findings, stats = self.scan_offline_directory(vuln_manager, strategy)
 

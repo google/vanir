@@ -6,7 +6,6 @@
 
 """Starlark macro to wrap Antlr4 code and library generation from grammar files."""
 
-load("@antlr4_deps//:requirements.bzl", "requirement")
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
 def antlr4_cc_gen(name, srcs, cc_namespace, cc_files_prefix, antlr4_ver, listener):
@@ -34,7 +33,7 @@ def antlr4_cc_gen(name, srcs, cc_namespace, cc_files_prefix, antlr4_ver, listene
         ]
     extra_args = "-listener" if listener else "-no-listener"
     cmd = (
-        "VANIR_ANTLR_TMPDIR=$$(mktemp -d);" +
+        "export HOME=$$PWD;VANIR_ANTLR_TMPDIR=$$(mktemp -d);" +
         "$(locations @antlr4_entry_points//:antlr4) " +
         "-v " + antlr4_ver + " " +
         "$(SRCS) " +
@@ -53,9 +52,8 @@ def antlr4_cc_gen(name, srcs, cc_namespace, cc_files_prefix, antlr4_ver, listene
         srcs = srcs,
         outs = out_src_files,
         cmd = cmd,
-        local = True,
         tools = [
-            requirement("antlr4-tools"),
+            "@antlr4_deps//antlr4_tools",
             "@antlr4_entry_points//:antlr4",
         ],
     )
@@ -68,4 +66,27 @@ def antlr4_cc_gen(name, srcs, cc_namespace, cc_files_prefix, antlr4_ver, listene
             "@antlr4_runtimes//:cpp",
         ],
         linkstatic = 1,  
+    )
+
+def gen_java_parsers(name = "gen_java_parsers"):
+    """Generates the java_cc_lexer and java_cc_parser targets."""
+    ANTLR4_VER = "4.13.2"
+    antlr4_cc_gen(
+        name = "java_cc_lexer",
+        srcs = ["@antlr4_grammar_java_lexer_g4//file"],
+        antlr4_ver = ANTLR4_VER,
+        cc_files_prefix = "JavaLexer",
+        cc_namespace = "java_cc_lexer",
+        listener = False,
+    )
+    antlr4_cc_gen(
+        name = "java_cc_parser",
+        srcs = [
+            "@antlr4_grammar_java_lexer_g4//file",
+            "@antlr4_grammar_java_parser_g4//file",
+        ],
+        antlr4_ver = ANTLR4_VER,
+        cc_files_prefix = "JavaParser",
+        cc_namespace = "java_cc_parser",
+        listener = True,
     )

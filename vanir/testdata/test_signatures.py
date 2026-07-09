@@ -7,6 +7,12 @@
 """Signatures to be checked against in Vanir integration test.
 """
 
+# pylint: disable=line-too-long
+# The line-too-long check is disabled here because multiple signatures currently
+# require very long, unbroken string literals for:
+# 1. Source code URLs (e.g., 'https://android.googlesource.com/kernel/common/+/050fad7c4...').
+# 2. Target file paths (e.g., 'services/core/java/com/android/server/om/OverlayManagerService.java').
+
 from vanir import signature
 
 EXPECTED_SIGNATURES_KERNEL = frozenset({

@@ -4,9 +4,10 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
-"""Tests for detector_runner."""
+"""Tests for detector_runner module, verifying flag parsing and report generation."""
 
 import builtins
+import copy
 import datetime
 import io
 import json
@@ -380,12 +381,16 @@ class DetectorRunnerTest(absltest.TestCase):
         ),
         'Should fail with duplicate args.',
     )
-    self.assertFalse(detector_runner._is_valid_scanner_args(
-        TestScanner2, ['req'], {},
-    ))
-    self.assertTrue(detector_runner._is_valid_scanner_args(
-        TestScanner2, ['req', 'vararg1', 'vararg2', 'vararg3'], {},
-    ))
+    self.assertFalse(
+        detector_runner._is_valid_scanner_args(TestScanner2, ['req'], {}),
+    )
+    self.assertTrue(
+        detector_runner._is_valid_scanner_args(
+            TestScanner2,
+            ['req', 'vararg1', 'vararg2', 'vararg3'],
+            {},
+        ),
+    )
 
   def test_main(self):
     mock_stdout = io.StringIO()
@@ -424,10 +429,14 @@ class DetectorRunnerTest(absltest.TestCase):
             },
             {
                 'unpatched_code': (
-                    f'{_TEST_NON_TARGET_FILE}::{_TEST_TARGET_FUNC}'),
+                    f'{_TEST_NON_TARGET_FILE}::{_TEST_TARGET_FUNC}()'
+                ),
                 'patch': _TEST_SOURCE,
                 'is_non_target_match': True,
                 'matched_signature': _TEST_SIGN_ID_2,
+                'source_patched_code': (
+                    f'{_TEST_TARGET_FILE}::{_TEST_TARGET_FUNC}()'
+                ),
             },
         ],
     }]
@@ -525,7 +534,7 @@ class DetectorRunnerTest(absltest.TestCase):
       <tr>
         <td>ASB-A-test-1234</td>
         <td>
-          foo/bar/baz.h::testfunc()  (<a href="http://android.googlesource.com/hellworld">patch</a>, ASB-A-test-1234-abcdef4321)<br>
+          foo/bar/baz.h::testfunc()  (<a href="http://android.googlesource.com/hellworld">patch</a>, ASB-A-test-1234-abcdef4321) (matched from foo/bar/baz.c::testfunc())<br>
           OSV: <a href="https://osv.dev/vulnerability/ASB-A-test-1234">https://osv.dev/vulnerability/ASB-A-test-1234</a><br>
           CVE: CVE-1234-12345 CVE-999-99999 <br>
         </td>
@@ -588,17 +597,32 @@ class DetectorRunnerTest(absltest.TestCase):
     mock_file_open.assert_has_calls([mock.call(expected_report_file, 'w')])
 
   def test_main_with_filter_flags(self):
+    vul2 = copy.deepcopy(_TEST_VUL)
+    vul2['id'] = 'ASB-A-test-5678'
+    vul2['affected'][0]['ecosystem_specific']['vanir_signatures'][0][
+        'id'
+    ] = 'sig-2-1'
+    vul2['affected'][0]['ecosystem_specific']['vanir_signatures'][1][
+        'id'
+    ] = 'sig-2-2'
+
+    test_vul_file = self.create_tempfile(content=json.dumps([_TEST_VUL, vul2]))
+
     with flagsaver.flagsaver(
-        vulnerability_file_name=[self._test_vul_file.full_path],
+        vulnerability_file_name=[test_vul_file.full_path],
         report_file_name_prefix=self._report_file_prefix,
-        osv_id_ignore_list=[_TEST_OSV_ID],
+        vuln_id_ignore_list=[_TEST_OSV_ID],
     ):
       detector_runner.main(['', 'test_scanner', _TEST_TARGET_ROOT])
       self._mock_scan.assert_called_with(
           _TEST_TARGET_ROOT,
-          (),
+          mock.ANY,
           strategy=target_selection_strategy.Strategy.TRUNCATED_PATH_MATCH,
       )
+      called_signatures = self._mock_scan.call_args.args[1]
+      self.assertLen(called_signatures, 2)
+      called_sig_ids = [sig.signature_id for sig in called_signatures]
+      self.assertCountEqual(called_sig_ids, ['sig-2-1', 'sig-2-2'])
 
   def test_main_with_path_filter(self):
     with flagsaver.flagsaver(
@@ -620,10 +644,14 @@ class DetectorRunnerTest(absltest.TestCase):
             {
                 # Note that _TEST_TARGET_FILE is not in this list
                 'unpatched_code': (
-                    f'{_TEST_NON_TARGET_FILE}::{_TEST_TARGET_FUNC}'),
+                    f'{_TEST_NON_TARGET_FILE}::{_TEST_TARGET_FUNC}()'
+                ),
                 'patch': _TEST_SOURCE,
                 'is_non_target_match': True,
                 'matched_signature': _TEST_SIGN_ID_2,
+                'source_patched_code': (
+                    f'{_TEST_TARGET_FILE}::{_TEST_TARGET_FUNC}()'
+                ),
             },
         ],
     }]

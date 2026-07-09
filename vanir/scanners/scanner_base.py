@@ -47,6 +47,7 @@ import typing
 from typing import Collection, Mapping, Optional, Sequence, Tuple, Union
 
 from absl import logging
+from vanir import osv_client
 from vanir import parser
 from vanir import signature
 from vanir import vulnerability
@@ -206,7 +207,7 @@ def _parse_file(
       file_path=file_path,
       target_file=os.path.relpath(file_path, code_location))
   chunks = list(file_parser.get_function_chunks())
-  chunks.append(file_parser.get_line_chunk())
+  chunks.append(file_parser.get_line_chunk())  # pyrefly: ignore[bad-argument-type]
   return chunks
 
 
@@ -248,7 +249,7 @@ def scan(
   # pool is considered "broken" at that point.
   result_futures = []
   with concurrent.futures.ProcessPoolExecutor(
-      max_workers=min(len(to_scan), os.cpu_count()),
+      max_workers=min(len(to_scan), os.cpu_count()),  # pyrefly: ignore[bad-specialization]
       mp_context=multiprocessing.get_context('forkserver'),
   ) as executor:
     for file in to_scan:
@@ -316,6 +317,7 @@ class ScannerBase(abc.ABC):
       vulnerability_overwrite_specs: Optional[
           Sequence[vulnerability_overwriter.OverwriteSpec]
       ] = None,
+      osv_api: Optional['osv_client.OsvApiType'] = None,
   ) -> Tuple[
       Findings, ScannedFileStats, vulnerability_manager.VulnerabilityManager
   ]:
@@ -340,6 +342,7 @@ class ScannerBase(abc.ABC):
       vulnerability_overwrite_specs: Optional list of |OverwriteSpec| to
         be applied onto |VulnerabilityManager| created for OSV signatures if a
         manager wasn't provided in |override_vuln_manager|.
+      osv_api: The OSV API type to use.
 
     Returns:
       A tuple of |Findings|, |ScannedFileStats|, and the |VulnerabilityManager|

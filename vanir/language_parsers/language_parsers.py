@@ -34,7 +34,7 @@ def get_parser_class(filename: str) -> Optional[Type[_P]]:
   ext = os.path.splitext(filename)[1]
   for parser_class in parsers:
     if ext in parser_class.get_supported_extensions():
-      return parser_class
+      return parser_class  # pyrefly: ignore[bad-return]
   return None
 
 

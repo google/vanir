@@ -5,11 +5,15 @@
 # https://developers.google.com/open-source/licenses/bsd
 
 # Package for Vanir test data.
+
 load("@rules_python//python:defs.bzl", "py_library")
 
-package(default_visibility = [
-    "//visibility:public",
-])
+package(
+    default_applicable_licenses = ["//:license"],
+    default_visibility = ["//visibility:public"],
+)
+
+exports_files(srcs = ["test_overwrite_specs.json"])
 
 filegroup(
     name = "vanir_test_source_simplified",
@@ -49,10 +53,6 @@ filegroup(
         "test_unrelated_file",
     ],
 )
-
-exports_files([
-    "test_overwrite_specs.json",
-])
 
 py_library(
     name = "test_signatures",

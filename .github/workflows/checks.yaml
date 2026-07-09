@@ -1,0 +1,40 @@
+# Copyright 2026 Google LLC
+#
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file or at
+# https://developers.google.com/open-source/licenses/bsd
+
+name: Linter and Type Checks
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  checks:
+    name: Run Linter and Type Checks
+    # Pin to a specific Ubuntu version for stable and consistent builds
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pylint mypy
+
+      - name: Run Linter (pylint)
+        run: pylint --rcfile=.pylintrc .
+
+      - name: Run Type Checker (mypy)
+        # 'if: always()' forces mypy to run even if the linter fails
+        if: always()
+        run: mypy .

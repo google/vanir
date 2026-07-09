@@ -15,6 +15,7 @@ from vanir import vulnerability_manager
 from vanir.scanners import android_kernel_scanner
 from vanir.scanners import scanner_base
 
+from importlib import resources
 from absl.testing import absltest
 
 _TESTDATA_DIR = file_path_utils.get_root_file_path('testdata/')
@@ -51,7 +52,7 @@ class AndroidKernelScannerTest(absltest.TestCase):
 
   def test_scan(self):
     override_vuln_manager = vulnerability_manager.generate_from_json_string(
-        open(_TEST_SIGNATURES_FILE, mode='rb').read()
+        resources.files('vanir').joinpath(_TEST_SIGNATURES_FILE).read_bytes()
     )
     scanner = android_kernel_scanner.AndroidKernelScanner(self._code_location)
     findings, stats, output_vul_manager = scanner.scan(
@@ -68,7 +69,7 @@ class AndroidKernelScannerTest(absltest.TestCase):
 
   @mock.patch.object(requests.sessions, 'Session', autospec=True)
   def test_scan_osv(self, mock_session_class):
-    text = b'{"vulns":' + open(_TEST_SIGNATURES_FILE, mode='rb').read() + b'}'
+    text = b'{"vulns":' + resources.files('vanir').joinpath(_TEST_SIGNATURES_FILE).read_bytes() + b'}'
     mock_response1 = mock.Mock()
     mock_response1.text = text
     mock_response1.json.return_value = json.loads(text)

@@ -66,7 +66,11 @@ def get_osv_url(osv_id: str) -> str:
 class OsvClient:
   """Class to abstract OSV APIs for retrieving Android CVEs."""
 
-  def __init__(self, session: Optional[requests.sessions.Session] = None):
+  def __init__(
+      self,
+      session: Optional[requests.sessions.Session] = None,
+      osv_api: Optional['OsvApiType'] = None,
+  ):
     self._session = session or requests.session()
     self._osv_api_key = _OSV_API_KEY.value
     self._osv_url_base = _OSV_PROD_URL_BASE

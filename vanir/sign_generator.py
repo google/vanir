@@ -199,7 +199,7 @@ class SignGenerator:
                        line_signature_threshold)
     self._line_signature_threshold = line_signature_threshold
     self._custom_line_signature_threshold_map = {}
-    for custom_threshold in custom_line_signature_thresholds:
+    for custom_threshold in custom_line_signature_thresholds:  # pyrefly: ignore[not-iterable]
       key = (custom_threshold.commit_url, custom_threshold.target_file)
       if key in self._custom_line_signature_threshold_map:
         raise ValueError(
@@ -262,7 +262,7 @@ class SignGenerator:
     if files_to_parse:
       result_futures = []
       with concurrent.futures.ProcessPoolExecutor(
-          max_workers=min(len(files_to_parse), os.cpu_count()),
+          max_workers=min(len(files_to_parse), os.cpu_count()),  # pyrefly: ignore[bad-specialization]
           mp_context=multiprocessing.get_context('forkserver'),
       ) as executor:
         for target_file, temp_file_path in files_to_parse:

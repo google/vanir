@@ -15,7 +15,7 @@ import re
 import subprocess
 from typing import Optional, Sequence, Tuple
 from absl import logging
-
+from vanir import osv_client
 from vanir import signature
 from vanir import vulnerability
 from vanir import vulnerability_manager
@@ -30,8 +30,10 @@ def _apply(func, args, kwargs):
 
 
 def _run_cmd(
-    cmd: Sequence[str], cwd: Optional[str] = None,
-    stdin: Optional[str] = None, check: bool = False,
+    cmd: Sequence[str],
+    cwd: Optional[str] = None,
+    stdin: Optional[str] = None,
+    check: bool = False,
 ) -> Tuple[int, str, str]:
   """Run cmd in cwd. Return a tuple of exit code, stdout, and stderr."""
   # PYTHONSAFEPATH does not work with repo before 2.40. Older repo versions are
@@ -42,15 +44,23 @@ def _run_cmd(
   else:
     env = None
   result = subprocess.run(
-      cmd, cwd=cwd, check=check, text=True, env=env,
-      stdin=stdin, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+      cmd,
+      cwd=cwd,
+      check=check,
+      text=True,
+      env=env,
+      stdin=stdin,
+      stdout=subprocess.PIPE,
+      stderr=subprocess.PIPE,
+  )
   return result.returncode, result.stdout, result.stderr
 
 
 def _skipped_stats(path: str) -> scanner_base.ScannedFileStats:
   return scanner_base.ScannedFileStats(
       analyzed_files=0,
-      skipped_files=sum(len(files) for _, _, files in os.walk(path)))
+      skipped_files=sum(len(files) for _, _, files in os.walk(path)),
+  )
 
 
 def _get_file_list(path: str) -> Sequence[str]:
@@ -115,7 +125,9 @@ class RepoScanner(scanner_base.ScannerBase):
     """Scan a single repo subdir pertaining to a one git repository."""
     current_scan_path = os.path.join(self._code_location, subdir)
     return scanner_base.scan(
-        current_scan_path, signature_bundle, strategy=strategy,
+        current_scan_path,
+        signature_bundle,
+        strategy=strategy,
     )
 
   def scan(
@@ -132,6 +144,7 @@ class RepoScanner(scanner_base.ScannerBase):
       vulnerability_overwrite_specs: Optional[
           Sequence[vulnerability_overwriter.OverwriteSpec]
       ] = None,
+      osv_api: Optional['osv_client.OsvApiType'] = None,
   ) -> Tuple[
       scanner_base.Findings,
       scanner_base.ScannedFileStats,
@@ -141,14 +154,21 @@ class RepoScanner(scanner_base.ScannerBase):
     # Use repo to get the mapping from directory to corresponding git repository
     logging.info('Querying repo list...')
     _, stdout, _ = _run_cmd(
-        cmd=['repo', 'list'], cwd=self._code_location, check=True)
+        cmd=['repo', 'list'], cwd=self._code_location, check=True
+    )
     repository_names = {}  # key: subdir, value: repository name
     for line in stdout.strip().splitlines():
       match = re.match(r'(?P<subdir>.*) : (?P<proj>.*)', line)
       if not match:
         raise ValueError('Unexpected repo command output: "%s"' % line)
       match_dict = match.groupdict()
-      repository_names[match_dict['subdir']] = match_dict['proj']
+      subdir = match_dict['subdir']
+      if not os.path.isdir(os.path.join(self._code_location, subdir)):
+        logging.warning(
+            'Skipping non-existent directory from repo list: %s', subdir
+        )
+        continue
+      repository_names[subdir] = match_dict['proj']
 
     # Use override_vuln_manager if given; download from OSV otherwise
     if override_vuln_manager is not None:
@@ -161,6 +181,7 @@ class RepoScanner(scanner_base.ScannerBase):
           self._ecosystem,
           vulnerability_filters=extra_vulnerability_filters,
           vulnerability_overwrite_specs=vulnerability_overwrite_specs,
+          osv_api=osv_api,
       )
 
     # Identify package name for each subdirectory.
@@ -183,7 +204,8 @@ class RepoScanner(scanner_base.ScannerBase):
       )
     starmap_args = zip(
         itertools.repeat(pkg_identifier.packages_for_repo),
-        args, itertools.repeat(kwargs),
+        args,
+        itertools.repeat(kwargs),
     )
     context = multiprocessing.get_context('forkserver')
     with context.Pool() as pool:
@@ -198,7 +220,7 @@ class RepoScanner(scanner_base.ScannerBase):
     # This toggle will tell the scanner to go look for those.
     is_kernel_repo_existing = False
 
-    for (subdir, packages) in zip(repository_names, subdirs_packages):
+    for subdir, packages in zip(repository_names, subdirs_packages):
       if not packages:
         subdirs_with_unknown_packages.append(subdir)
 
@@ -207,18 +229,19 @@ class RepoScanner(scanner_base.ScannerBase):
         packages_to_scan[subdir] = packages
 
       if any(
-          pkg for pkg in packages
+          pkg
+          for pkg in packages
           if pkg is vulnerability.MetaPackage.ANDROID_KERNEL
       ):
         is_kernel_repo_existing = True
         logging.info(
             'Found kernel repo in: %s. All unrecognized repos will be scanned '
             'against kernel signatures',
-            subdir
+            subdir,
         )
     logging.info(
         '%d dirs did not map to known packages',
-        len(subdirs_with_unknown_packages)
+        len(subdirs_with_unknown_packages),
     )
     logging.debug('Unmatched dirs: %s', subdirs_with_unknown_packages)
 
@@ -232,9 +255,7 @@ class RepoScanner(scanner_base.ScannerBase):
         # module repositories. We will try scanning all uknown repos with kernel
         # signatures. Note that this wouldn't necessarily download all files
         # unless the strategy is ALL_FILES.
-        packages_to_scan[subdir] = {
-            vulnerability.MetaPackage.ANDROID_KERNEL
-        }
+        packages_to_scan[subdir] = {vulnerability.MetaPackage.ANDROID_KERNEL}
       else:
         # Signatures will be tested against only their corresponding packages'
         # files. Thus, repositories with no matching package won't be considered
@@ -269,8 +290,11 @@ class RepoScanner(scanner_base.ScannerBase):
     for subdir, (findings, _) in results.items():
       for sig in findings:
         for chunk in findings[sig]:
-          all_findings[sig].append(dataclasses.replace(
-              chunk, target_file=os.path.join(subdir, chunk.target_file)))
+          all_findings[sig].append(
+              dataclasses.replace(
+                  chunk, target_file=os.path.join(subdir, chunk.target_file)
+              )
+          )
 
     # Combine ScannedFileStats into one
     analyzed_files = 0

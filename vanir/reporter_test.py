@@ -39,7 +39,10 @@ class ReporterTest(absltest.TestCase):
     )
 
   def test_get_simple_report(self):
-    expected_simple_report = 'foo/bar/unpatched_file.c::unpatched_func1()'
+    expected_simple_report = (
+        'foo/bar/unpatched_file.c::unpatched_func1() (matched from'
+        ' foo/bar/target_file.c::target_func1())'
+    )
     self.assertEqual(
         self._test_report.get_simple_report(), expected_simple_report
     )

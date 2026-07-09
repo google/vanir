@@ -19,6 +19,7 @@ from vanir.scanners import repo_scanner
 from vanir.scanners import scanner_base
 from vanir.scanners import target_selection_strategy
 
+from importlib import resources
 from absl.testing import absltest
 
 _TESTDATA_DIR = file_path_utils.get_root_file_path('testdata/')
@@ -41,7 +42,7 @@ class RepoScannerTest(absltest.TestCase):
     super().setUp()
 
     self._vuln_manager = vulnerability_manager.generate_from_json_string(
-        open(_TEST_SIGNATURES_FILE, mode='rb').read())
+        resources.files('vanir').joinpath(_TEST_SIGNATURES_FILE).read_bytes())
     self._code_location = self.create_tempdir().full_path
     self.enter_context(
         mock.patch.object(
@@ -49,6 +50,14 @@ class RepoScannerTest(absltest.TestCase):
             'walk',
             autospec=True,
             return_value=[('foo', [], ['file1', 'file2'])],
+        )
+    )
+    self.enter_context(
+        mock.patch.object(
+            os.path,
+            'isdir',
+            autospec=True,
+            return_value=True,
         )
     )
 
@@ -73,8 +82,9 @@ class RepoScannerTest(absltest.TestCase):
     # Mock multiprocessing Pool: forkserver does not work with this test.
     self._mock_multiprocessing_pool = self.enter_context(
         mock.patch.object(multiprocessing.pool, 'Pool', autospec=True))
-    self._mock_multiprocessing_pool.return_value.__enter__.return_value.starmap.side_effect = (
-        lambda f, args: [f(*arg) for arg in args])
+    mock_pool_context = self._mock_multiprocessing_pool.return_value
+    mock_pool = mock_pool_context.__enter__.return_value
+    mock_pool.starmap.side_effect = lambda f, args: [f(*arg) for arg in args]
 
     # autospeccing dataclass doesn't work (https://bugs.python.org/issue36580)
     signatures = self._vuln_manager.signatures
@@ -105,6 +115,13 @@ class RepoScannerTest(absltest.TestCase):
     self.assertNotIn(
         'PYTHONSAFEPATH', self._mock_subprocess_run.call_args.kwargs['env'])
     self.assertIn('OTHER', self._mock_subprocess_run.call_args.kwargs['env'])
+
+  def test_scan_missing_dir(self):
+    with mock.patch.object(os.path, 'isdir', return_value=False):
+      scanner = repo_scanner.RepoScanner('Android', self._code_location)
+      _, stats, _ = scanner.scan(override_vuln_manager=self._vuln_manager)
+      self.assertEqual(stats.analyzed_files, 0)
+      self.assertEqual(stats.skipped_files, 0)
 
   @mock.patch.object(os, 'environ', new={'OTHER': 'ENV'})
   def test_scan_without_python_safe_path_env(self):
@@ -212,16 +229,15 @@ class RepoScannerTest(absltest.TestCase):
 
     def download_to_file(file_obj):
       with open(
-          _TEST_SIGNATURES_ZIP_FILE, 'rb'
+          str(resources.files('vanir').joinpath(_TEST_SIGNATURES_ZIP_FILE)), 'rb'
       ) as f:
         file_obj.write(f.read())
 
     mock_blob.download_to_file.side_effect = download_to_file
     mock_bucket = mock.MagicMock()
     mock_bucket.blob.return_value = mock_blob
-    mock_storage_client.create_anonymous_client.return_value.bucket.return_value = (
-        mock_bucket
-    )
+    mock_client = mock_storage_client.create_anonymous_client.return_value
+    mock_client.bucket.return_value = mock_bucket
 
     scanner = repo_scanner.RepoScanner('Android', self._code_location)
     _, _, vuln_manager = scanner.scan()

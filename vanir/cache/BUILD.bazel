@@ -5,13 +5,13 @@
 # https://developers.google.com/open-source/licenses/bsd
 
 # Package for Vanir cached data.
-load("@rules_python//python:defs.bzl", "py_library")
 
-package(default_visibility = ["//visibility:public"])
+package(
+    default_applicable_licenses = ["//:license"],
+    default_visibility = ["//visibility:public"],
+)
 
-py_library(
+filegroup(
     name = "ecosystem_file_lists",
-    srcs = [
-        "ecosystem_file_lists.py",
-    ],
+    srcs = ["ecosystem_file_lists.json"],
 )

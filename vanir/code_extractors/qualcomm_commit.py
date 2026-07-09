@@ -149,6 +149,9 @@ class QualcommCommit(code_extractor_base.Commit):
       )
     return commit_info
 
+  def _get_description(self) -> Optional[str]:
+    return self._commit_info.get('message')
+
   @property
   def _parent_commit(self) -> str:
     parent_commit_hashes = self._commit_info.get('parent_ids', None)

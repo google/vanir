@@ -131,7 +131,9 @@ ParserCore::Parse(
     input_stream = std::make_unique<antlr4::ANTLRInputStream>(file_stream);
   } catch (const antlr4::IllegalArgumentException& e) {
     return absl::InvalidArgumentError(e.what());
-  }  JavaLexer java_lexer(input_stream.get());
+  }
+
+  JavaLexer java_lexer(input_stream.get());
   ErrorListener lexer_error_listener("JavaLexer");
   java_lexer.removeErrorListeners();  // Remove default logger error listener
   java_lexer.addErrorListener(&lexer_error_listener);

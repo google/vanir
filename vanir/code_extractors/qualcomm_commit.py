@@ -201,24 +201,20 @@ class QualcommCommit(code_extractor_base.Commit):
     Raises:
       CommitDataFetchError: when failed to fetch unpatched files for the commit.
     """
-    # Added files are not included since they do not exist in the parent.
-    unpatched_file_paths = [
-        file.path
-        for file in self._patch.removed_files + self._patch.modified_files
-    ]
     base_url = self.url.rstrip('/').rsplit('/', 1)[0] + '/'
     logging.info('Retrieving unpatched file source: %s', self.url)
     unpatched_files = {}
-    for file_path in unpatched_file_paths:
+    # Added files are not included since they do not exist in the parent.
+    for file in self._patch.removed_files + self._patch.modified_files:
       unpatched_file_url = ''.join([
           base_url.replace('commit', 'raw'),
           self._parent_commit,
           '/',
-          file_path,
+          self._get_unpatched_file_path(file),
       ])
-      unpatched_files[file_path] = self._create_temp_file(
+      unpatched_files[file.path] = self._create_temp_file(
           self._get_text(unpatched_file_url),
-          suffix=f'_{os.path.basename(file_path)}',
+          suffix=f'_{os.path.basename(file.path)}',
       )
     return unpatched_files
 

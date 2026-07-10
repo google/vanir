@@ -121,7 +121,9 @@ class GitilesCommit(code_extractor_base.Commit):
         file.path: self.get_file_at_rev(file.path)
         for file in self._patch.added_files + self._patch.modified_files
         # Gitiles has a bug and cannot serve raw markdown files; exclude them
-        if not file.path.endswith('.md')
+        if not file.path.endswith('.md') and not self._get_unpatched_file_path(
+            file
+        ).endswith('.md')
     }
 
   def _extract_unpatched_files(self) -> Mapping[str, str]:
@@ -136,22 +138,21 @@ class GitilesCommit(code_extractor_base.Commit):
       target source tree and the value is the absoulte path to the extracted
       unpatched version of the file.
     """
-    # Added files are not included since they do not exist in the parent.
-    unpatched_file_paths = [
-        file.path
-        for file in self._patch.removed_files + self._patch.modified_files
-        # Gitiles has a bug and cannot serve raw markdown files; exclude them
-        if not file.path.endswith('.md')
-    ]
     base_url = self.url.rstrip('/').rsplit('/', 1)[0] + '/'
     logging.info('Retrieving unpatched file source: %s', self.url)
     unpatched_files = {}
-    for file_path in unpatched_file_paths:
+    # Added files are not included since they do not exist in the parent
+    for file in self._patch.removed_files + self._patch.modified_files:
+      unpatched_file_path = self._get_unpatched_file_path(file)
+      # Gitiles has a bug and cannot serve raw markdown files; exclude them
+      if file.path.endswith('.md') or unpatched_file_path.endswith('.md'):
+        continue
       unpatched_file_url = ''.join(
-          [base_url, self._parent_commit, '/', file_path])
-      unpatched_files[file_path] = self._create_temp_file(
+          [base_url, self._parent_commit, '/', unpatched_file_path]
+      )
+      unpatched_files[file.path] = self._create_temp_file(
           self._get_text(unpatched_file_url, raw=True),
-          suffix=f'_{os.path.basename(file_path)}',
+          suffix=f'_{os.path.basename(file.path)}',
       )
     return unpatched_files
 

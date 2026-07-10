@@ -242,6 +242,32 @@ class GitilesCommitTest(parameterized.TestCase):
     self.assertEqual(commit.patched_files.keys(), {'modified.txt', 'added.bin'})
     self.assertEqual(commit.unpatched_files.keys(), {'modified.txt'})
 
+  def test_commit_init_with_renamed_file_path(self):
+    """Tests unpatched file extraction from their original paths on rename."""
+    test_patch = (
+        b'diff --git a/old_name.txt b/new_name.txt\n'
+        b'rename from old_name.txt\n'
+        b'rename to new_name.txt\n'
+    )
+    self._mock_get_returnval_map.update({
+        _TEST_PATCH_DOWNLOAD_URL: base64.b64encode(test_patch),
+        _url(_TEST_PROJECT, _TEST_PARENT_COMMIT, '/old_name.txt'): (
+            base64.b64encode(b'content before rename')
+        ),
+        _url(_TEST_PROJECT, _TEST_COMMIT, '/new_name.txt'): (
+            base64.b64encode(b'content after rename')
+        ),
+    })
+    commit = gitiles_commit.GitilesCommit(
+        _TEST_COMMIT_URL,
+        requests_session=self._mock_session,
+    )
+    file_key = 'new_name.txt'
+    self.assertEqual(commit.patched_files.keys(), {file_key})
+    self.assertEqual(commit.unpatched_files.keys(), {file_key})
+    with open(commit.unpatched_files[file_key], 'r') as f:
+      self.assertEqual(f.read(), 'content before rename')
+
 
 if __name__ == '__main__':
   absltest.main()

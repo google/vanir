@@ -244,6 +244,34 @@ class GitCommitTest(parameterized.TestCase):
     self.assertEqual(commit.patched_files.keys(), {'modified.txt', 'added.bin'})
     self.assertEqual(commit.unpatched_files.keys(), {'modified.txt', 'deleted'})
 
+  def test_init_with_renamed_file_path(self):
+    """Tests that unpatched files are correctly extracted when renamed."""
+    # Reuse the existing test repo, but isolate changes in a new branch
+    self._run_git(self.git_repo_dir, ['checkout', '-B', 'rename_branch'])
+    with open(os.path.join(self.git_repo_dir, 'old_name.txt'), 'wt') as f:
+      f.write('content before rename')
+    self._run_git(self.git_repo_dir, ['add', 'old_name.txt'])
+    self._run_git(self.git_repo_dir, ['commit', '-m', 'add file'])
+    # Rename the file to trigger file.is_rename
+    self._run_git(self.git_repo_dir, ['mv', 'old_name.txt', 'new_name.txt'])
+    self._run_git(self.git_repo_dir, ['commit', '-m', 'rename file'])
+    commit_id = self._run_git(
+        self.git_repo_dir, ['rev-parse', 'HEAD']
+    ).decode('utf-8').strip()
+    # Initialize GitCommit with the new commit
+    url = f'file://{self.git_repo_dir}@{commit_id}'
+    commit = git_commit.GitCommit(
+        url,
+        git_path=self.git_bin,
+        git_exec_path=self.exec_path,
+        git_working_dir=self.create_tempdir().full_path,
+    )
+    self.assertEqual(commit.url, url)
+    self.assertEqual(commit.patched_files.keys(), {'new_name.txt'})
+    self.assertEqual(commit.unpatched_files.keys(), {'new_name.txt'})
+    with open(commit.unpatched_files['new_name.txt'], 'rt') as f:
+      self.assertEqual(f.read(), 'content before rename')
+
 
 if __name__ == '__main__':
   absltest.main()

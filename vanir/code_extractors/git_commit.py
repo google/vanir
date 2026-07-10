@@ -254,7 +254,10 @@ class GitCommit(code_extractor_base.Commit):
 
   def _extract_unpatched_files(self) -> Mapping[str, str]:
     return {
-        file.path: self._get_file(self._parent_commit, file.path)
+        file.path: self._get_file(
+            self._parent_commit,
+            self._get_unpatched_file_path(file)
+        )
         for file in self._patch.removed_files + self._patch.modified_files
     }
 

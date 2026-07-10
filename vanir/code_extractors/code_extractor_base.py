@@ -137,6 +137,32 @@ class Commit(metaclass=abc.ABCMeta):
       f.write(file_content)
       return f.name
 
+  def _get_unpatched_file_path(self, file: unidiff.PatchedFile) -> str:
+    """Returns the path to the unpatched file, handling renames safely.
+
+    Args:
+      file: The patched file from the diff.
+    """
+    # If a file is renamed, fetch its unpatched state using its original path
+    # (source_file) which Git prefixes with 'a/'. We strip this prefix to
+    # extract the valid path.
+
+    # Example:
+    #   https://android.googlesource.com/platform/frameworks/native/+/0cda11569dd256ff3220b4fe44f861f8081d7116%5E!/#F2
+    #
+    #   PatchedFile diff:
+    #     diff --git a/services/gpuservice/GpuService.h \
+    #       b/services/gpuservice/include/gpuservice/GpuService.h
+    #     rename from services/gpuservice/GpuService.h
+    #     rename to services/gpuservice/include/gpuservice/GpuService.h
+    #
+    #   The 'a/' prefix is removed from source_file
+    #   'a/services/gpuservice/GpuService.h' and returned as:
+    #   'services/gpuservice/GpuService.h'
+    if file.is_rename:
+      return file.source_file.removeprefix('a/')
+    return file.path
+
   @abc.abstractmethod
   def _get_description(self) -> Optional[str]:
     """Returns the commit description/message."""

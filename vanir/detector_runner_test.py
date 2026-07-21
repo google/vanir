@@ -4,6 +4,10 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
+# Disabling protected-access to allow unit testing of internal variables and
+# methods.
+# pylint: disable=protected-access
+
 """Tests for detector_runner module, verifying flag parsing and report generation."""
 
 import builtins
@@ -82,6 +86,7 @@ _TEST_VUL = {
 
 
 class TestScanner(scanner_base.ScannerBase):
+  """Mock scanner for testing."""
 
   def __init__(self, code_location: str, opt_arg: bool = True):
     """test_scanner init doc."""
@@ -162,6 +167,7 @@ class TestScanner2(InterimTestScanner):
 
 
 class TestNonCliScanner(scanner_base.ScannerBase):
+  """Mock non-CLI scanner for testing."""
 
   def __init__(
       self, required_arg: str, *vararg: str, kw_only: str
@@ -594,7 +600,9 @@ class DetectorRunnerTest(absltest.TestCase):
     expected_report_file = '/tmp/vanir/report-%s.json' % test_datetime.strftime(
         '%Y%m%d%H%M%S'
     )
-    mock_file_open.assert_has_calls([mock.call(expected_report_file, 'w')])
+    mock_file_open.assert_has_calls(
+        [mock.call(expected_report_file, 'w', encoding='utf-8')]
+    )
 
   def test_main_with_filter_flags(self):
     vul2 = copy.deepcopy(_TEST_VUL)

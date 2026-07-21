@@ -400,7 +400,7 @@ def _generate_json_report(
   json_report['options'] = ' '.join(sys.argv[1:])
   json_report['covered_cves'] = covered_cves
   json_report['missing_patches'] = missing_patches
-  with open(report_file_name, 'w') as report_file:
+  with open(report_file_name, 'w', encoding='utf-8') as report_file:
     json.dump(json_report, report_file, indent=4)
 
 
@@ -470,7 +470,7 @@ def _generate_html_report(
       errors=stats.errors,
   )
 
-  with open(report_file_name, 'w') as f:
+  with open(report_file_name, 'w', encoding='utf-8') as f:
     f.write(html_report)
 
 
@@ -519,7 +519,7 @@ def main(argv: Sequence[str]) -> None:
   json_output_file_name = output_file_name_prefix + '.json'
   html_output_file_name = output_file_name_prefix + '.html'
   for output_file_name in [json_output_file_name, html_output_file_name]:
-    report_file = open(output_file_name, 'w')
+    report_file = open(output_file_name, 'w', encoding='utf-8')
     report_file.close()
 
   scanner = scanner_class(*scanner_args, **scanner_kwargs)

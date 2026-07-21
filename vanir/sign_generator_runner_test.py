@@ -4,6 +4,11 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
+
+# Disabling protected-access to allow unit testing of internal variables and
+# methods.
+# pylint: disable=protected-access
+
 import builtins
 import datetime
 import json
@@ -198,7 +203,9 @@ class SignGeneratorRunnerTest(absltest.TestCase):
         extractor_config=mock.ANY,
     )
     expected_output_file = '/tmp/vanir/signature-20221004101000.json'
-    self.mock_file_open.assert_has_calls([mock.call(expected_output_file, 'w')])
+    self.mock_file_open.assert_has_calls(
+        [mock.call(expected_output_file, 'w', encoding='utf-8')]
+    )
     mock_file_write = self.mock_file_open().write
     mock_file_write.assert_called_once()
 
@@ -239,7 +246,9 @@ class SignGeneratorRunnerTest(absltest.TestCase):
     self.mock_get_vulns_for_packages.assert_called_once()
     self.mock_generate_signatures.assert_called_once()
     expected_output_file = _DESIGNATED_SIGNATURE_FILE_NAME
-    self.mock_file_open.assert_has_calls([mock.call(expected_output_file, 'w')])
+    self.mock_file_open.assert_has_calls(
+        [mock.call(expected_output_file, 'w', encoding='utf-8')]
+    )
     mock_file_write = self.mock_file_open().write
     mock_file_write.assert_called_once()
 

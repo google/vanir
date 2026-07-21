@@ -132,7 +132,7 @@ class KernelVersionExtractor(VersionExtractor):
     if not os.path.isfile(version_file_path):
       return None
 
-    with open(version_file_path) as vfile:
+    with open(version_file_path, 'rt', encoding='utf-8') as vfile:
       return cls._parse_makefile(vfile.read())
 
   @classmethod

@@ -145,7 +145,7 @@ def main(argv: Sequence[str]) -> None:
   deprecated_vulns = set()
   if _DEPRECATED_SIGNATURES.value:
     for deprecated_signs_file in _DEPRECATED_SIGNATURES.value:
-      with open(deprecated_signs_file, 'rt') as fd:
+      with open(deprecated_signs_file, 'rt', encoding='utf-8') as fd:
         for deprecated_signs_block in json.load(fd):
           deprecated_signs.update(
               deprecated_signs_block.get('signature_ids', ()))
@@ -158,7 +158,7 @@ def main(argv: Sequence[str]) -> None:
   exact_match_only_patches = set()
   if _EXACT_MATCH_ONLY_SIGNATURES.value:
     for exact_match_only_signs_file in _EXACT_MATCH_ONLY_SIGNATURES.value:
-      with open(exact_match_only_signs_file, 'rt') as fd:
+      with open(exact_match_only_signs_file, 'rt', encoding='utf-8') as fd:
         for exact_match_only_signs_block in json.load(fd):
           exact_match_only_signs.update(
               exact_match_only_signs_block.get('signature_ids', ()))
@@ -238,7 +238,7 @@ def main(argv: Sequence[str]) -> None:
       )
   )
 
-  with open(output_file, 'w') as f:
+  with open(output_file, 'w', encoding='utf-8') as f:
     f.write(vuln_manager.to_json())
 
 

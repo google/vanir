@@ -67,7 +67,7 @@ class OverwriteSpecValidityTest(absltest.TestCase):
     if _SIGNATURE_FILES.value:
       for signature_file in _SIGNATURE_FILES.value:
         logging.info('Loading vulnerabilities from %s', signature_file)
-        with open(signature_file) as f:
+        with open(signature_file, 'rt', encoding='utf-8') as f:
           signature_file_content = f.read()
           vulnerabilities.extend(json.loads(signature_file_content))
     return vulnerabilities

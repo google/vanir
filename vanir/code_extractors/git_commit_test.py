@@ -4,6 +4,10 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
+# Disabling protected-access to allow unit testing of internal variables and
+# methods.
+# pylint: disable=protected-access
+
 import os
 import subprocess
 import tempfile
@@ -92,7 +96,7 @@ class GitCommitTest(parameterized.TestCase):
     self.assertEqual(commit.patched_files.keys(), {'modified.txt', 'added.bin'})
     self.assertEqual(commit.unpatched_files.keys(), {'modified.txt', 'deleted'})
     modified_tmp_file = commit.get_file_at_rev('modified.txt')
-    with open(modified_tmp_file, 'rt') as f:
+    with open(modified_tmp_file, 'rt', encoding='utf-8') as f:
       self.assertEqual(f.read(), 'modified')
     added_tmp_file = commit.get_file_at_rev('added.bin')
     with open(added_tmp_file, 'rb') as f:
@@ -116,7 +120,7 @@ class GitCommitTest(parameterized.TestCase):
     self.assertEqual(commit.patched_files.keys(), {'modified.txt', 'added.bin'})
     self.assertEqual(commit.unpatched_files.keys(), {'modified.txt', 'deleted'})
     modified_tmp_file = commit.get_file_at_rev('modified.txt')
-    with open(modified_tmp_file, 'rt') as f:
+    with open(modified_tmp_file, 'rt', encoding='utf-8') as f:
       self.assertEqual(f.read(), 'modified')
     added_tmp_file = commit.get_file_at_rev('added.bin')
     with open(added_tmp_file, 'rb') as f:
@@ -181,12 +185,16 @@ class GitCommitTest(parameterized.TestCase):
     # create a merge commit in the test repo
     self._run_git(self.git_repo_dir, ['checkout', '-B', 'main'])
     self._run_git(self.git_repo_dir, ['checkout', '-B', 'branch1'])
-    with open(os.path.join(self.git_repo_dir, 'branch_file'), 'wt') as f:
+    with open(
+        os.path.join(self.git_repo_dir, 'branch_file'), 'wt', encoding='utf-8'
+    ) as f:
       f.write('branch_file')
     self._run_git(self.git_repo_dir, ['add', 'branch_file'])
     self._run_git(self.git_repo_dir, ['commit', '-m', 'branch_commit'])
     self._run_git(self.git_repo_dir, ['checkout', 'main'])
-    with open(os.path.join(self.git_repo_dir, 'main_file'), 'wt') as f:
+    with open(
+        os.path.join(self.git_repo_dir, 'main_file'), 'wt', encoding='utf-8'
+    ) as f:
       f.write('main_file')
     self._run_git(self.git_repo_dir, ['add', 'main_file'])
     self._run_git(self.git_repo_dir, ['commit', '-m', 'main_commit'])
@@ -211,11 +219,11 @@ class GitCommitTest(parameterized.TestCase):
     )
     modified_local_path = commit.get_file_at_rev('modified.txt')
     self.assertIsNotNone(modified_local_path)
-    with open(modified_local_path, 'rt') as f:
+    with open(modified_local_path, 'rt', encoding='utf-8') as f:
       self.assertEqual(f.read(), 'modified')
     unrelated_local_path = commit.get_file_at_rev('unrelated.txt')
     self.assertIsNotNone(unrelated_local_path)
-    with open(unrelated_local_path, 'rt') as f:
+    with open(unrelated_local_path, 'rt', encoding='utf-8') as f:
       self.assertEqual(f.read(), 'unchanged')
 
   def test_get_file_at_rev_fails_on_nonexistent_file(self):

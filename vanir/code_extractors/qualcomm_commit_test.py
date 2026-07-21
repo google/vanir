@@ -106,7 +106,7 @@ class QualcommCommitTest(parameterized.TestCase):
 
     self.assertEqual(commit.patched_files.keys(), {'modified.txt', 'added.bin'})
     patched_text_file_path = commit.patched_files['modified.txt']
-    with open(patched_text_file_path, 'r') as f:
+    with open(patched_text_file_path, 'r', encoding='utf-8') as f:
       self.assertEqual(f.read(), self._test_patched_file.decode('UTF-8'))
     patched_binary_file_path = commit.patched_files['added.bin']
     with open(patched_binary_file_path, 'rb') as f:
@@ -114,7 +114,7 @@ class QualcommCommitTest(parameterized.TestCase):
 
     self.assertEqual(commit.unpatched_files.keys(), {'modified.txt'})
     unpatched_text_file_path = commit.unpatched_files['modified.txt']
-    with open(unpatched_text_file_path, 'r') as f:
+    with open(unpatched_text_file_path, 'r', encoding='utf-8') as f:
       self.assertEqual(f.read(), self._test_unpatched_file.decode('UTF-8'))
 
   @parameterized.named_parameters(
@@ -147,7 +147,10 @@ class QualcommCommitTest(parameterized.TestCase):
   def test_commit_init_under_network_failure(self, commit_url):
     def mock_raise_for_status():
       raise requests.RequestException('bad network')
-    side_effect = lambda _: mock.Mock(raise_for_status=mock_raise_for_status)
+
+    def side_effect(_):
+      return mock.Mock(raise_for_status=mock_raise_for_status)
+
     self._mock_session.get.side_effect = side_effect
     with self.assertRaisesRegex(
         code_extractor_base.CommitDataFetchError,
@@ -216,11 +219,11 @@ class QualcommCommitTest(parameterized.TestCase):
     )
     file_tmp_path = commit.get_file_at_rev('unrelated.txt')
     self.assertIsNotNone(file_tmp_path)
-    with open(file_tmp_path, 'r') as f:
+    with open(file_tmp_path, 'r', encoding='utf-8') as f:
       self.assertEqual(f.read(), self._test_unrelated_file.decode('UTF-8'))
     del commit
     with self.assertRaises(FileNotFoundError):
-      open(file_tmp_path, 'r')
+      open(file_tmp_path, 'r', encoding='utf-8')
 
   def test_init_with_unrelated_args(self):
     commit = qualcomm_commit.QualcommCommit(

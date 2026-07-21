@@ -54,7 +54,7 @@ def _create_init_file() -> None:
   This function creates an empty __init__.py file in the vanir directory. This
   file is needed for the package to be recognized as a Python package.
   """
-  with open(_INIT_FILE_PATH, 'w') as f:
+  with open(_INIT_FILE_PATH, 'w', encoding='utf-8') as f:
     f.write('''# Copyright 2025 Google LLC
 #
 # Use of this source code is governed by a BSD-style

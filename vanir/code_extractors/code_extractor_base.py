@@ -291,7 +291,7 @@ class Commit(metaclass=abc.ABCMeta):
     """
     return self._affected_line_ranges.get(file_path, [])
 
-  
+
   @functools.cached_property
   def raw_patch(self) -> str:
     """Returns the raw patch string of the given commit."""

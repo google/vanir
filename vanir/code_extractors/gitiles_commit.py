@@ -31,7 +31,7 @@ class GitilesCommit(code_extractor_base.Commit):
   uses, e.g. for proxying HTTP requests through firewalls, or for testing.
   """
 
-  
+
   _KNOWN_GITILES_HOSTS = (
       'android.googlesource.com',
   )

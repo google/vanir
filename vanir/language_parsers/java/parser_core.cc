@@ -234,7 +234,7 @@ void FileListener::enterMethodCall(JavaParser::MethodCallContext* ctx) {
       chunks_stack_.top()->called_functions_.push_back(
           ctx->identifier()->getText());
     }
-    
+
     // because we don't want Vanir normalizer to normallize these as other
     // generic FUNCCALL's. Needs more investigation to know whether we should.
   }

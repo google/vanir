@@ -65,7 +65,7 @@ def antlr4_cc_gen(name, srcs, cc_namespace, cc_files_prefix, antlr4_ver, listene
             ":{target}_src".format(target = name),
             "@antlr4_runtimes//:cpp",
         ],
-        linkstatic = 1,  
+        linkstatic = 1,
     )
 
 def gen_java_parsers(name = "gen_java_parsers"):

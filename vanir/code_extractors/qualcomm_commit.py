@@ -82,7 +82,7 @@ class QualcommCommit(code_extractor_base.Commit):
     Returns:
       Code Linaro commit URL corresponding to the given Code Aurora commit URL.
     """
-    
+
     # Repos in 'quic/le' are migrated to project group 'la'.
     url = aurora_url.replace(
         cls.code_aurora_quic_repo_prefix + '/le/',

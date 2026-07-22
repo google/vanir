@@ -73,7 +73,8 @@ class AbstractLanguageParser(abc.ABC):
           return new_file.name
       except ValueError:  # Try other encodings on decoding failure
         continue
+    alt_encodings_str = ', '.join(_ALTERNATIVE_ENCODINGS)
     raise ValueError(
-        'Failed to decode %s. Tried encodings: UTF-8, %s'
-        % (filename, ', '.join(_ALTERNATIVE_ENCODINGS))
+        f'Failed to decode {filename}. Tried encodings: UTF-8,'
+        f' {alt_encodings_str}'
     )

@@ -160,7 +160,7 @@ class RepoScanner(scanner_base.ScannerBase):
     for line in stdout.strip().splitlines():
       match = re.match(r'(?P<subdir>.*) : (?P<proj>.*)', line)
       if not match:
-        raise ValueError('Unexpected repo command output: "%s"' % line)
+        raise ValueError(f'Unexpected repo command output: "{line}"')
       match_dict = match.groupdict()
       subdir = match_dict['subdir']
       if not os.path.isdir(os.path.join(self._code_location, subdir)):

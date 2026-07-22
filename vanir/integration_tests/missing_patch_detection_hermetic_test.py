@@ -94,28 +94,34 @@ def _fake_gitiles_response(url: str):
     if m := re.fullmatch(_FULL_SHA_URL_PATTERN, url):
       res = _FULL_SHA[m.group('sha')]
     elif m := re.fullmatch(_PATCH_INFO_URL_PATTERN, url):
-      fake_source = f'{_GITILES_TESTDATA_DIR}{m.group("sha")}.patchinfo.base64'
+      sha = m.group('sha')
+      fake_source = f'{_GITILES_TESTDATA_DIR}{sha}.patchinfo.base64'
       res = resources.files('vanir').joinpath(fake_source).read_bytes()
     elif m := re.fullmatch(_PATCH_URL_PATTERN, url):
-      fake_source = f'{_GITILES_TESTDATA_DIR}{m.group("sha")}.patch.base64'
+      sha = m.group('sha')
+      fake_source = f'{_GITILES_TESTDATA_DIR}{sha}.patch.base64'
       res = resources.files('vanir').joinpath(fake_source).read_bytes()
     elif m := re.fullmatch(_FILE_URL_PATTERN, url):
-      fake_source = (f'{_GITILES_TESTDATA_DIR}{m.group("sha")}_'
-                     f'{m.group("file").replace("/", "_")}.base64')
+      sha = m.group('sha')
+      file_path = m.group('file').replace('/', '_')
+      fake_source = f'{_GITILES_TESTDATA_DIR}{sha}_{file_path}.base64'
       res = resources.files('vanir').joinpath(fake_source).read_bytes()
     elif m := re.fullmatch(_BRANCH_TIP_FILE_URL_PATTERN, url):
-      fake_source = (f'{_GITILES_TESTDATA_DIR}{m.group("branch")}_'
-                     f'{m.group("file").replace("/", "_")}.base64')
+      branch = m.group('branch')
+      file_path = m.group('file').replace('/', '_')
+      fake_source = f'{_GITILES_TESTDATA_DIR}{branch}_{file_path}.base64'
       res = resources.files('vanir').joinpath(fake_source).read_bytes()
     else:
-      raise RuntimeError('Unexpected gitiles URL: "%s"' % url)
+      raise RuntimeError(f'Unexpected gitiles URL: "{url}"')
 
   except FileNotFoundError as e:
     # File is not found; simulate a 404 (e.g. newly created file)
     logging.warning('Fake response not found for: "%s". Returning 404.', url)
     return _mock_request_error(str(e), 404)
 
-  logging.info('Faking "%s" --> "%s" (%d bytes)', url, fake_source, len(res))
+  logging.info(
+      'Faking "%s" --> "%s" (%d bytes)', url, fake_source, len(res)
+  )
   return absltest.mock.MagicMock(text=res, ok=True, status=200)
 
 
@@ -124,7 +130,7 @@ def _make_fake_osv_response(json_str: str) -> Callable[[str, str], Any]:
   """
   def fake_osv_response(url: str, data: str) -> Any:
     if _OSV_QUERY_URL not in url:
-      raise RuntimeError('Unexpected POST URL: "%s"' % url)
+      raise RuntimeError(f'Unexpected POST URL: "{url}"')
     data_json = json.loads(data)
     vulns_json = json.loads(json_str)
     if ('package' not in data_json
@@ -136,7 +142,8 @@ def _make_fake_osv_response(json_str: str) -> Callable[[str, str], Any]:
     elif data_json['page_token'] == 'token':
       res = json.dumps({'vulns': vulns_json[-1:]})
     else:
-      raise RuntimeError('Unexpected page token "%s"' % data_json['page_token'])
+      page_token = data_json['page_token']
+      raise RuntimeError(f'Unexpected page token "{page_token}"')
     return absltest.mock.MagicMock(text=res, ok=True, status=200)
 
   return fake_osv_response
@@ -258,10 +265,11 @@ class MissingPatchDetectionHermeticTest(
       unpatched_vuls = []
       for osv_id, summaries in summaries_per_vul.items():
         summaries = sorted(summaries)
-        summaries.append('OSV: %s' % osv_client.get_osv_url(osv_id))
+        summaries.append(f'OSV: {osv_client.get_osv_url(osv_id)}')
         cve_ids = vul_manager.osv_id_to_cve_ids(osv_id)
         if cve_ids:
-          summaries.append('CVE: %s' % ', '.join(cve_ids))
+          cves_str = ', '.join(cve_ids)
+          summaries.append(f'CVE: {cves_str}')
         pass
         unpatched_vuls.append(osv_id)
 

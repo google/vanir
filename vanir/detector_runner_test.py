@@ -450,8 +450,8 @@ class DetectorRunnerTest(absltest.TestCase):
         json_report['missing_patches'], expected_missing_patches
     )
     expected_stdout = (
-        r'Found [0-9]+ potentially unpatched vulnerabilities: %s, %s'
-        % (_TEST_CVE_ID1, _TEST_CVE_ID2) +
+        rf'Found [0-9]+ potentially unpatched vulnerabilities: {_TEST_CVE_ID1},'
+        rf' {_TEST_CVE_ID2}'
         r'\nDetailed report:\n.*'
     )
     self.assertRegex(mock_stdout.getvalue(), expected_stdout)
@@ -593,13 +593,13 @@ class DetectorRunnerTest(absltest.TestCase):
     with mock.patch.object(datetime.datetime, 'now') as mock_now:
       mock_now.return_value = test_datetime
       with flagsaver.flagsaver(
-          vulnerability_file_name=[self._test_vul_file.full_path]):
+          vulnerability_file_name=[self._test_vul_file.full_path]
+      ):
         with mock.patch.object(os.path, 'isfile', autospec=True):
           with mock.patch.object(builtins, 'open', mock_file_open):
             detector_runner.main(['', 'test_scanner', _TEST_TARGET_ROOT])
-    expected_report_file = '/tmp/vanir/report-%s.json' % test_datetime.strftime(
-        '%Y%m%d%H%M%S'
-    )
+    date_str = test_datetime.strftime('%Y%m%d%H%M%S')
+    expected_report_file = f'/tmp/vanir/report-{date_str}.json'
     mock_file_open.assert_has_calls(
         [mock.call(expected_report_file, 'w', encoding='utf-8')]
     )
@@ -726,28 +726,24 @@ class DetectorRunnerTest(absltest.TestCase):
       ):
         detector_runner.main(['', 'test_scanner', _TEST_TARGET_ROOT])
     self.assertIn(
-        'The scanned target directory contains only %d file(s) supported by'
-        ' Vanir. Please confirm that this is intended.'
-        % (_TEST_ANALYZED_FILES + _TEST_SKIPPED_FILES),
+        'The scanned target directory contains only'
+        f' {_TEST_ANALYZED_FILES + _TEST_SKIPPED_FILES} file(s) supported by'
+        ' Vanir. Please confirm that this is intended.',
         ' '.join(logs.output),
     )
 
   def test_main_logs_error_when_target_has_too_few_analyzed_files(self):
-    medium_threshold = _TEST_ANALYZED_FILES + _TEST_SKIPPED_FILES
     with self.assertLogs(level=logging.ERROR) as logs:
       with flagsaver.flagsaver(
           vulnerability_file_name=[self._test_vul_file.full_path],
           report_file_name_prefix=self._report_file_prefix,
-          minimum_number_of_files=medium_threshold,
+          minimum_number_of_files=_TEST_ANALYZED_FILES + _TEST_SKIPPED_FILES,
       ):
         detector_runner.main(['', 'test_scanner', _TEST_TARGET_ROOT])
     self.assertIn(
-        'The scanned target directory contains only %d file(s) analyzed by'
-        ' Vanir (%d file(s) were skipped).'
-        % (
-            _TEST_ANALYZED_FILES,
-            _TEST_SKIPPED_FILES,
-        ),
+        f'The scanned target directory contains only {_TEST_ANALYZED_FILES}'
+        f' file(s) analyzed by Vanir ({_TEST_SKIPPED_FILES} file(s) were'
+        ' skipped).',
         ' '.join(logs.output),
     )
 

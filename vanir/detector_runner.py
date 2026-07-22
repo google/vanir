@@ -290,10 +290,11 @@ def _get_scanner_usage_str(scanner: Type[ScannerClass]) -> str:
       if scanner.__doc__ else ''
   )
   sample_json_args = f'\'{{"{arg_strs[0]}": "some_value..."}}\''
+  joined_args = ' '.join(arg_strs)
   return (
       f'Documentation for {scanner.name()}:\n'
       '  Usage (with positional args):\n'
-      f'    detector_runner.py {scanner.name()} {" ".join(arg_strs)}\n\n'
+      f'    detector_runner.py {scanner.name()} {joined_args}\n\n'
       '  Usage (with argument json object):\n'
       f'    detector_runner.py {scanner.name()} '
       f'--scanner_args={sample_json_args}\n\n'
@@ -477,8 +478,9 @@ def _generate_html_report(
 def main(argv: Sequence[str]) -> None:
   scanners = _get_all_scanners()
   scanners_list_str = '\n\n'.join(
-      f'- {scanner.name()}: {scanner.__doc__ if scanner.__doc__ else ""}'
-      for scanner in scanners.values())
+      f'- {scanner.name()}: {scanner.__doc__ or str()}'
+      for scanner in scanners.values()
+  )
   if len(argv) <= 0 or (len(argv) <= 1 and not _SCANNER.value):
     raise app.UsageError(
         f'Scanner is not specified. Known scanners:\n{scanners_list_str}')
@@ -509,10 +511,8 @@ def main(argv: Sequence[str]) -> None:
   # Check if output file can be generated before start scanning.
   output_file_name_prefix = _REPORT_FILE_NAME_PREFIX.value
   if not output_file_name_prefix:
-    output_file_name_prefix = (
-        '/tmp/vanir/report-%s'
-        % datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-    )
+    date_str = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+    output_file_name_prefix = f'/tmp/vanir/report-{date_str}'
 
   directory = os.path.dirname(os.path.realpath(output_file_name_prefix))
   os.makedirs(directory, exist_ok=True)
@@ -578,12 +578,13 @@ def main(argv: Sequence[str]) -> None:
         stats.skipped_files,
     )
 
+  cves_str = ', '.join(unpatched_cves)
   message = (
       f'Scanned {stats.analyzed_files} source files '
       f'(skipped {stats.skipped_files} source files likely unaffected by '
       'known vulnerabilities).\n'
       f'Found {len(unpatched_cves)} potentially unpatched vulnerabilities: '
-      f'{", ".join(unpatched_cves)}\n'
+      f'{cves_str}\n'
       f'Detailed report:\n - {html_output_file_name}\n'
       f' - {json_output_file_name}'
   )

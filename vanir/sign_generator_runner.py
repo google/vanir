@@ -167,8 +167,8 @@ def main(argv: Sequence[str]) -> None:
 
   output_file = _SIGNATURE_FILE_NAME.value
   if not output_file:
-    output_file = '/tmp/vanir/signature-%s.json' % datetime.datetime.now(
-    ).strftime('%Y%m%d%H%M%S')
+    timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+    output_file = f'/tmp/vanir/signature-{timestamp}.json'
   directory = os.path.dirname(os.path.realpath(output_file))
   os.makedirs(directory, exist_ok=True)
 

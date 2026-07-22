@@ -62,17 +62,17 @@ class ReporterTest(absltest.TestCase):
         vulnerability_manager.VulnerabilityManager, instance=True
     )
     mock_vul_manager.sign_id_to_osv_id.side_effect = (
-        lambda sign_id: 'osv-id-%s' % sign_id[-1]
+        lambda sign_id: f'osv-id-{sign_id[-1]}'
     )
     mock_vul_manager.osv_id_to_cve_ids.side_effect = (
         lambda osv_id: [osv_id.replace('osv', 'cve')]
     )
     test_report_book = reporter.ReportBook(reports, mock_vul_manager)
-    expected_unpatched_vuls = ['osv-id-%d' % i for i in range(10)]
+    expected_unpatched_vuls = [f'osv-id-{i}' for i in range(10)]
     self.assertEqual(
         test_report_book.unpatched_vulnerabilities, expected_unpatched_vuls
     )
-    expected_unpatched_cves = ['cve-id-%d' % i for i in range(10)]
+    expected_unpatched_cves = [f'cve-id-{i}' for i in range(10)]
     self.assertEqual(test_report_book.unpatched_cves, expected_unpatched_cves)
     embedded_reports = []
     for osv_id in test_report_book.unpatched_vulnerabilities:

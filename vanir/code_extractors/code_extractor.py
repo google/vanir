@@ -51,8 +51,9 @@ def _get_extractor_class(ecosystem: str) -> Optional[Type[_P]]:
     return None
   if len(found_extractors) > 1:
     raise DuplicatedCodeExtractorError(
-        'Multiple code extractors supported ecosystem "%s": %s' %
-        (ecosystem, found_extractors))
+        f'Multiple code extractors supported ecosystem "{ecosystem}":'
+        f' {found_extractors}'
+    )
   return found_extractors[0]
 
 

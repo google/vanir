@@ -95,7 +95,7 @@ class QualcommCommit(code_extractor_base.Commit):
     match = re.search('id=[a-f0-9]{7,40}', url_commit_suffix)
     if match is None:
       raise code_extractor_base.IncompatibleUrlError(
-          'Invalid Code Aurora commit URL: %s' % aurora_url
+          f'Invalid Code Aurora commit URL: {aurora_url}'
       )
     commit_hash = match.group().replace('id=', '')
     return '/'.join([url_prefix, 'commit', commit_hash])
@@ -122,7 +122,7 @@ class QualcommCommit(code_extractor_base.Commit):
         ValueError,
     ) as e:
       raise code_extractor_base.CommitDataFetchError(
-          'Failed to fetch valid commit data from %s' % url
+          f'Failed to fetch valid commit data from {url}'
       ) from e
     return response.text
 
@@ -135,7 +135,7 @@ class QualcommCommit(code_extractor_base.Commit):
     path_with_namespace = urllib.parse.quote(path_with_namespace, safe='')
     match = re.search('[a-f0-9]{7,40}', url_commit_suffix)
     if match is None:
-      raise ValueError('Invalid Code Linaro commit URL: %s' % self.url)
+      raise ValueError(f'Invalid Code Linaro commit URL: {self.url}')
     commit_hash = match.group()
     api_format = (
         'https://git.codelinaro.org/api/v4/projects/%s/repository/commits/%s'

@@ -149,8 +149,7 @@ def _get_target_truncated_path_set(
     except truncated_path.PathLevelError as error:
       # The signature's TP level is invalid.
       raise ValueError(
-          'The signature %s has invalid Truncated Path Level.'
-          % (sign.signature_id)
+          f'The signature {sign.signature_id} has invalid Truncated Path Level.'
       ) from error
     target_truncated_path_set.add(tp)
   return target_truncated_path_set

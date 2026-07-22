@@ -135,8 +135,9 @@ class _TokenTrie:
     next_index = None
 
     if index >= len(tokens):
-      raise IndexError('Index:%d is out of boundary of tokens (max:%d)' %
-                       (index, len(tokens) - 1))
+      raise IndexError(
+          f'Index:{index} is out of boundary of tokens (max:{len(tokens) - 1})'
+      )
 
     end_index = index
     subtrie = self._trie
@@ -186,8 +187,10 @@ def normalize_function_chunk(
     token_trie.insert_entry([called_function], _AbstractedToken.FUNCTION_CALL)
   for data_type in function_chunk_base.used_data_types:
     token_trie.insert_entry(data_type, _AbstractedToken.DATA_TYPE)
-  token_trie.insert_entry(sum(function_chunk_base.return_types, []),  # pyrefly: ignore[no-matching-overload]
-                          _AbstractedToken.DATA_TYPE)
+  # pyrefly: ignore[no-matching-overload]
+  token_trie.insert_entry(
+      sum(function_chunk_base.return_types, []), _AbstractedToken.DATA_TYPE
+  )
 
   normalized_code = ' '.join(
       token_trie.generate_normalized_tokens(function_chunk_base.tokens))

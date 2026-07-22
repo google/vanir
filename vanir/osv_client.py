@@ -77,11 +77,9 @@ class OsvClient:
 
   def get_vuln(self, osv_id: str) -> Dict[str, Any]:
     """Retrieve specific vulnerability for the given OSV ID from OSV."""
-    osv_vulnerability_url = '%s%s/%s?key=%s' % (
-        self._osv_url_base,
-        _OSV_VULNERABILITY_POSTFIX,
-        osv_id,
-        self._osv_api_key,
+    osv_vulnerability_url = (
+        f'{self._osv_url_base}{_OSV_VULNERABILITY_POSTFIX}/'
+        f'{osv_id}?key={self._osv_api_key}'
     )
     response = self._session.get(osv_vulnerability_url)
     return json.loads(response.text)
@@ -92,10 +90,8 @@ class OsvClient:
     """Retrieve all vulns in the given ecosystem and package list from OSV."""
     vulnerabilities = []
     for package_name in package_names:
-      osv_query_url = '%s%s?key=%s' % (
-          self._osv_url_base,
-          _OSV_QUERY_POSTFIX,
-          self._osv_api_key,
+      osv_query_url = (
+          f'{self._osv_url_base}{_OSV_QUERY_POSTFIX}?key={self._osv_api_key}'
       )
       payload = {
           'package': {
@@ -106,16 +102,18 @@ class OsvClient:
       while True:
         response = self._session.post(osv_query_url, data=json.dumps(payload))
         if 'code' in response.json():
+          res_json = response.json()
+          code = res_json['code']
+          msg = res_json.get('message', '')
           logging.error(
               'Failed to get OSV vulns for %s (code: %s, reason: %s)',
               package_name,
-              response.json()['code'],
-              response.json().get('message', ''),
+              code,
+              msg,
           )
           raise RuntimeError(
-              f'Failed to get OSV vulns for {package_name} (code:'
-              f' {response.json()["code"]}, reason:'
-              f' {response.json()["message"]})'
+              f'Failed to get OSV vulns for {package_name} (code: {code}, '
+              f'reason: {msg})'
           )
         osv_data = json.loads(response.text)
         vulnerabilities += osv_data.get(_OSV_VULNERABILITIES, [])

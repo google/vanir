@@ -102,7 +102,7 @@ def _generate_commit(url: str, **kwargs) -> code_extractor_base.Commit:
         code_extractor_base.CommitDataFetchError,
     ):
       continue
-  raise ValueError('Unknown commit URL: %s' % url)
+  raise ValueError(f'Unknown commit URL: {url}')
 
 
 class AndroidCodeExtractor(code_extractor_base.AbstractCodeExtractor):

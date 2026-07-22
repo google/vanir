@@ -196,7 +196,8 @@ class Signature(metaclass=abc.ABCMeta):
     if self.truncated_path_level:
       osv_dict['target']['truncated_path_level'] = self.truncated_path_level
     if self.match_only_versions:
-      osv_dict['match_only_versions'] = sorted(list(self.match_only_versions))  # pyrefly: ignore[bad-assignment]
+      # pyrefly: ignore[bad-assignment]
+      osv_dict['match_only_versions'] = sorted(list(self.match_only_versions))
     return osv_dict
 
   @classmethod
@@ -262,8 +263,9 @@ class FunctionSignature(Signature):
   target_function: str
 
   def __str__(self):
-    return 'Function signature for %s() in %s' % (self.target_function,
-                                                  self.target_file)
+    return (
+        f'Function signature for {self.target_function}() in {self.target_file}'
+    )
 
   @property
   def signature_type(self) -> SignatureType:
@@ -303,11 +305,13 @@ class LineSignature(Signature):
 
   def __post_init__(self):
     if not 0 <= self.threshold <= 1:
-      raise ValueError('Invalid line signature threshold: %f. Line signature '
-                       'threshold must be between 0 and 1.' % self.threshold)
+      raise ValueError(
+          f'Invalid line signature threshold: {self.threshold:f}. Line'
+          ' signature threshold must be between 0 and 1.'
+      )
 
   def __str__(self):
-    return 'Line signature for %s' % self.target_file
+    return f'Line signature for {self.target_file}'
 
   def __hash__(self) -> int:  # convert line_hashes to tuple to be hashable
     return hash((super().__hash__(), tuple(self.line_hashes), self.threshold))
@@ -524,7 +528,7 @@ class SignatureBundle:
     elif isinstance(chunk, LineChunk):
       return self.match_line_chunk(chunk)
     else:
-      raise TypeError('The type of given chunk %s is unknown.' % type(chunk))
+      raise TypeError(f'The type of given chunk {type(chunk)} is unknown.')
 
   def match_function_chunk(self, chunk: FunctionChunk) -> Sequence[Signature]:
     """Returns function signatures matching the given function chunk."""

@@ -102,7 +102,7 @@ class GitilesCommit(code_extractor_base.Commit):
       except (requests.RequestException, ValueError):
         continue  # Retry as long as there is next trial candidate.
     raise code_extractor_base.CommitDataFetchError(
-        'Failed to fetch valid commit data from %s' % url
+        f'Failed to fetch valid commit data from {url}'
     )
 
   def _extract_patched_files(self) -> Mapping[str, str]:

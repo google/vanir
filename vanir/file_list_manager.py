@@ -57,4 +57,4 @@ def get_file_lists(
     file_lists = json.loads(resource)
     return file_lists
   else:
-    raise ValueError('Unknown file list source: %s' % source)
+    raise ValueError(f'Unknown file list source: {source}')

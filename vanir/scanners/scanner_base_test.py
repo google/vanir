@@ -367,21 +367,14 @@ class ScannerBaseTest(absltest.TestCase):
     self.assertEqual(reports[1].unpatched_function_name, '')
     self.assertEqual(
         reports[0].get_simple_report(),
-        '%s::%s()'
-        % (
-            self._mock_function_chunk_foo.target_file,
-            self._mock_function_chunk_foo.base.name,
-        ),
+        f'{self._mock_function_chunk_foo.target_file}::'
+        f'{self._mock_function_chunk_foo.base.name}()',
     )
     self.assertEqual(
         reports[0].get_simple_report(include_patch_source=True),
-        '%s::%s()  (patch:%s, signature:%s)'
-        % (
-            self._mock_function_chunk_foo.target_file,
-            self._mock_function_chunk_foo.base.name,
-            test_sign1.source,
-            test_sign1.signature_id,
-        ),
+        f'{self._mock_function_chunk_foo.target_file}::'
+        f'{self._mock_function_chunk_foo.base.name}()  '
+        f'(patch:{test_sign1.source}, signature:{test_sign1.signature_id})',
     )
     self.assertEqual(
         reports[1].get_simple_report(),
@@ -389,12 +382,8 @@ class ScannerBaseTest(absltest.TestCase):
     )
     self.assertEqual(
         reports[1].get_simple_report(include_patch_source=True),
-        '%s  (patch:%s, signature:%s) (matched from target.c)'
-        % (
-            mock_line_chunk.target_file,
-            test_sign2.source,
-            test_sign2.signature_id,
-        ),
+        f'{mock_line_chunk.target_file}  (patch:{test_sign2.source}, '
+        f'signature:{test_sign2.signature_id}) (matched from target.c)',
     )
 
   def test_scanner_with_unexpected_crash(self):

@@ -207,7 +207,8 @@ def _parse_file(
       file_path=file_path,
       target_file=os.path.relpath(file_path, code_location))
   chunks = list(file_parser.get_function_chunks())
-  chunks.append(file_parser.get_line_chunk())  # pyrefly: ignore[bad-argument-type]
+  # pyrefly: ignore[bad-argument-type]
+  chunks.append(file_parser.get_line_chunk())
   return chunks
 
 
@@ -249,7 +250,8 @@ def scan(
   # pool is considered "broken" at that point.
   result_futures = []
   with concurrent.futures.ProcessPoolExecutor(
-      max_workers=min(len(to_scan), os.cpu_count()),  # pyrefly: ignore[bad-specialization]
+      # pyrefly: ignore[bad-specialization]
+      max_workers=min(len(to_scan), os.cpu_count()),
       mp_context=multiprocessing.get_context('forkserver'),
   ) as executor:
     for file in to_scan:
@@ -271,7 +273,7 @@ def scan(
           logging.debug(
               '%s%s matches signature %s)',
               chunk.target_file,
-              '::%s()' % unpatched_function if unpatched_function else '',
+              f'::{unpatched_function}()' if unpatched_function else '',
               matched_sign.signature_id)
     except concurrent.futures.process.BrokenProcessPool:
       logging.error('A worker died unexpectedly while processing %s', file)

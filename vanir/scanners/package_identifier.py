@@ -106,7 +106,8 @@ class PackageIdentifier:
       True if the package is mapped to the repository; False, otherwise.
     """
 
-    package_name = self.get_package_name_if_signature_exist(package_name)  # pyrefly: ignore[bad-assignment]
+    # pyrefly: ignore[bad-assignment]
+    package_name = self.get_package_name_if_signature_exist(package_name)
 
     package_truncated_paths = self.get_truncated_paths(package_name)
 

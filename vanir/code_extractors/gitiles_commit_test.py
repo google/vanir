@@ -58,7 +58,7 @@ class GitilesCommitTest(parameterized.TestCase):
     ).read_bytes()
     self._test_unpatched_file = resources.files('vanir').joinpath(_TEST_UNPATCHED_FILE_PATH).read_bytes()
     self._test_unrelated_file = resources.files('vanir').joinpath(_TEST_UNRELATED_FILE_PATH).read_bytes()
-    self._test_commit_message = 'parent %s' % _TEST_PARENT_COMMIT
+    self._test_commit_message = f'parent {_TEST_PARENT_COMMIT}'
 
     self._mock_get_returnval_map = {
         # Android Commit URL requests.

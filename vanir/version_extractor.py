@@ -73,7 +73,7 @@ def extract_version(
       versions[cls] = ver
   if len(versions) > 1:
     raise RuntimeError(
-        'Multiple versions were found from the target root: %s' % versions
+        f'Multiple versions were found from the target root: {versions}'
     )
   if len(versions) < 1:
     return None
@@ -126,7 +126,7 @@ class KernelVersionExtractor(VersionExtractor):
   def extract_version(cls, target_root: str) -> Optional[str]:
     target_root = os.path.abspath(target_root)
     if not os.path.isdir(target_root):
-      raise ValueError('Invalid directory: %s' % target_root)
+      raise ValueError(f'Invalid directory: {target_root}')
 
     version_file_path = os.path.join(target_root, cls._get_version_file())
     if not os.path.isfile(version_file_path):
@@ -168,5 +168,5 @@ class KernelVersionExtractor(VersionExtractor):
     for name in ordered_names:
       if not version_info[name]:
         return kernelversion
-      kernelversion += '%s%s' % (delimiters[name], version_info[name])
+      kernelversion += f'{delimiters[name]}{version_info[name]}'
     return kernelversion

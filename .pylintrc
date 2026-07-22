@@ -273,7 +273,7 @@ ignore-long-lines=(?x)(
 
   # 4. Ignores these lines as they are auto-generated.
   ^.*file_path_utils\.get_root_file_path.*$|
-  ^.*open\(.*mode='rb'\)\.read\(\).*$|
+  ^.*resources\.files\('vanir'\)\.joinpath.*$|
 
   # 5. Ignores the first line of docstrings (starting with triple quotes).
   # Example (from vanir/vulnerability_manager.py):

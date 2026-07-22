@@ -32,7 +32,8 @@ class CppParser(abstract_language_parser.AbstractLanguageParser):
       self.parser_core.init()
     except status.StatusNotOk as e:
       if (
-          e.code == status.StatusCode.INVALID_ARGUMENT.value  # pyrefly: ignore[missing-attribute]
+          # pyrefly: ignore[missing-attribute]
+          e.code == status.StatusCode.INVALID_ARGUMENT.value
           and e.message == _ANTLR4_DECODE_ERROR
       ):
         # If encoding problem, try again after converting to UTF-8.
@@ -46,7 +47,8 @@ class CppParser(abstract_language_parser.AbstractLanguageParser):
         raise e
 
   @classmethod
-  def get_supported_extensions(cls) -> Iterable[str]:  # pyrefly: ignore[bad-override]
+  # pyrefly: ignore[bad-override]
+  def get_supported_extensions(cls) -> Iterable[str]:
     return ['.c', '.h', '.cc', '.hh', '.cpp', '.hpp', '.cxx', '.hxx']
 
   def _to_standard_function_chunk_base(

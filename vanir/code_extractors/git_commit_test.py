@@ -202,8 +202,9 @@ class GitCommitTest(parameterized.TestCase):
     merge_commit = self._run_git(self.git_repo_dir, ['rev-parse', 'HEAD'])
 
     with self.assertRaises(code_extractor_base.CommitDataFetchError):
+      decoded_commit = merge_commit.decode('utf-8').strip()
       git_commit.GitCommit(
-          f'file://{self.git_repo_dir}@{merge_commit.decode("utf-8").strip()}',
+          f'file://{self.git_repo_dir}@{decoded_commit}',
           git_path=self.git_bin,
           git_exec_path=self.exec_path,
           git_working_dir=self.create_tempdir().full_path,

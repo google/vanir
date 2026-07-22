@@ -126,8 +126,9 @@ class OverwriteSpecValidityTest(absltest.TestCase):
         # does not raise an error if no matches are found.
         for replace in overwrite_specs_map[vulnerability['id']].replace:
           if not replace.path.find(vulnerability):
+            vuln_id = vulnerability['id']
             self.fail(
-                f'Overwrite spec for {vulnerability["id"]} has a path yielding '
+                f'Overwrite spec for {vuln_id} has a path yielding '
                 'no matches.'
             )
 
@@ -140,7 +141,7 @@ class OverwriteSpecValidityTest(absltest.TestCase):
         'All overwrite specs are loaded correctly and have required fields, but'
         ' some specs do not match any vulnerabilities in the signature files. '
         'You may suppress this error by setting --no_signature_validation=True.'
-        ' Missing vulnerabilities: %s' % target_vulnerabilities,
+        f' Missing vulnerabilities: {target_vulnerabilities}',
     )
 
 

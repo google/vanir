@@ -185,5 +185,6 @@ class CodeExtractorLinuxTest(parameterized.TestCase):
     self.assertEmpty(commits)
     self.assertEmpty(failures)
 
+
 if __name__ == '__main__':
   absltest.main()

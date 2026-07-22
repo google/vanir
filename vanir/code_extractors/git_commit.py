@@ -39,7 +39,8 @@ _CGIT_URL_PATTERN = re.compile(
 # https://git.kernel.org/stable/c/dc59e4fea9d8
 # https://git.kernel.org/bpf/bpf/c/26490a375cb9
 _GIT_KERNEL_SHORT_PATTERN = re.compile(
-    r'(?P<remote>[^:]+://git\.kernel\.org/)(?P<path>[^/]+(/(?!c/)[^/]+){0,2})/(c/)?(?P<rev>[0-9a-fA-F]+)'
+    r'(?P<remote>[^:]+://git\.kernel\.org/)(?P<path>[^/]+(/(?!c/)[^/]+)'
+    r'{0,2})/(c/)?(?P<rev>[0-9a-fA-F]+)'
 )
 
 # Matches the first line of a CGit patch, e.g.:

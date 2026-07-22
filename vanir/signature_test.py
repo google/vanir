@@ -128,7 +128,7 @@ class SignatureTest(parameterized.TestCase):
     hash_line_chunk.assert_called_once()
     self.assertEqual(chunk.line_hashes, [])
     self.assertEqual(chunk.used_lines, [])
-    self.assertIn('The line chunk of %s has no hash.' % test_target_file,
+    self.assertIn(f'The line chunk of {test_target_file} has no hash.',
                   logs.output[0])
 
   def test_function_signature_creation_from_function_chunk(self):
@@ -512,10 +512,12 @@ class SignatureTest(parameterized.TestCase):
     with self.assertLogs(level=logging.WARNING) as logs:
       sign_bundle = signature.SignatureBundle([test_signature])
     self.assertIn(
-        'Signature %s is disregarded due to version mismatch: (current ver: '
-        '%s, the signature ver: %s)' %
-        (test_signature.signature_id, signature._VANIR_SIGNATURE_VERSION,
-         test_signature.signature_version), logs.output[0])
+        f'Signature {test_signature.signature_id} is disregarded due to '
+        'version mismatch: (current ver: '
+        f'{signature._VANIR_SIGNATURE_VERSION}, the signature ver: '
+        f'{test_signature.signature_version})',
+        logs.output[0],
+    )
     self.assertEmpty(sign_bundle.signatures)
 
   def test_signature_bundle_filters_out_unrecognized_signatures(self):
@@ -528,9 +530,10 @@ class SignatureTest(parameterized.TestCase):
     with self.assertLogs(level=logging.ERROR) as logs:
       sign_bundle = signature.SignatureBundle([test_signature])
     self.assertIn(
-        'Signature %s is disregarded due to its unrecognized type: %s' %
-        (test_signature.signature_id, test_signature.signature_type),
-        logs.output[0])
+        f'Signature {test_signature.signature_id} is disregarded due to its '
+        f'unrecognized type: {test_signature.signature_type}',
+        logs.output[0],
+    )
     self.assertEmpty(sign_bundle.signatures)
 
   def test_signature_bundle_function_signature_hash_collisions(self):

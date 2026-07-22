@@ -202,10 +202,10 @@ class JavaParserTest(absltest.TestCase):
     expected_parse_errors = [
         common.ParseError(
             line=5, column=20, bad_token='(',
-            message=("JavaParser: missing ';' at '('")),
+            message="JavaParser: missing ';' at '('"),
         common.ParseError(
             line=5, column=22, bad_token=';',
-            message=("JavaParser: mismatched input ';' expecting '->'"))
+            message="JavaParser: mismatched input ';' expecting '->'")
     ]
 
     results = java_parser.JavaParser(error_testfile.full_path).get_chunks()

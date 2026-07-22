@@ -4,6 +4,8 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
+"""Tests for code_extractor_android module."""
+
 from unittest import mock
 
 from vanir import vulnerability
@@ -141,7 +143,7 @@ class CodeExtractorAndroidTest(parameterized.TestCase):
     extractor = code_extractor_android.AndroidCodeExtractor()
     commits, failures = extractor.extract_files_at_tip_of_unaffected_versions(
         package_name='test_repo',
-        affected_versions=['12', '12L', '13', '15', '15-next'],  # all but 14
+        versions=['12', '12L', '13', '15', '15-next'],  # all but 14
         files=['file1', 'file2', 'file_that_does_not_exist_in_14'],
     )
     self.assertEmpty(failures)
@@ -155,7 +157,7 @@ class CodeExtractorAndroidTest(parameterized.TestCase):
     extractor = code_extractor_android.AndroidCodeExtractor()
     commits, failures = extractor.extract_files_at_tip_of_unaffected_versions(
         package_name='test_repo',
-        affected_versions=['Kernel', 'something_else'],
+        versions=['Kernel', 'something_else'],
         files=['file1'],
     )
     self.assertEmpty(commits)
@@ -165,7 +167,7 @@ class CodeExtractorAndroidTest(parameterized.TestCase):
     extractor = code_extractor_android.AndroidCodeExtractor()
     commits, failures = extractor.extract_files_at_tip_of_unaffected_versions(
         package_name='test_repo',
-        affected_versions=['something_else', 'SoCVersion'],
+        versions=['something_else', 'SoCVersion'],
         files=['file1'],
     )
     self.assertEmpty(commits)
@@ -174,7 +176,7 @@ class CodeExtractorAndroidTest(parameterized.TestCase):
   def test_extract_files_at_tip_of_unaffected_versions_ignore_metapackage(self):
     extractor = code_extractor_android.AndroidCodeExtractor()
     commits, failures = extractor.extract_files_at_tip_of_unaffected_versions(
-        package_name=':modem:', affected_versions=['11'], files=['file1'],
+        package_name=':modem:', versions=['11'], files=['file1'],
     )
     self.assertEmpty(commits)
     self.assertEmpty(failures)

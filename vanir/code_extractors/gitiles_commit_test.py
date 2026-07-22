@@ -1,3 +1,5 @@
+"""Tests for gitiles_commit module."""
+
 import base64
 from unittest import mock
 

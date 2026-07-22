@@ -298,7 +298,6 @@ class ScannerBase(abc.ABC):
   any necessary setup arguments.
   """
 
-  @property
   @classmethod
   @abc.abstractmethod
   def name(cls) -> str:

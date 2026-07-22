@@ -1,11 +1,13 @@
-import itertools
-import json
 # Copyright 2023 Google LLC
 #
 # Use of this source code is governed by a BSD-style
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
+"""Tests for android_kernel_scanner module."""
+
+import itertools
+import json
 from unittest import mock
 
 import requests

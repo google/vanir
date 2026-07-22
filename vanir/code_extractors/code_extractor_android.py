@@ -141,7 +141,7 @@ class AndroidCodeExtractor(code_extractor_base.AbstractCodeExtractor):
   def extract_files_at_tip_of_unaffected_versions(
       self,
       package_name: str,
-      affected_versions: Collection[str],
+      versions: Collection[str],
       files: Collection[str],
       extractor_config: Optional[code_extractor_base.ExtractorConfig] = None,
   ) -> Tuple[
@@ -154,7 +154,7 @@ class AndroidCodeExtractor(code_extractor_base.AbstractCodeExtractor):
     # vendor fixes are included in Android bulletins, they do not follow Android
     # versioning scheme. Google's Android OSV exporter uses these special
     # version values to indicate Kernel or SoC vendor fixes.
-    if {'Kernel', 'SoCVersion'} & set(affected_versions):
+    if {'Kernel', 'SoCVersion'} & set(versions):
       return ([], [])
     if any(
         meta_package for meta_package in vulnerability.MetaPackage
@@ -163,8 +163,8 @@ class AndroidCodeExtractor(code_extractor_base.AbstractCodeExtractor):
       return ([], [])
 
     missing_branches = {
-        self.VERSION_BRANCH_MAP[ver] for ver in self.VERSION_BRANCH_MAP
-        if ver not in affected_versions
+        branch for ver, branch in self.VERSION_BRANCH_MAP.items()
+        if ver not in versions
     }
     tip_commits = []
     failed_commit_urls = []

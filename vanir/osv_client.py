@@ -6,13 +6,13 @@
 
 """This module abstracts the usage of OSV APIs for retrieving Android CVEs."""
 
-import enum
 import io
 import json
 from typing import Any, Dict, Optional, Sequence
 import zipfile
 
 from absl import flags
+from absl import logging
 from google.cloud import storage
 import requests
 
@@ -71,6 +71,8 @@ class OsvClient:
       session: Optional[requests.sessions.Session] = None,
       osv_api: Optional['OsvApiType'] = None,
   ):
+    # osv_api is unused in the generated codebase
+    # pylint: disable=unused-argument
     self._session = session or requests.session()
     self._osv_api_key = _OSV_API_KEY.value
     self._osv_url_base = _OSV_PROD_URL_BASE

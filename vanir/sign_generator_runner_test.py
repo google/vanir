@@ -4,10 +4,11 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
-
 # Disabling protected-access to allow unit testing of internal variables and
 # methods.
 # pylint: disable=protected-access
+
+"""Tests for sign_generator_runner module."""
 
 import builtins
 import datetime

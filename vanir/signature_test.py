@@ -8,6 +8,8 @@
 # methods.
 # pylint: disable=protected-access
 
+"""Tests for signature module."""
+
 import dataclasses
 from typing import Union
 from unittest import mock

@@ -1,3 +1,5 @@
+"""Tests for code_extractor_git module."""
+
 from unittest import mock
 
 from vanir import vulnerability

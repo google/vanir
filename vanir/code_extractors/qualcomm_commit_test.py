@@ -1,3 +1,5 @@
+"""Tests for qualcomm_commit module."""
+
 import json
 from unittest import mock
 

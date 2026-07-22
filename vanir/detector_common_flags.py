@@ -24,8 +24,6 @@ from vanir import vulnerability_overwriter
 from vanir.scanners import scanner_base
 from vanir.scanners import target_selection_strategy
 
-from importlib import resources
-
 
 _VULN_ID_IGNORE_LIST = flags.DEFINE_list(
     'vuln_id_ignore_list', [], 'Comma-separated list of vulnerability IDs or '

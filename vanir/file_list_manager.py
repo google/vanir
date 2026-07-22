@@ -11,12 +11,9 @@ for calculating truncated path level.
 """
 
 from vanir import file_path_utils
-import collections
 import enum
 import json
 from typing import Mapping, Sequence
-
-from vanir import parser
 
 from importlib import resources
 

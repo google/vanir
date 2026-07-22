@@ -8,9 +8,10 @@
 # methods.
 # pylint: disable=protected-access
 
+"""Tests for git_commit module."""
+
 import os
 import subprocess
-import tempfile
 from typing import Mapping, Optional, Sequence
 from unittest import mock
 import tenacity
@@ -18,7 +19,6 @@ import tenacity
 from vanir.code_extractors import code_extractor_base
 from vanir.code_extractors import git_commit
 
-from importlib import resources
 from absl.testing import absltest
 from absl.testing import parameterized
 

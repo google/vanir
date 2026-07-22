@@ -8,6 +8,8 @@
 # methods.
 # pylint: disable=protected-access
 
+"""Tests for refiner module."""
+
 import concurrent
 import concurrent.futures
 import dataclasses

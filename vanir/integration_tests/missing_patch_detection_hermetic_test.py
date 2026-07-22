@@ -4,7 +4,8 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
-import base64
+"""Hermetic integration tests for missing patch detection module."""
+
 import collections
 import dataclasses
 import enum

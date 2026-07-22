@@ -4,6 +4,8 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
+"""Tests for code_extractor module."""
+
 from unittest import mock
 
 from vanir import vulnerability

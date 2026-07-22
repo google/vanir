@@ -8,6 +8,8 @@
 # methods.
 # pylint: disable=protected-access
 
+"""Tests for code_extractor_linux module."""
+
 from unittest import mock
 import urllib.request
 

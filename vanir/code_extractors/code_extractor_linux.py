@@ -79,9 +79,9 @@ class LinuxCodeExtractor(code_extractor_base.AbstractCodeExtractor):
   def extract_files_at_tip_of_unaffected_versions(
       self,
       package_name: str,
-      affected_versions: Collection[str],
+      versions: Sequence[str],
       files: Collection[str],
-      **kwargs,
+      extractor_config: Optional[code_extractor_base.ExtractorConfig] = None,
   ) -> Tuple[
       Sequence[code_extractor_base.Commit],
       Sequence[code_extractor_base.FailedCommitUrl],

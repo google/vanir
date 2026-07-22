@@ -125,6 +125,9 @@ disable=R,
         suppressed-message,
         sys-max-int,
         trailing-newlines,
+        # ungrouped-imports: Disables imports grouping affected due to
+        # auto-generated code.
+        ungrouped-imports,
         unichr-builtin,
         unicode-builtin,
         unnecessary-pass,

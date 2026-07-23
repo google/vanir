@@ -14,7 +14,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "vanir"
-version = "1.1.0"
+version = "1.2.0"
 authors = [
     { name = "Hyunwook (Wooky) Baek", email = "baekhw@google.com" },
     { name = "Duy Truong", email = "duytruong@google.com" },

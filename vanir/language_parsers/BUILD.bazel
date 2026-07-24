@@ -28,6 +28,15 @@ py_library(
 )
 
 py_library(
+    name = "tree_sitter_base",
+    srcs = ["tree_sitter_base.py"],
+    deps = [
+        ":abstract_language_parser",
+        ":common",
+    ],
+)
+
+py_library(
     name = "language_parsers",
     srcs = ["language_parsers.py"],
     deps = [
@@ -35,5 +44,6 @@ py_library(
         ":common",
         "//vanir/language_parsers/cpp:cpp_parser",
         "//vanir/language_parsers/java:java_parser",
+        "//vanir/language_parsers/python:python_parser",
     ],
 )

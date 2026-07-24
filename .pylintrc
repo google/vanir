@@ -66,7 +66,11 @@ disable=R,
         basestring-builtin,
         buffer-builtin,
         c-extension-no-member,
+        consider-using-dict-items,
         consider-using-enumerate,
+        # Stylistic convention; other valid formatting choices like % or
+        # format() exist.
+        consider-using-f-string,
         cmp-builtin,
         cmp-method,
         coerce-builtin,
@@ -94,7 +98,13 @@ disable=R,
         long-suffix,
         map-builtin-not-iterating,
         misplaced-comparison-constant,
+        # Stylistic convention (simple or self-explanatory classes may not
+        # require docstrings).
+        missing-class-docstring,
         missing-function-docstring,
+        # Stylistic convention (small or test modules may not require
+        # docstrings).
+        missing-module-docstring,
         metaclass-assignment,
         next-method-called,
         next-method-defined,
@@ -122,6 +132,9 @@ disable=R,
         setslice-method,
         signature-differs,
         standarderror-builtin,
+        # Stylistic convention (parentheses are sometimes preferred for
+        # readability).
+        superfluous-parens,
         suppressed-message,
         sys-max-int,
         trailing-newlines,
@@ -130,6 +143,9 @@ disable=R,
         ungrouped-imports,
         unichr-builtin,
         unicode-builtin,
+        # Stylistic convention (lambda assignments can be useful for local
+        # definitions).
+        unnecessary-lambda-assignment,
         unnecessary-pass,
         unpacking-in-except,
         useless-else-on-loop,

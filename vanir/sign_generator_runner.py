@@ -204,7 +204,7 @@ def main(argv: Sequence[str]) -> None:
   if _IGNORE_TEST_FILES.value:
     java_test_file_filter = sign_generator.EcosystemAndFileNameFilter(
         'Android',
-        r'(^|.*/)(multivalent|java)?[Tt]ests?/.*[^/]Tests?(Base)?\.java',
+        r'(^|.*/)(multivalent|java)?[Tt]ests?/.*[^/]Tests?(Base|Case)?\.java',
     )
     cpp_test_file_filter = sign_generator.EcosystemAndFileNameFilter(
         'Android', r'(^|.*/)tests?/.*[^/][Tt]ests?\.(cpp|cc)'

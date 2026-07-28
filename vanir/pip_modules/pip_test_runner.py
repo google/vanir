@@ -131,7 +131,10 @@ def _run_unit_tests_with_error_tracking(
           check=False,
           capture_output=True,
           text=True,
-          timeout=60,
+          timeout=60 * 5,  # 5 minutes, required for some tests such as
+          # 'missing_patch_detection_hermetic_test' while building wheel
+          # distributions using cibuildwheel on Linux(since running
+          # cross-platform Docker containers is slow e.g. aarch64 on x86-64).
       )
       if result.returncode == 0:  # Return code '0' means success.
         passing_tests.append(test_module)

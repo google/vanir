@@ -4,13 +4,13 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
-"""Vanir detector scanner that scans Android Linux Kernel vulns.
-"""
+"""Vanir detector scanner that scans Android Linux Kernel vulns."""
 
 import dataclasses
 from typing import Optional, Sequence, Tuple
 
 from absl import logging
+from vanir import osv_client
 from vanir import version_extractor
 from vanir import vulnerability
 from vanir import vulnerability_manager
@@ -54,6 +54,7 @@ class AndroidKernelScanner(package_scanner.PackageScanner):
       vulnerability_overwrite_specs: Optional[
           Sequence[vulnerability_overwriter.OverwriteSpec]
       ] = None,
+      osv_api: Optional['osv_client.OsvApiType'] = None,
   ) -> Tuple[
       scanner_base.Findings,
       scanner_base.ScannedFileStats,
@@ -62,17 +63,20 @@ class AndroidKernelScanner(package_scanner.PackageScanner):
     """Run the scan and returns a tuple of Findings and ScannedFileStats."""
 
     logging.info(
-        'Scanning %s against Android kernel signatures...', self._code_location)
+        'Scanning %s against Android kernel signatures...', self._code_location
+    )
     findings, stats, vuln_manager = super().scan(
         strategy,
         override_vuln_manager,
         extra_vulnerability_filters,
-        vulnerability_overwrite_specs
+        vulnerability_overwrite_specs,
     )
 
     logging.info('Collecting findings...')
     version_data = {
-        'version': version_extractor.extract_version(self._code_location)}
+        'version': version_extractor.extract_version(self._code_location)
+    }
     new_stats = dataclasses.replace(
-        stats, scan_metadata={**(stats.scan_metadata or {}), **version_data})
+        stats, scan_metadata={**(stats.scan_metadata or {}), **version_data}
+    )
     return findings, new_stats, vuln_manager

@@ -11,6 +11,7 @@ from vanir import vulnerability_manager
 from vanir.scanners import offline_directory_scanner
 from vanir.scanners import scanner_base
 
+from importlib import resources
 from absl.testing import absltest
 
 _TESTDATA_DIR = file_path_utils.get_root_file_path('testdata/')
@@ -22,7 +23,7 @@ class OfflineDirectoryScannerTest(absltest.TestCase):
     super().setUp()
 
     self._vul_manager = vulnerability_manager.generate_from_json_string(
-        open(_TEST_SIGNATURES_FILE, mode='rb').read())
+        resources.files('vanir').joinpath(_TEST_SIGNATURES_FILE).read_bytes())
     self._code_location = self.create_tempdir().full_path
 
     self._mock_findings = mock.create_autospec(

@@ -196,7 +196,7 @@ class Signature(metaclass=abc.ABCMeta):
     if self.truncated_path_level:
       osv_dict['target']['truncated_path_level'] = self.truncated_path_level
     if self.match_only_versions:
-      osv_dict['match_only_versions'] = sorted(list(self.match_only_versions))
+      osv_dict['match_only_versions'] = sorted(list(self.match_only_versions))  # pyrefly: ignore[bad-assignment]
     return osv_dict
 
   @classmethod
@@ -245,7 +245,7 @@ class Signature(metaclass=abc.ABCMeta):
     else:
       raise ValueError(f'Signature type {sig_type} is unknown.')
 
-    return sign
+    return sign  # pyrefly: ignore[bad-return]
 
 
 @dataclasses.dataclass(frozen=True)

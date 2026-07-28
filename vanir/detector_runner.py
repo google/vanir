@@ -47,8 +47,9 @@ from vanir.scanners import repo_scanner
 
 ScannerClass = TypeVar('ScannerClass', bound=scanner_base.ScannerBase)
 
-flags.declare_key_flag('osv_id_ignore_list')
-flags.declare_key_flag('cve_id_ignore_list')
+flags.declare_key_flag('vuln_id_ignore_list')
+flags.declare_key_flag('signature_ids')
+flags.declare_key_flag('vuln_ids')
 flags.declare_key_flag('android_min_severity_level')
 flags.declare_key_flag('android_spl')
 flags.declare_key_flag('sign_target_path_filter')
@@ -383,13 +384,19 @@ def _generate_json_report(
     for report in report_group.reports:
       unpatched_code = report.unpatched_file
       if report.unpatched_function_name:
-        unpatched_code += '::' + report.unpatched_function_name
-      details.append({
+        unpatched_code += f'::{report.unpatched_function_name}()'
+      finding_details = {
           'unpatched_code': unpatched_code,
           'patch': report.signature_source,
           'is_non_target_match': report.is_non_target_match,
           'matched_signature': report.signature_id,
-      })
+      }
+      if report.is_non_target_match:
+        source_patched_code = report.signature_target_file
+        if report.signature_target_function:
+          source_patched_code += f'::{report.signature_target_function}()'
+        finding_details['source_patched_code'] = source_patched_code
+      details.append(finding_details)
   json_report['options'] = ' '.join(sys.argv[1:])
   json_report['covered_cves'] = covered_cves
   json_report['missing_patches'] = missing_patches
@@ -524,7 +531,9 @@ def main(argv: Sequence[str]) -> None:
       extra_vulnerability_filters=(
           detector_common_flags.generate_vulnerability_filters_from_flags()
       ),
-      vulnerability_overwrite_specs=detector_common_flags.generate_overwrite_specs_from_flags(),
+      vulnerability_overwrite_specs=(
+          detector_common_flags.generate_overwrite_specs_from_flags()
+      ),
   )
   finding_filters = (
       [scanner_base.ShortFunctionFilter()]

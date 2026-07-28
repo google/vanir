@@ -117,10 +117,9 @@ class TargetSelectionStrategyTest(absltest.TestCase):
     self.assertEqual(skipped, 4)
 
   def test_truncated_path_match_strategy(self):
-    to_scan, skipped = (
-        target_selection_strategy.Strategy.TRUNCATED_PATH_MATCH.get_target_files(
-            self._test_dir.full_path, self._mock_sign_bundle
-        )
+    strategy = target_selection_strategy.Strategy.TRUNCATED_PATH_MATCH
+    to_scan, skipped = strategy.get_target_files(
+        self._test_dir.full_path, self._mock_sign_bundle
     )
     expected_scan_targets = {
         os.path.join(self._test_dir.full_path, test_file_path)

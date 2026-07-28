@@ -49,18 +49,24 @@ class Report:
     """Returns unpatched file and optionally unpatched function name."""
     simple_report = self.unpatched_file
     if self.unpatched_function_name:
-      simple_report += '::%s()' % self.unpatched_function_name
+      simple_report += f'::{self.unpatched_function_name}()'
     if include_patch_source:
       if use_html_link_for_patch_source:
-        simple_report += '  (<a href="%s">patch</a>, %s)' % (
-            self.signature_source,
-            self.signature_id,
+        simple_report += (
+            f'  (<a href="{self.signature_source}">patch</a>,'
+            f' {self.signature_id})'
         )
       else:
-        simple_report += '  (patch:%s, signature:%s)' % (
-            self.signature_source,
-            self.signature_id,
+        simple_report += (
+            f'  (patch:{self.signature_source}, signature:{self.signature_id})'
         )
+
+    if self.is_non_target_match:
+      source_patched_code = self.signature_target_file
+      if self.signature_target_function:
+        source_patched_code += f'::{self.signature_target_function}()'
+      simple_report += f' (matched from {source_patched_code})'
+
     return simple_report
 
 

@@ -8,20 +8,24 @@
 # against some vulnerability patch signatures, and report the findings.
 
 load("@rules_python//python:defs.bzl", "py_library", "py_test")
-load("@vanir_deps//:requirements.bzl", "requirement")
 
-package(default_visibility = ["//visibility:public"])
+package(
+    default_applicable_licenses = ["//:license"],
+    default_visibility = ["//visibility:public"],
+)
 
 py_library(
     name = "scanner_base",
     srcs = ["scanner_base.py"],
     deps = [
         ":target_selection_strategy",
+        "//:osv_client",
         "//:parser",
         "//:signature",
         "//:vulnerability",
         "//:vulnerability_manager",
-        requirement("absl-py"),
+        "//:vulnerability_overwriter",
+        "@com_google_absl_py//absl/logging",
     ],
 )
 
@@ -32,8 +36,11 @@ py_library(
         ":offline_directory_scanner",
         ":scanner_base",
         ":target_selection_strategy",
+        "//:osv_client",
         "//:vulnerability",
         "//:vulnerability_manager",
+        "//:vulnerability_overwriter",
+        "@com_google_absl_py//absl/logging",
     ],
 )
 
@@ -44,9 +51,12 @@ py_library(
         ":package_scanner",
         ":scanner_base",
         ":target_selection_strategy",
+        "//:osv_client",
         "//:version_extractor",
         "//:vulnerability",
         "//:vulnerability_manager",
+        "//:vulnerability_overwriter",
+        "@com_google_absl_py//absl/logging",
     ],
 )
 
@@ -56,8 +66,11 @@ py_library(
     deps = [
         ":scanner_base",
         ":target_selection_strategy",
+        "//:osv_client",
         "//:signature",
         "//:vulnerability_manager",
+        "//:vulnerability_overwriter",
+        "@com_google_absl_py//absl/logging",
     ],
 )
 
@@ -68,9 +81,12 @@ py_library(
         ":package_identifier",
         ":scanner_base",
         ":target_selection_strategy",
+        "//:osv_client",
         "//:signature",
         "//:vulnerability",
         "//:vulnerability_manager",
+        "//:vulnerability_overwriter",
+        "@com_google_absl_py//absl/logging",
     ],
 )
 
@@ -90,9 +106,8 @@ py_library(
     srcs = ["package_identifier.py"],
     deps = [
         "//:truncated_path",
-        "//:vulnerability",
         "//:vulnerability_manager",
-        requirement("absl-py"),
+        "@com_google_absl_py//absl/logging",
     ],
 )
 
@@ -106,7 +121,7 @@ py_test(
         "//:reporter",
         "//:signature",
         "//vanir/language_parsers:common",
-        requirement("absl-py"),
+        "@com_google_absl_py//absl/testing:absltest",
     ],
 )
 
@@ -121,7 +136,7 @@ py_test(
         ":scanner_base",
         "//:file_path_utils",
         "//:vulnerability_manager",
-        requirement("absl-py"),
+        "@com_google_absl_py//absl/testing:absltest",
     ],
 )
 
@@ -135,9 +150,11 @@ py_test(
         ":android_kernel_scanner",
         ":scanner_base",
         "//:file_path_utils",
+        "//:version_extractor",
         "//:vulnerability_manager",
-        requirement("absl-py"),
-        requirement("requests"),
+        "@com_google_absl_py//absl/testing:absltest",
+        "@com_google_absl_py//absl/testing:flagsaver",
+        "@vanir_deps//requests",
     ],
 )
 
@@ -153,8 +170,8 @@ py_test(
         "//:file_path_utils",
         "//:vulnerability",
         "//:vulnerability_manager",
-        requirement("absl-py"),
-        requirement("requests"),
+        "@com_google_absl_py//absl/testing:absltest",
+        "@vanir_deps//requests",
     ],
 )
 
@@ -171,10 +188,11 @@ py_test(
         ":target_selection_strategy",
         "//:file_path_utils",
         "//:signature",
+        "//:vulnerability",
         "//:vulnerability_manager",
-        requirement("absl-py"),
-        requirement("requests"),
-        requirement("google-cloud-storage"),
+        "@com_google_absl_py//absl/testing:absltest",
+        "@com_google_absl_py//absl/testing:flagsaver",
+        "@vanir_deps//google_cloud_storage",
     ],
 )
 
@@ -184,7 +202,7 @@ py_test(
     deps = [
         ":target_selection_strategy",
         "//:signature",
-        requirement("absl-py"),
+        "@com_google_absl_py//absl/testing:absltest",
     ],
 )
 
@@ -200,6 +218,6 @@ py_test(
         "//:truncated_path",
         "//:vulnerability",
         "//:vulnerability_manager",
-        requirement("absl-py"),
+        "@com_google_absl_py//absl/testing:absltest",
     ],
 )

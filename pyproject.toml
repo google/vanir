@@ -6,13 +6,15 @@
 
 [build-system]
 requires = [
-    "pdm-backend",
+    "scikit-build-core>=0.12.2,<1",
+    "antlr4-tools>=0.2.0,<1",
+    "grpcio-tools>=1.62.0,<2",
 ]
-build-backend = "pdm.backend"
+build-backend = "scikit_build_core.build"
 
 [project]
 name = "vanir"
-version = "1.0.3"
+version = "1.1.0"
 authors = [
     { name = "Hyunwook (Wooky) Baek", email = "baekhw@google.com" },
     { name = "Duy Truong", email = "duytruong@google.com" },
@@ -54,27 +56,23 @@ dependencies = [
     # major version to ensure compatibility.
     # Ref: https://packaging.python.org/en/latest/discussions/versioning/#semantic-versioning.
     "absl-py>=2.4.0,<3",
-    "google-api-core[grpc]>=2.30.2,<3",
-    "google-auth>=2.49.1,<3",
-    "google-cloud-iam>=2.22.0,<3",
+    "google-api-core[grpc]>=2.31.0,<3",
+    "google-auth>=2.53.0,<3",
+    "google-cloud-iam>=2.23.0,<3",
 
     # PiPs dependency resolution resolves to different major versions for
     # google-cloud-storage(v2.19.0 for Python 3.11, 3.12 and v3.9.0 for Python
     # 3.10 and 3.13) for different Python versions, hence keep the version
     # upper limit as 4 to keep the version range inclusive and simple.
-    "google-cloud-storage>=2.19.0,<4",
+    "google-cloud-storage>=3.11.0,<4",
 
     "jinja2>=3.1.6,<4",
     "jsonpath_ng>=1.8.0,<2",
     "mmh3>=5.2.1,<6",
 
-    # Use the latest supported OSV version as per the Python version.
-    "osv>=0.0.21,<0.1.0; python_version>='3.10' and python_version<'3.13'",
-    "osv>=0.1.2,<1; python_version>='3.13'",
-
-    "protobuf>=6.33.6,<7",
+    "protobuf>=7.35.1,<8",
     "python-dateutil>=2.9.0.post0,<3",
-    "requests>=2.33.1,<3",
+    "requests>=2.34.2,<3",
     "tenacity>=9.1.4,<10",
     "typing-extensions>=4.15.0,<5",
     "unidiff>=0.7.5,<1",
@@ -83,3 +81,24 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/google/vanir"
 Issues = "https://github.com/google/vanir/issues"
+
+[tool.scikit-build]
+cmake.build-type = "Release"
+cmake.source-dir = "vanir"
+logging.level = "INFO"
+sdist.exclude = ["dist/**", "**/*.bazel", "**/*.bzl"]
+
+[tool.cibuildwheel]
+test-command = "python -m vanir.pip_modules.pip_test_runner"
+
+[tool.cibuildwheel.linux]
+# Enabling only 'x86_64' and 'aarch64' manylinux architectures.
+# Skipping musllinux and other manylinux architectures.
+archs = ["x86_64", "aarch64"]
+skip = "*-musllinux*"
+# Install JDK 11 in Docker containers used by cibuildwheel. This is required by
+# ANTLR4 commands that are run to generate CPP files from ANTLR4 grammar files
+# and used in Python extension modules. 'antlr4-tools' seems to try to install
+# JDK 11 if JDK 11 is not installed but that process is quite slow hence
+# explicitly installing JDK 11 with 'yum' command.
+before-all = "yum install -y java-11-openjdk-devel"

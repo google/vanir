@@ -84,7 +84,7 @@ class TruncatedPath:
   def __hash__(self):
     return hash(self._path)
 
-  def __eq__(self, other: 'TruncatedPath'):
+  def __eq__(self, other: 'TruncatedPath'):  # pyrefly: ignore[bad-override]
     return self._path_elements == other._path_elements
 
   @functools.cached_property

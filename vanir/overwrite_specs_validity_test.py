@@ -31,6 +31,7 @@ import logging
 from typing import Any
 from absl import flags
 from vanir import vulnerability_overwriter
+from importlib import resources
 from absl.testing import absltest
 
 _OVERWRITE_SPECS = flags.DEFINE_string(

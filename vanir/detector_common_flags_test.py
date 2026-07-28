@@ -9,6 +9,7 @@
 import datetime
 import os
 import shutil
+from unittest import mock
 
 from absl import flags
 from absl.testing import flagsaver
@@ -32,23 +33,18 @@ class DetectorCommonFlagsTest(parameterized.TestCase):
   """
 
   @flagsaver.flagsaver
-  def test_osv_id_ignore_list(self):
-    flags.FLAGS['osv_id_ignore_list'].parse('ASB-A-1111,ASB-A-1234')
-    self.assertCountEqual(['ASB-A-1111', 'ASB-A-1234'],
-                          detector_common_flags._OSV_ID_IGNORE_LIST.value)
+  def test_vuln_id_ignore_list(self):
+    flags.FLAGS['vuln_id_ignore_list'].parse('ASB-A-1111,CVE-2020-1234')
+    self.assertCountEqual(['ASB-A-1111', 'CVE-2020-1234'],
+                          detector_common_flags._VULN_ID_IGNORE_LIST.value)
 
   @flagsaver.flagsaver
-  def test_osv_id_prefix(self):
-    flags.FLAGS['osv_id_allowed_prefix'].parse('ASB-A-,WSB-A-')
+  def test_vuln_id_prefix(self):
+    flags.FLAGS['vuln_id_allowed_prefix'].parse('ASB-A-,WSB-A-')
     self.assertEqual(
-        ['ASB-A-', 'WSB-A-'], detector_common_flags._OSV_ID_ALLOWED_PREFIX.value
+        ['ASB-A-', 'WSB-A-'],
+        detector_common_flags._VULN_ID_ALLOWED_PREFIX.value
     )
-
-  @flagsaver.flagsaver
-  def test_cve_id_ignore_list(self):
-    flags.FLAGS['cve_id_ignore_list'].parse('CVE-1234-1234,CVE-1111-1111')
-    self.assertCountEqual(['CVE-1234-1234', 'CVE-1111-1111'],
-                          detector_common_flags._CVE_ID_IGNORE_LIST.value)
 
   @flagsaver.flagsaver
   def test_android_min_severity_level(self):
@@ -132,11 +128,14 @@ class DetectorCommonFlagsTest(parameterized.TestCase):
     flags.FLAGS['android_spl_relative_months'].parse(offset)
 
     flags.FLAGS.validate_all_flags()
+    vfilters = detector_common_flags.generate_vulnerability_filters_from_flags()
+
     spl_filter = [
         f
-        for f in detector_common_flags.generate_vulnerability_filters_from_flags()
+        for f in vfilters
         if isinstance(f, vulnerability_manager.AndroidSplFilter)
     ]
+
     self.assertLen(spl_filter, 1)
     self.assertEqual(spl_filter[0]._target_spl, expected_spl)
 
@@ -174,7 +173,21 @@ class DetectorCommonFlagsTest(parameterized.TestCase):
       flags.FLAGS['sign_target_arch'].parse('nonexisting-arch')
 
   @flagsaver.flagsaver
+  def test_signature_ids(self):
+    flags.FLAGS['signature_ids'].parse('SIG-1,SIG-2')
+    self.assertCountEqual(
+        ['SIG-1', 'SIG-2'], detector_common_flags._SIGNATURE_IDS.value
+    )
+
+  @flagsaver.flagsaver(signature_ids=['SIG-1', 'SIG-2'])
+  def test_generate_vulnerability_filters_from_flags_with_signature_ids(self):
+    vfilters = detector_common_flags.generate_vulnerability_filters_from_flags()
+    self.assertNotEmpty(vfilters)
+    self.assertIsInstance(vfilters[-1], vulnerability_manager.SignatureIdFilter)
+
+  @flagsaver.flagsaver
   def test_target_selection_strategy(self):
+
     test_strategies = [
         'all_files',
         'eXaCt_PaTh_MaTch',
@@ -195,9 +208,8 @@ class DetectorCommonFlagsTest(parameterized.TestCase):
       flags.FLAGS['target_selection_strategy'].parse(test_strategy)
 
   @flagsaver.flagsaver(
-      osv_id_ignore_list=['ASB-A-1111', 'ASB-A-1234'],
-      osv_id_allowed_prefix='ASB-A-',
-      cve_id_ignore_list=['CVE-1234-1234', 'CVE-1111-1111'],
+      vuln_id_ignore_list=['ASB-A-1111', 'CVE-2020-1234'],
+      vuln_id_allowed_prefix='ASB-A-',
       android_min_severity_level='MODERATE',
       android_spl='2020-05-01',
       sign_target_path_filter=['foo/bar/.*', 'foo/bar/.*', 'foo/baz/.*'],
@@ -205,13 +217,12 @@ class DetectorCommonFlagsTest(parameterized.TestCase):
   )
   def test_generate_vulnerability_filters_from_flags(self):
     vfilters = detector_common_flags.generate_vulnerability_filters_from_flags()
-    self.assertLen(vfilters, 9)
+    self.assertLen(vfilters, 8)
     self.assertEqual(
         {type(vfilter) for vfilter in vfilters},
         {
-            vulnerability_manager.OsvIdFilter,
-            vulnerability_manager.OsvIdAllowedPrefixFilter,
-            vulnerability_manager.CveIdFilter,
+            vulnerability_manager.VulnIdIgnoreFilter,
+            vulnerability_manager.VulnIdAllowedPrefixFilter,
             vulnerability_manager.AndroidSeverityFilter,
             vulnerability_manager.AndroidSplFilter,
             vulnerability_manager.TargetPathFilter,
@@ -258,6 +269,44 @@ class DetectorCommonFlagsTest(parameterized.TestCase):
     )
     specs = detector_common_flags.generate_overwrite_specs_from_flags()
     self.assertNotEmpty(specs, 'Overwrite specs should not be empty')
+
+  @flagsaver.flagsaver(vuln_ids=['ASB-A-1111', 'CVE-2020-1234'])
+  def test_generate_vuln_filters_from_flags_with_vuln_ids(self):
+    vfilters = detector_common_flags.generate_vulnerability_filters_from_flags()
+    self.assertNotEmpty(vfilters)
+    self.assertIsInstance(
+        vfilters[-1], vulnerability_manager.VulnIdFilter
+    )
+
+  @flagsaver.flagsaver
+  def test_generate_vuln_manager_from_flags_with_files(self):
+    from_filename = os.path.join(
+        absltest.TEST_SRCDIR.value,
+        file_path_utils.get_root_file_path('testdata/test_vulnerabilities_platform.json'),
+    )
+    to_file = self.create_tempfile('test_vulnerabilities_platform.json')
+    shutil.copyfile(from_filename, to_file.full_path)
+
+    flags.FLAGS['vulnerability_file_name'].parse(to_file.full_path)
+
+    vuln_manager = detector_common_flags.generate_vuln_manager_from_flags()
+    self.assertIsNotNone(vuln_manager)
+
+  @flagsaver.flagsaver(vulnerability_file_name=['dummy_file.json'])
+  def test_generate_vuln_manager_from_flags_fails_when_all_filtered(self):
+    with mock.patch('os.path.isfile', return_value=True):
+      with mock.patch.object(vulnerability_manager, 'generate_from_file'):
+        with mock.patch.object(
+            vulnerability_manager, 'generate_from_managers'
+        ) as mock_gen:
+          mock_manager = mock.MagicMock()
+          mock_manager.vulnerabilities = []
+          mock_gen.return_value = mock_manager
+
+          with self.assertRaisesRegex(
+              ValueError, 'All vulnerabilities were filtered out'
+          ):
+            detector_common_flags.generate_vuln_manager_from_flags()
 
 
 if __name__ == '__main__':

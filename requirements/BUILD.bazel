@@ -8,9 +8,7 @@ load("@rules_python//python:pip.bzl", "compile_pip_requirements")
 
 # This BUILD file is required to expose the requirements lock files to Bazel and contains Bazel
 # rules used to generate the requirements lock files.
-package(default_visibility = [
-    "//visibility:public",
-])
+package(default_visibility = ["//visibility:public"])
 
 SUPPORTED_PYTHON_VERSIONS = [
     "3.10",
@@ -23,8 +21,8 @@ SUPPORTED_PYTHON_VERSIONS = [
     compile_pip_requirements(
         name = "%s_%s" % (target, version),
         srcs = ["%s.txt" % target],
-        requirements_txt = "%s_lock_%s.txt" % (target, version),
         generate_hashes = False,
+        requirements_txt = "%s_lock_%s.txt" % (target, version),
         tags = ["manual"],
     )
     for target in ("requirements", "requirements_antlr4")

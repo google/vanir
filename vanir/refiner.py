@@ -173,7 +173,7 @@ class Refiner:
     # performance, and to gracefully handle native parser crashes.
     parser_futures = {}
     with concurrent.futures.ProcessPoolExecutor(
-        max_workers=min(len(files), os.cpu_count()),
+        max_workers=min(len(files), os.cpu_count()),  # pyrefly: ignore[bad-specialization]
         mp_context=multiprocessing.get_context('forkserver'),
     ) as executor:
       for target_file, url, file_path in files:

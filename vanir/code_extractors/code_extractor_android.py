@@ -31,7 +31,7 @@ class AndroidTipOfBranchCommit(gitiles_commit.GitilesCommit):
       **kwargs,
   ):
     self._files = files
-    self._extract_patch = lambda: []
+    self._extract_patch = lambda: []  # pyrefly: ignore[bad-assignment]
     self._fetch_raw_patch = lambda: ''
     self._extract_unpatched_files = lambda: {}
     self._compute_affected_line_ranges = lambda: {}
@@ -108,7 +108,8 @@ def _generate_commit(url: str, **kwargs) -> code_extractor_base.Commit:
 class AndroidCodeExtractor(code_extractor_base.AbstractCodeExtractor):
   """Code extractor for Android affected packages."""
   VERSION_BRANCH_MAP = {
-      '16-next': 'main',
+      '17-next': 'main',
+      '17': 'android17-security-release',
       '16': 'android16-security-release',
       '15': 'android15-security-release',
       '14': 'android14-security-release',

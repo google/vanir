@@ -12,6 +12,7 @@ from vanir import vulnerability
 from vanir import vulnerability_manager
 from vanir.scanners import package_identifier
 
+from importlib import resources
 from absl.testing import absltest
 
 _TEST_SIGN_FILE = file_path_utils.get_root_file_path('testdata/test_signatures.json')
@@ -23,7 +24,7 @@ class PackageIdentifierTest(absltest.TestCase):
   def setUp(self):
     super().setUp()
     self._vuln_manager = vulnerability_manager.generate_from_json_string(
-        open(_TEST_SIGN_FILE, mode='rb').read()
+        resources.files('vanir').joinpath(_TEST_SIGN_FILE).read_bytes()
     )
 
   def test_init(self):
@@ -153,9 +154,7 @@ class PackageIdentifierTest(absltest.TestCase):
     )
     self.assertEmpty(
         pkg_identifier.packages_for_repo(
-            'platform/bionic',
-            ['dne.c'],
-            min_package_truncated_paths=1
+            'platform/bionic', ['dne.c'], min_package_truncated_paths=1
         )
     )
 
@@ -165,9 +164,8 @@ class PackageIdentifierTest(absltest.TestCase):
     )
     self.assertEqual(
         pkg_identifier.packages_for_repo(
-            'platform/frameworks/base',
-            ['dne.c'],
-            min_package_truncated_paths=1),
+            'platform/frameworks/base', ['dne.c'], min_package_truncated_paths=1
+        ),
         {'platform/frameworks/base'},
     )
 
@@ -179,7 +177,8 @@ class PackageIdentifierTest(absltest.TestCase):
         pkg_identifier.packages_for_repo(
             'renamed/repo',
             ['core/tests/coretests/src/android/widget/RemoteViewsTest.java'],
-            min_package_truncated_paths=1),
+            min_package_truncated_paths=1,
+        ),
         {'platform/frameworks/base'},
     )
 
@@ -191,7 +190,8 @@ class PackageIdentifierTest(absltest.TestCase):
         pkg_identifier.packages_for_repo(
             'platform/frameworks/base',
             ['core/tests/coretests/src/android/widget/RemoteViewsTest.java'],
-            min_package_truncated_paths=1),
+            min_package_truncated_paths=1,
+        ),
         {'platform/frameworks/base'},
     )
 
@@ -206,7 +206,8 @@ class PackageIdentifierTest(absltest.TestCase):
                 'core/tests/coretests/src/android/widget/RemoteViewsTest.java',
                 'drivers/media/usb/uvc/uvc_driver.c',
             ],
-            min_package_truncated_paths=1),
+            min_package_truncated_paths=1,
+        ),
         {
             'platform/frameworks/base',
             vulnerability.MetaPackage.ANDROID_KERNEL.value,
@@ -224,13 +225,15 @@ class PackageIdentifierTest(absltest.TestCase):
                 'core/tests/coretests/src/android/widget/RemoteViewsTest.java',
                 'drivers/media/usb/uvc/uvc_driver.c',
             ],
-            min_package_truncated_paths=1),
+            min_package_truncated_paths=1,
+        ),
         {
             'platform/packages/apps/Bluetooth',
             'platform/frameworks/base',
             vulnerability.MetaPackage.ANDROID_KERNEL.value,
         },
     )
+
 
 if __name__ == '__main__':
   absltest.main()

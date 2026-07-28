@@ -157,7 +157,7 @@ class _TokenTrie:
     if normalized_token is None:
       # If no matching entry, use the token as-is after lowercasing.
       return (tokens[index].lower(), index + 1)
-    return (normalized_token, next_index)
+    return (normalized_token, next_index)  # pyrefly: ignore[bad-return]
 
 
 def normalize_function_chunk(
@@ -186,7 +186,7 @@ def normalize_function_chunk(
     token_trie.insert_entry([called_function], _AbstractedToken.FUNCTION_CALL)
   for data_type in function_chunk_base.used_data_types:
     token_trie.insert_entry(data_type, _AbstractedToken.DATA_TYPE)
-  token_trie.insert_entry(sum(function_chunk_base.return_types, []),
+  token_trie.insert_entry(sum(function_chunk_base.return_types, []),  # pyrefly: ignore[no-matching-overload]
                           _AbstractedToken.DATA_TYPE)
 
   normalized_code = ' '.join(

@@ -6,9 +6,12 @@
 
 # Package containing all programming language parsers for Vanir.
 
-load("@rules_python//python:defs.bzl", "py_library", "py_test")
+load("@rules_python//python:defs.bzl", "py_library")
 
-package(default_visibility = ["//visibility:public"])
+package(
+    default_applicable_licenses = ["//:license"],
+    default_visibility = ["//visibility:public"],
+)
 
 py_library(
     name = "abstract_language_parser",
@@ -17,6 +20,7 @@ py_library(
     ],
     deps = [
         ":common",
+        "@com_google_absl_py//absl/logging",
     ],
 )
 

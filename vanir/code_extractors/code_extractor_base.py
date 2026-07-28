@@ -15,12 +15,15 @@ import copy
 import dataclasses
 import functools
 import logging
+import re
 import tempfile
 from typing import Collection, Mapping, Optional, Sequence, Tuple, Union
 
 import requests
 import unidiff
 from vanir import vulnerability
+
+_PATCH_SUBJECT_RE = re.compile(r'^\[PATCH[^]]*\]\s*')
 
 
 class CommitDataFetchError(Exception):
@@ -90,6 +93,16 @@ class Commit(metaclass=abc.ABCMeta):
       _ = self._unpatched_files
 
   @functools.cached_property
+  def description(self) -> Optional[str]:
+    """Returns the commit description/message."""
+    return self._get_description()
+
+  @functools.cached_property
+  def diff(self) -> Optional[str]:
+    """Returns the commit diff."""
+    return str(self.patch)
+
+  @functools.cached_property
   def _patch(self) -> unidiff.PatchSet:
     return self._extract_patch()
 
@@ -123,6 +136,10 @@ class Commit(metaclass=abc.ABCMeta):
     ) as f:
       f.write(file_content)
       return f.name
+
+  @abc.abstractmethod
+  def _get_description(self) -> Optional[str]:
+    """Returns the commit description/message."""
 
   @abc.abstractmethod
   def _fetch_raw_patch(self) -> str:
@@ -294,6 +311,11 @@ class Commit(metaclass=abc.ABCMeta):
   @abc.abstractmethod
   def get_commit_time(self) -> int | None:
     """Returns the commit timestamp."""
+
+  def cleanup(self):
+    """Explicitly cleans up temporary directories used by this commit."""
+    if hasattr(self, '_working_dir'):
+      self._working_dir.cleanup()
 
 
 @dataclasses.dataclass(frozen=True)

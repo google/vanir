@@ -42,13 +42,13 @@ class PackageIdentifier:
     """Returns truncated paths of signatures of the given package."""
     signatures = self._signatures_per_package.get(package_name)
     truncated_paths = set()
-    for sign in signatures:
+    for sign in signatures:  # pyrefly: ignore[not-iterable]
       if sign.truncated_path_level is not None:
         level = sign.truncated_path_level
       else:
         level = min(
             DEFAULT_TRUNCATED_PATH_LEVEL,
-            truncated_path.TruncatedPath.get_max_level(sign.target_file)
+            truncated_path.TruncatedPath.get_max_level(sign.target_file),
         )
       if truncated_path.TruncatedPath.is_level_ok(sign.target_file, level):
         truncated_paths.add(
@@ -106,7 +106,7 @@ class PackageIdentifier:
       True if the package is mapped to the repository; False, otherwise.
     """
 
-    package_name = self.get_package_name_if_signature_exist(package_name)
+    package_name = self.get_package_name_if_signature_exist(package_name)  # pyrefly: ignore[bad-assignment]
 
     package_truncated_paths = self.get_truncated_paths(package_name)
 
@@ -168,7 +168,8 @@ class PackageIdentifier:
 
     # Also heuristically identify the packages that could be mapped to this repo
     packages.update(
-        package for package in self._signatures_per_package
+        package
+        for package in self._signatures_per_package
         if self.is_package_mapped_to_repo(
             package, repo_file_list, threshold, min_package_truncated_paths
         )

@@ -29,6 +29,7 @@ from vanir.code_extractors import code_extractor_base
 from vanir.scanners import scanner_base
 from vanir.testdata import test_signatures
 
+from importlib import resources
 from absl.testing import absltest
 
 
@@ -37,7 +38,7 @@ _GITILES_TESTDATA_DIR = _TESTDATA_DIR + 'gitiles/'
 
 _TEST_FRAMEWORKS_BASE = _TESTDATA_DIR + 'test_frameworks_base.tar.gz'
 _TEST_PLATFORM_VULN_PATH = _TESTDATA_DIR + 'test_vulnerabilities_platform.json'
-_TEST_PLATFORM_VULNERABILITIES = open(_TEST_PLATFORM_VULN_PATH, mode='rb').read()
+_TEST_PLATFORM_VULNERABILITIES = resources.files('vanir').joinpath(_TEST_PLATFORM_VULN_PATH).read_bytes()
 
 # test_vulnerabilities.json contains 3 vulns with 4 patches, necessitating fake
 # HTTP downloads of those 4 patches as well as files from 8 revs (before/after).
@@ -94,18 +95,18 @@ def _fake_gitiles_response(url: str):
       res = _FULL_SHA[m.group('sha')]
     elif m := re.fullmatch(_PATCH_INFO_URL_PATTERN, url):
       fake_source = f'{_GITILES_TESTDATA_DIR}{m.group("sha")}.patchinfo.base64'
-      res = open(fake_source, mode='rb').read()
+      res = resources.files('vanir').joinpath(fake_source).read_bytes()
     elif m := re.fullmatch(_PATCH_URL_PATTERN, url):
       fake_source = f'{_GITILES_TESTDATA_DIR}{m.group("sha")}.patch.base64'
-      res = open(fake_source, mode='rb').read()
+      res = resources.files('vanir').joinpath(fake_source).read_bytes()
     elif m := re.fullmatch(_FILE_URL_PATTERN, url):
       fake_source = (f'{_GITILES_TESTDATA_DIR}{m.group("sha")}_'
                      f'{m.group("file").replace("/", "_")}.base64')
-      res = open(fake_source, mode='rb').read()
+      res = resources.files('vanir').joinpath(fake_source).read_bytes()
     elif m := re.fullmatch(_BRANCH_TIP_FILE_URL_PATTERN, url):
       fake_source = (f'{_GITILES_TESTDATA_DIR}{m.group("branch")}_'
                      f'{m.group("file").replace("/", "_")}.base64')
-      res = open(fake_source, mode='rb').read()
+      res = resources.files('vanir').joinpath(fake_source).read_bytes()
     else:
       raise RuntimeError('Unexpected gitiles URL: "%s"' % url)
 
@@ -237,7 +238,7 @@ class MissingPatchDetectionHermeticTest(
 
     with self.runtime_reporter('target_extraction'):
       test_src_dir = self.create_tempdir()
-      with open(tarball_path, mode='rb') as tarball_obj:
+      with resources.files('vanir').joinpath(tarball_path).open(mode='rb') as tarball_obj:
         with tarfile.open(fileobj=tarball_obj, mode='r:gz') as f:
           f.extractall(test_src_dir)
 

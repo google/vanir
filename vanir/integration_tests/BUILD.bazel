@@ -7,12 +7,15 @@
 # Integration tests for Vanir
 
 load("@rules_python//python:defs.bzl", "py_test")
-load("@vanir_deps//:requirements.bzl", "requirement")
 
-package(default_visibility = ["//visibility:public"])
+package(
+    default_applicable_licenses = ["//:license"],
+    default_visibility = ["//visibility:public"],
+)
 
 py_test(
     name = "missing_patch_detection_hermetic_test",
+    size = "large",
     srcs = ["missing_patch_detection_hermetic_test.py"],
     data = [
         "//vanir/testdata:test_gitiles_data",
@@ -27,11 +30,14 @@ py_test(
         "//:vanir_test_base",
         "//:vulnerability",
         "//:vulnerability_manager",
+        "//vanir/code_extractors:code_extractor_android",
         "//vanir/code_extractors:code_extractor_base",
         "//vanir/scanners:scanner_base",
-        "//vanir/scanners:target_selection_strategy",
         "//vanir/testdata:test_signatures",
-        requirement("absl-py"),
-        requirement("requests"),
+        "@com_google_absl_py//absl/logging",
+        "@com_google_absl_py//absl/testing:absltest",
+        "@com_google_absl_py//absl/testing:flagsaver",
+        "@com_google_absl_py//absl/testing:parameterized",
+        "@vanir_deps//requests",
     ],
 )

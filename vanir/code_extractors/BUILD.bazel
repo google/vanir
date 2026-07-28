@@ -4,22 +4,22 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
-# Bazel build rules for Vanir code extractors.
-load("@rules_python//python:defs.bzl", "py_library", "py_test")
-load("@vanir_deps//:requirements.bzl", "requirement")
+# Package containing all code extractors that find and download patches/source code for Vanir.
 
-package(default_visibility = [
-    "//visibility:public",
-])
+load("@rules_python//python:defs.bzl", "py_library", "py_test")
+
+package(
+    default_applicable_licenses = ["//:license"],
+    default_visibility = ["//visibility:public"],
+)
 
 py_library(
     name = "code_extractor_base",
     srcs = ["code_extractor_base.py"],
     deps = [
-        "//:file_path_utils",
         "//:vulnerability",
-        requirement("requests"),
-        requirement("unidiff"),
+        "@vanir_deps//requests",
+        "@vanir_deps//unidiff",
     ],
 )
 
@@ -30,6 +30,7 @@ py_library(
         ":code_extractor_android",
         ":code_extractor_base",
         ":code_extractor_git",
+        ":code_extractor_linux",
         "//:vulnerability",
     ],
 )
@@ -53,36 +54,18 @@ py_library(
         ":code_extractor_base",
         ":git_commit",
         "//:vulnerability",
-        requirement("osv"),
+        "@ossf_osv_schema//:vulnerability_py_pb2",
     ],
 )
 
 py_library(
-    name = "gitiles_commit",
-    srcs = ["gitiles_commit.py"],
+    name = "code_extractor_linux",
+    srcs = ["code_extractor_linux.py"],
     deps = [
         ":code_extractor_base",
-        requirement("requests"),
-        requirement("unidiff"),
-    ],
-)
-
-py_library(
-    name = "qualcomm_commit",
-    srcs = ["qualcomm_commit.py"],
-    deps = [
-        ":code_extractor_base",
-        requirement("requests"),
-        requirement("unidiff"),
-    ],
-)
-py_library(
-    name = "git_commit",
-    srcs = ["git_commit.py"],
-    deps = [
-        ":code_extractor_base",
-        requirement("tenacity"),
-        requirement("unidiff"),
+        ":git_commit",
+        ":gitiles_commit",
+        "//:vulnerability",
     ],
 )
 
@@ -98,7 +81,8 @@ py_test(
         ":code_extractor_base",
         ":code_extractor_git",
         "//:vulnerability",
-        requirement("absl-py"),
+        "@com_google_absl_py//absl/testing:absltest",
+        "@com_google_absl_py//absl/testing:parameterized",
     ],
 )
 
@@ -115,7 +99,8 @@ py_test(
         ":gitiles_commit",
         ":qualcomm_commit",
         "//:vulnerability",
-        requirement("absl-py"),
+        "@com_google_absl_py//absl/testing:absltest",
+        "@com_google_absl_py//absl/testing:parameterized",
     ],
 )
 
@@ -130,7 +115,32 @@ py_test(
         ":code_extractor_git",
         ":git_commit",
         "//:vulnerability",
-        requirement("absl-py"),
+        "@com_google_absl_py//absl/testing:absltest",
+        "@com_google_absl_py//absl/testing:parameterized",
+    ],
+)
+
+py_test(
+    name = "code_extractor_linux_test",
+    srcs = ["code_extractor_linux_test.py"],
+    data = [
+        "//vanir/testdata:test_patch_set",
+    ],
+    deps = [
+        ":code_extractor_linux",
+        ":git_commit",
+        "//:vulnerability",
+        "@com_google_absl_py//absl/testing:absltest",
+        "@com_google_absl_py//absl/testing:parameterized",
+    ],
+)
+
+py_library(
+    name = "gitiles_commit",
+    srcs = ["gitiles_commit.py"],
+    deps = [
+        ":code_extractor_base",
+        "@vanir_deps//requests",
     ],
 )
 
@@ -143,8 +153,19 @@ py_test(
     deps = [
         ":code_extractor_base",
         ":gitiles_commit",
-        requirement("absl-py"),
-        requirement("requests"),
+        "//:file_path_utils",
+        "@com_google_absl_py//absl/testing:absltest",
+        "@com_google_absl_py//absl/testing:parameterized",
+        "@vanir_deps//requests",
+    ],
+)
+
+py_library(
+    name = "qualcomm_commit",
+    srcs = ["qualcomm_commit.py"],
+    deps = [
+        ":code_extractor_base",
+        "@vanir_deps//requests",
     ],
 )
 
@@ -157,21 +178,33 @@ py_test(
     deps = [
         ":code_extractor_base",
         ":qualcomm_commit",
-        requirement("absl-py"),
-        requirement("requests"),
+        "//:file_path_utils",
+        "@com_google_absl_py//absl/testing:absltest",
+        "@com_google_absl_py//absl/testing:parameterized",
+        "@vanir_deps//requests",
+    ],
+)
+
+py_library(
+    name = "git_commit",
+    srcs = ["git_commit.py"],
+    deps = [
+        ":code_extractor_base",
+        "//:vulnerability",
+        "@vanir_deps//tenacity",
     ],
 )
 
 py_test(
     name = "git_commit_test",
     srcs = ["git_commit_test.py"],
-    data = [
-        "//vanir/testdata:test_patch_set",
-    ],
+    data = ["//vanir/testdata:test_patch_set"],
     deps = [
         ":code_extractor_base",
         ":git_commit",
-        requirement("absl-py"),
-        requirement("tenacity"),
+        "//:file_path_utils",
+        "@com_google_absl_py//absl/testing:absltest",
+        "@com_google_absl_py//absl/testing:parameterized",
+        "@vanir_deps//tenacity",
     ],
 )

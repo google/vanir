@@ -380,11 +380,12 @@ class ScannerBaseTest(absltest.TestCase):
         ),
     )
     self.assertEqual(
-        reports[1].get_simple_report(), mock_line_chunk.target_file
+        reports[1].get_simple_report(),
+        mock_line_chunk.target_file + ' (matched from target.c)',
     )
     self.assertEqual(
         reports[1].get_simple_report(include_patch_source=True),
-        '%s  (patch:%s, signature:%s)'
+        '%s  (patch:%s, signature:%s) (matched from target.c)'
         % (
             mock_line_chunk.target_file,
             test_sign2.source,

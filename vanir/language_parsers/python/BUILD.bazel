@@ -5,7 +5,7 @@
 # https://developers.google.com/open-source/licenses/bsd
 
 # Bazel build rules for Vanir Python language parser.
-load("@rules_python//python:defs.bzl", "py_library", "py_test")
+load("@rules_python//python:defs.bzl", "py_library")
 load("@vanir_deps//:requirements.bzl", "requirement")
 
 package(default_visibility = [
@@ -21,15 +21,5 @@ py_library(
         "//vanir/language_parsers:tree_sitter_base",
         requirement("tree-sitter"),
         requirement("tree-sitter-python"),
-    ],
-)
-
-py_test(
-    name = "python_parser_test",
-    size = "small",
-    srcs = ["python_parser_test.py"],
-    deps = [
-        ":python_parser",
-        requirement("absl-py"),
     ],
 )

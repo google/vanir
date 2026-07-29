@@ -5,21 +5,21 @@
 #    bazel run //requirements:requirements_3.11.update
 #
 
-certifi==2026.5.20
+certifi==2026.7.22
     # via requests
-cffi==2.0.0
+cffi==2.1.0
     # via cryptography
-charset-normalizer==3.4.7
+charset-normalizer==3.4.9
     # via requests
-cryptography==48.0.1
+cryptography==49.0.0
     # via google-auth
-google-api-core[grpc]==2.31.0
+google-api-core[grpc]==2.33.0
     # via
     #   -r requirements/requirements.txt
     #   google-cloud-core
     #   google-cloud-iam
     #   google-cloud-storage
-google-auth==2.53.0
+google-auth==2.56.2
     # via
     #   -r requirements/requirements.txt
     #   google-api-core
@@ -28,9 +28,9 @@ google-auth==2.53.0
     #   google-cloud-storage
 google-cloud-core==2.6.0
     # via google-cloud-storage
-google-cloud-iam==2.23.0
+google-cloud-iam==2.24.0
     # via -r requirements/requirements.txt
-google-cloud-storage==3.11.0
+google-cloud-storage==3.13.0
     # via -r requirements/requirements.txt
 google-crc32c==1.8.0
     # via
@@ -45,14 +45,14 @@ googleapis-common-protos[grpc]==1.75.0
     #   grpcio-status
 grpc-google-iam-v1==0.14.4
     # via google-cloud-iam
-grpcio==1.81.1
+grpcio==1.83.0
     # via
     #   google-api-core
     #   google-cloud-iam
     #   googleapis-common-protos
     #   grpc-google-iam-v1
     #   grpcio-status
-grpcio-status==1.81.1
+grpcio-status==1.83.0
     # via google-api-core
 idna==3.18
     # via requests
@@ -64,7 +64,7 @@ markupsafe==3.0.3
     # via jinja2
 mmh3==5.2.1
     # via -r requirements/requirements.txt
-proto-plus==1.28.0
+proto-plus==1.28.2
     # via
     #   google-api-core
     #   google-cloud-iam
@@ -77,7 +77,7 @@ protobuf==7.35.1
     #   grpc-google-iam-v1
     #   grpcio-status
     #   proto-plus
-pyasn1==0.6.3
+pyasn1==0.6.4
     # via pyasn1-modules
 pyasn1-modules==0.4.2
     # via google-auth
@@ -94,7 +94,7 @@ six==1.17.0
     # via python-dateutil
 tenacity==9.1.4
     # via -r requirements/requirements.txt
-typing-extensions==4.15.0
+typing-extensions==4.16.0
     # via
     #   -r requirements/requirements.txt
     #   grpcio

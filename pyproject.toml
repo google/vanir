@@ -56,15 +56,15 @@ dependencies = [
     # major version to ensure compatibility.
     # Ref: https://packaging.python.org/en/latest/discussions/versioning/#semantic-versioning.
     "absl-py>=2.4.0,<3",
-    "google-api-core[grpc]>=2.31.0,<3",
-    "google-auth>=2.53.0,<3",
-    "google-cloud-iam>=2.23.0,<3",
+    "google-api-core[grpc]>=2.33.0,<3",
+    "google-auth>=2.56.2,<3",
+    "google-cloud-iam>=2.24.0,<3",
 
     # PiPs dependency resolution resolves to different major versions for
     # google-cloud-storage(v2.19.0 for Python 3.11, 3.12 and v3.9.0 for Python
     # 3.10 and 3.13) for different Python versions, hence keep the version
     # upper limit as 4 to keep the version range inclusive and simple.
-    "google-cloud-storage>=3.11.0,<4",
+    "google-cloud-storage>=3.13.0,<4",
 
     "jinja2>=3.1.6,<4",
     "jsonpath_ng>=1.8.0,<2",
@@ -74,7 +74,7 @@ dependencies = [
     "python-dateutil>=2.9.0.post0,<3",
     "requests>=2.34.2,<3",
     "tenacity>=9.1.4,<10",
-    "typing-extensions>=4.15.0,<5",
+    "typing-extensions>=4.16.0,<5",
     "unidiff>=0.7.5,<1",
 ]
 

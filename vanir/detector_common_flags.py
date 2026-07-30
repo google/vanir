@@ -80,7 +80,18 @@ _ANDROID_SPL_RELATIVE_MONTHS = flags.DEFINE_integer(
     " Vulnerabilities with SPL after today's date plus this number of months"
     ' will be excluded. Example: --android_spl_relative_months=1 will exclude'
     ' vulnerabilities with SPL after next month. The offset can be negative.'
-    ' Mutually exclusive with --android_spl.',
+    ' Mutually exclusive with --android_spl and --android_spl_relative_days.',
+)
+
+_ANDROID_SPL_RELATIVE_DAYS = flags.DEFINE_integer(
+    'android_spl_relative_days',
+    None,
+    'Alternative way to specify the Security Patch Level (SPL) for scanning.'
+    " Vulnerabilities with SPL after today's date plus this number of days"
+    ' will be excluded. Example: --android_spl_relative_days=15 will exclude'
+    ' vulnerabilities with SPL after 15 days from today. The offset can be'
+    ' negative. Mutually exclusive with --android_spl and'
+    ' --android_spl_relative_months.',
 )
 
 _ANDROID_SPL_ALIGN_TO_QUARTER = flags.DEFINE_bool(
@@ -186,9 +197,11 @@ def _sign_target_path_filter_validator(
       return False
   return True
 
-flags.mark_flags_as_mutual_exclusive(
-    [_ANDROID_SPL, _ANDROID_SPL_RELATIVE_MONTHS]
-)
+flags.mark_flags_as_mutual_exclusive([
+    _ANDROID_SPL,
+    _ANDROID_SPL_RELATIVE_MONTHS,
+    _ANDROID_SPL_RELATIVE_DAYS,
+])
 
 flags.register_validator(
     'android_spl',
@@ -261,6 +274,12 @@ def generate_vulnerability_filters_from_flags(
     today = datetime.date.today()
     offset = _ANDROID_SPL_RELATIVE_MONTHS.value
     offset_delta = dateutil.relativedelta.relativedelta(months=offset)
+    # Convert to datetime for robust addition with relativedelta
+    spl_date = today + offset_delta
+  elif _ANDROID_SPL_RELATIVE_DAYS.present:
+    today = datetime.date.today()
+    offset = _ANDROID_SPL_RELATIVE_DAYS.value
+    offset_delta = dateutil.relativedelta.relativedelta(days=offset)
     # Convert to datetime for robust addition with relativedelta
     spl_date = today + offset_delta
 

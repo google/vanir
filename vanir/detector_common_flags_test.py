@@ -103,10 +103,52 @@ class DetectorCommonFlagsTest(parameterized.TestCase):
     self.assertLen(spl_filter, 1)
     self.assertEqual(spl_filter[0]._target_spl, expected_spl)
 
+  @parameterized.named_parameters(
+      ('none', 0, datetime.datetime(2020, 7, 30)),
+      ('next_month', 15, datetime.datetime(2020, 8, 14)),
+      ('same_year', 45, datetime.datetime(2020, 9, 13)),
+      ('next_year', 160, datetime.datetime(2021, 1, 6)),
+      ('negative', -15, datetime.datetime(2020, 7, 15)),
+      ('last_year', -250, datetime.datetime(2019, 11, 23)),
+  )
+  @flagsaver.flagsaver
+  def test_android_spl_offset_days(self, offset, expected_spl):
+    class MyDate(datetime.date):
+      @classmethod
+      def today(cls):
+        return datetime.date(2020, 7, 30)
+    datetime.date = MyDate
+
+    flags.FLAGS['android_spl_relative_days'].parse(offset)
+    flags.FLAGS.validate_all_flags()
+    spl_filter = [
+        filter for filter in
+        detector_common_flags.generate_vulnerability_filters_from_flags()
+        if isinstance(filter, vulnerability_manager.AndroidSplFilter)
+    ]
+    self.assertLen(spl_filter, 1)
+    self.assertEqual(spl_filter[0]._target_spl, expected_spl)
+
   @flagsaver.flagsaver
   def test_android_spl_offset_and_spl_flags_are_mutually_exclusive(self):
     flags.FLAGS['android_spl_relative_months'].parse(1)
     flags.FLAGS['android_spl'].parse('2020-05-01')
+    with self.assertRaises(flags.IllegalFlagValueError):
+      flags.FLAGS.validate_all_flags()
+
+  @flagsaver.flagsaver
+  def test_android_spl_offset_days_and_spl_flags_are_mutually_exclusive(self):
+    flags.FLAGS['android_spl_relative_days'].parse(15)
+    flags.FLAGS['android_spl'].parse('2020-05-01')
+    with self.assertRaises(flags.IllegalFlagValueError):
+      flags.FLAGS.validate_all_flags()
+
+  @flagsaver.flagsaver
+  def test_android_spl_offset_days_and_months_flags_are_mutually_exclusive(
+      self,
+  ):
+    flags.FLAGS['android_spl_relative_days'].parse(15)
+    flags.FLAGS['android_spl_relative_months'].parse(1)
     with self.assertRaises(flags.IllegalFlagValueError):
       flags.FLAGS.validate_all_flags()
 

@@ -62,16 +62,16 @@ class PackageScanner(offline_directory_scanner.OfflineDirectoryScanner):
     is_meta_package = isinstance(self._package, vulnerability.MetaPackage)
     if is_meta_package:
       package_vfilter = vulnerability_manager.AffectedPackageNameFilter(
-          self._package.package_pattern
+          self._package.package_pattern  # pyrefly: ignore[missing-attribute]
       )
     else:
       package_vfilter = vulnerability_manager.AffectedPackageNameFilter(
-          self._package
+          self._package  # pyrefly: ignore[bad-argument-type]
       )
     ecosystem_filter = vulnerability_manager.AffectedEcosystemFilter(
         self._ecosystem
     )
-    vfilters = [ecosystem_filter, package_vfilter] + (
+    vfilters = [ecosystem_filter, package_vfilter] + (  # pyrefly: ignore[unsupported-operation]
         extra_vulnerability_filters or []
     )
 
@@ -82,7 +82,7 @@ class PackageScanner(offline_directory_scanner.OfflineDirectoryScanner):
     else:
       vuln_manager = vulnerability_manager.generate_from_osv(
           self._ecosystem,
-          self._package if is_meta_package else [self._package],
+          self._package if is_meta_package else [self._package],  # pyrefly: ignore[bad-argument-type]
           vulnerability_filters=vfilters,
           vulnerability_overwrite_specs=vulnerability_overwrite_specs,
           osv_api=osv_api,

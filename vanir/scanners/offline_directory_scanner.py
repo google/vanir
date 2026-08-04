@@ -27,7 +27,7 @@ class OfflineDirectoryScanner(scanner_base.ScannerBase):
     self._code_location = code_location
 
   @classmethod
-  def name(cls):
+  def name(cls):  # pyrefly: ignore[bad-override]
     return 'offline_directory_scanner'
 
   def scan_offline_directory(

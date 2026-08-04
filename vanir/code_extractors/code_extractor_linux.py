@@ -76,7 +76,7 @@ class LinuxCodeExtractor(code_extractor_base.AbstractCodeExtractor):
         )
     return (commits, failed_commit_urls)
 
-  def extract_files_at_tip_of_unaffected_versions(
+  def extract_files_at_tip_of_unaffected_versions(  # pyrefly: ignore[bad-override]
       self,
       package_name: str,
       versions: Sequence[str],

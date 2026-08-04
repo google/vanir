@@ -43,7 +43,7 @@ def _run_cmd(
     env.pop('PYTHONSAFEPATH')
   else:
     env = None
-  result = subprocess.run(
+  result = subprocess.run(  # pyrefly: ignore[no-matching-overload]
       cmd,
       cwd=cwd,
       check=check,
@@ -111,7 +111,7 @@ class RepoScanner(scanner_base.ScannerBase):
     self._min_package_truncated_paths = min_package_truncated_paths
 
   @classmethod
-  def name(cls):
+  def name(cls):  # pyrefly: ignore[bad-override]
     return 'repo_scanner'
 
   def _scan_one_subdir(

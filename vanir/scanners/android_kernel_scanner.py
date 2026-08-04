@@ -77,6 +77,6 @@ class AndroidKernelScanner(package_scanner.PackageScanner):
         'version': version_extractor.extract_version(self._code_location)
     }
     new_stats = dataclasses.replace(
-        stats, scan_metadata={**(stats.scan_metadata or {}), **version_data}
+        stats, scan_metadata={**(stats.scan_metadata or {}), **version_data}  # pyrefly: ignore[bad-argument-type]
     )
     return findings, new_stats, vuln_manager

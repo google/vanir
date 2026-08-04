@@ -189,7 +189,7 @@ def normalize_function_chunk(
     token_trie.insert_entry(data_type, _AbstractedToken.DATA_TYPE)
   # pyrefly: ignore[no-matching-overload]
   token_trie.insert_entry(
-      sum(function_chunk_base.return_types, []), _AbstractedToken.DATA_TYPE
+      sum(function_chunk_base.return_types, []), _AbstractedToken.DATA_TYPE  # pyrefly: ignore[no-matching-overload]
   )
 
   normalized_code = ' '.join(

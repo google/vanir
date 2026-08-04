@@ -372,7 +372,7 @@ def _generate_json_report(
   json_report = collections.OrderedDict()
   missing_patches = []
   for osv_id in report_book.unpatched_vulnerabilities:
-    report_group = report_book.get_report_group(osv_id)
+    report_group = report_book.get_report_group(osv_id)  # pyrefly: ignore[bad-argument-type]
     if not report_group:
       continue
     details = []
@@ -430,7 +430,7 @@ def _generate_html_report(
       lambda: collections.defaultdict(set))
 
   for osv_id in report_book.unpatched_vulnerabilities:
-    report_groups = report_book.get_report_group(osv_id)
+    report_groups = report_book.get_report_group(osv_id)  # pyrefly: ignore[bad-argument-type]
     if not report_groups:
       continue
 
@@ -447,14 +447,14 @@ def _generate_html_report(
     cve_ids = report_groups.cve_ids
     if target_match_summaries:
       target_missing_patches[osv_id]['summaries'] = target_match_summaries
-      target_missing_patches[osv_id]['osv_url'] = _get_public_osv_url(osv_id)
-      target_missing_patches[osv_id]['cve_ids'] = cve_ids if cve_ids else []
+      target_missing_patches[osv_id]['osv_url'] = _get_public_osv_url(osv_id)  # pyrefly: ignore[unsupported-operation]
+      target_missing_patches[osv_id]['cve_ids'] = cve_ids if cve_ids else []  # pyrefly: ignore[unsupported-operation]
     if non_target_match_summaries:
       non_target_missing_patches[osv_id]['summaries'] = (
           non_target_match_summaries)
-      non_target_missing_patches[osv_id]['osv_url'] = _get_public_osv_url(
+      non_target_missing_patches[osv_id]['osv_url'] = _get_public_osv_url(  # pyrefly: ignore[unsupported-operation]
           osv_id)
-      non_target_missing_patches[osv_id]['cve_ids'] = cve_ids if cve_ids else []
+      non_target_missing_patches[osv_id]['cve_ids'] = cve_ids if cve_ids else []  # pyrefly: ignore[unsupported-operation]
 
   metadata = {
       **(stats.scan_metadata or {}),

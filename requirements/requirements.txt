@@ -14,4 +14,8 @@ google-api-core
 google-cloud-iam
 protobuf
 jsonpath_ng
+# tree-sitter and the Python grammar require Python >= 3.10.
+# On Python 3.9, the PythonParser is unavailable and .py files are skipped.
+tree-sitter>=0.21.0; python_version>='3.10'
+tree-sitter-python>=0.21.0; python_version>='3.10'
 

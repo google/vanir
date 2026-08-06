@@ -285,7 +285,7 @@ class DetectorCommonFlagsTest(parameterized.TestCase):
 
   @flagsaver.flagsaver(ignore_scan_path=['path1', 'path2/3'])
   def test_generate_scan_path_finding_filters_from_flags(self):
-    filters = detector_common_flags.generate_finding_filters_from_flags()
+    filters = detector_common_flags.generate_finding_filters_from_flags([])
     self.assertLen(filters, 3)
     self.assertIsInstance(filters[0], scanner_base.PathPrefixFilter)
     self.assertIsInstance(filters[1], scanner_base.PathPrefixFilter)
@@ -295,7 +295,7 @@ class DetectorCommonFlagsTest(parameterized.TestCase):
 
   @flagsaver.flagsaver(package_version=['1', '2'])
   def test_generate_version_finding_filters_from_flags(self):
-    filters = detector_common_flags.generate_finding_filters_from_flags()
+    filters = detector_common_flags.generate_finding_filters_from_flags([])
     self.assertLen(filters, 1)
     self.assertIsInstance(
         filters[0], scanner_base.PackageVersionSpecificSignatureFilter

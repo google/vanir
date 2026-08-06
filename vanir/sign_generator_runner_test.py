@@ -46,6 +46,7 @@ _TEST_SIGN1 = signature.LineSignature(
     exact_target_file_match_only=False,
     match_only_versions=None,
     truncated_path_level=None,
+    affected_entry_versions=None,
     line_hashes=[],
     threshold=0,
 )
@@ -58,6 +59,7 @@ _TEST_SIGN2 = signature.FunctionSignature(
     exact_target_file_match_only=False,
     match_only_versions=None,
     truncated_path_level=None,
+    affected_entry_versions=None,
     function_hash='func_hash',
     length=10,
     target_function='func',

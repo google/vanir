@@ -149,34 +149,74 @@ class PathPrefixFilter(FindingsFilter):
 class PackageVersionSpecificSignatureFilter(FindingsFilter):
   """Removes findings from version-specific signatures not matching given versions."""
 
-  def __init__(self, versions: Collection[str]):
+  def __init__(
+      self,
+      versions: Collection[str],
+      ignore_other_package_versions: bool=False,
+      vulnerabilities: Sequence[vulnerability.Vulnerability]=[]
+  ):
     self._package_versions = frozenset(versions)
+    self._ignore_other_package_versions = ignore_other_package_versions
+    self._versions_per_CVE = self._get_package_versions_per_CVE(vulnerabilities)
 
   def filter(self, findings: Findings) -> Findings:
     filtered_findings = {}
     for sig, chunks in findings.items():
-      # If the signature is not version-specific, keep.
-      if not sig.match_only_versions:
-        filtered_findings[sig] = chunks
-        continue
-      # If the signature's versions overlay with the package's versions, keep.
-      if set(sig.match_only_versions) & self._package_versions:
-        filtered_findings[sig] = chunks
-        continue
-      # If the signature has "X-next" listed and the package's version is newer
-      # than X, keep. Note that this versioning scheme is currently only used by
-      # Android; there are plans for a more generic approach in the future.
-      next_vers = [v for v in sig.match_only_versions if v.endswith('-next')]
-      # We are using string comparison for versioning; there is plan to
-      # incorporate OSV's SemVer comparison library in the future.
+      CVE_id = sig.signature_id.removesuffix('-' + sig.signature_id.split('-')[-1])
+
+      # Make sure there is at least one patch for the specified versions
+      # in case we want to ignore other package versions
       if (
-          next_vers and
-          any(ver > min(next_vers) for ver in self._package_versions)
+        self._ignore_other_package_versions
+        and (self._versions_per_CVE[CVE_id] & self._package_versions)
       ):
-        filtered_findings[sig] = chunks
-      # Otherwise, filter out.
+        # Only keep signatures for a CVE that are in self._package_versions
+        if(
+            (set(sig.affected_entry_versions) & self._package_versions) or
+            (sig.match_only_versions and (set(sig.match_only_versions) & self._package_versions))
+        ):
+          filtered_findings[sig] = chunks
+        else:
+          logging.debug(f'Ignoring {sig} due to version mismatch')
+      else:
+        # If the signature is not version-specific, keep.
+        if not sig.match_only_versions:
+          filtered_findings[sig] = chunks
+          continue
+        # If the signature's versions overlay with the package's versions, keep.
+        if set(sig.match_only_versions) & self._package_versions:
+          filtered_findings[sig] = chunks
+          continue
+        # If the signature has "X-next" listed and the package's version is newer
+        # than X, keep. Note that this versioning scheme is currently only used by
+        # Android; there are plans for a more generic approach in the future.
+        next_vers = [v for v in sig.match_only_versions if v.endswith('-next')]
+        # We are using string comparison for versioning; there is plan to
+        # incorporate OSV's SemVer comparison library in the future.
+        if (
+            next_vers and
+            any(ver > min(next_vers) for ver in self._package_versions)
+        ):
+          filtered_findings[sig] = chunks
+        # Otherwise, filter out.
     return filtered_findings
 
+  def _get_package_versions_per_CVE(
+      self,
+      vulnerabilities: Sequence[vulnerability.Vulnerability]
+  ) -> Mapping[str, str]:
+    """Parse package version for all vulnerability affected entries."""
+    mappings = {}
+    for vuln in vulnerabilities:
+      ids = [vuln.id]
+      if vuln.aliases:
+        ids.extend(vuln.aliases)
+      for vuln_id in ids:
+        mappings[vuln_id] = set()
+      for affected_entry in vuln.affected:
+        for vuln_id in ids:
+          mappings[vuln_id].update(affected_entry.versions)
+    return mappings
 
 @dataclasses.dataclass(frozen=True)
 class ScannedFileStats:

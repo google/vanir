@@ -38,6 +38,7 @@ class TargetSelectionStrategyTest(absltest.TestCase):
         target_file='exact_match1.c',
         target_function='foo',
         truncated_path_level=None,
+        affected_entry_versions=None,
         length=3,
         signature_version='v1',
         function_hash='func_hash',
@@ -50,6 +51,7 @@ class TargetSelectionStrategyTest(absltest.TestCase):
         source='https://android.googlesource.com/sign2_source',
         target_file='foo/exact_match2.c',
         truncated_path_level=None,
+        affected_entry_versions=None,
         signature_version='v1',
         deprecated=False,
         exact_target_file_match_only=False,
@@ -64,6 +66,7 @@ class TargetSelectionStrategyTest(absltest.TestCase):
             'somewhat/different/dir/prefix/foo/bar/truncated_path_match.c'
         ),
         truncated_path_level=2,
+        affected_entry_versions=None,
         signature_version='v1',
         deprecated=False,
         exact_target_file_match_only=False,

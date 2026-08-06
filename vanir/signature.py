@@ -149,6 +149,7 @@ class Signature(metaclass=abc.ABCMeta):
       to identify the target file. See the Truncated Path module for details.
     signature_id_prefix: Prepended to the signature hash to create the globally
       unique ID of the signature. If not given, signature_id will be invalid.
+    affected_entry_versions: Versions of the affected entry of the signature
   """
   signature_id: str
   signature_version: str
@@ -158,6 +159,7 @@ class Signature(metaclass=abc.ABCMeta):
   exact_target_file_match_only: bool
   match_only_versions: Optional[FrozenSet[str]]
   truncated_path_level: Optional[int]
+  affected_entry_versions: Optional[Sequence[str]]
 
   @property
   @abc.abstractmethod
@@ -223,6 +225,11 @@ class Signature(metaclass=abc.ABCMeta):
           function_hash=int(osv_dict['digest']['function_hash']),
           length=int(osv_dict['digest']['length']),
           target_function=osv_dict['target']['function'],
+          affected_entry_versions=(
+              frozenset(osv_dict['affected_entry_versions'])
+              if 'affected_entry_versions' in osv_dict
+              else None
+          ),
       )
     elif sig_type is SignatureType.LINE_SIGNATURE:
       sign = LineSignature(
@@ -242,6 +249,11 @@ class Signature(metaclass=abc.ABCMeta):
           truncated_path_level=_get_truncated_path_level(osv_dict),
           line_hashes=[int(h) for h in osv_dict['digest']['line_hashes']],
           threshold=osv_dict['digest']['threshold'],
+          affected_entry_versions=(
+              frozenset(osv_dict['affected_entry_versions'])
+              if 'affected_entry_versions' in osv_dict
+              else None
+          ),
       )
     else:
       raise ValueError(f'Signature type {sig_type} is unknown.')
@@ -410,6 +422,7 @@ class SignatureFactory:
         function_hash=chunk.function_hash,
         length=len(chunk.normalized_code),
         target_function=chunk.base.name,
+        affected_entry_versions=None,
     )
 
   def create_from_line_chunk(
@@ -448,6 +461,7 @@ class SignatureFactory:
         truncated_path_level=truncated_path_level,
         line_hashes=chunk.line_hashes,
         threshold=containment_threshold,
+        affected_entry_versions=None,
     )
 
   def add_used_signature_id(self, sig_id: str):

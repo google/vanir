@@ -15,6 +15,7 @@ For example, to scan /test/source against all signatures in /vanir/sigs.json:
       offline_directory_scanner /test/source
 """
 import collections
+import copy
 import datetime
 import functools
 import inspect
@@ -23,7 +24,7 @@ import json
 import os
 import sys
 import textwrap
-from typing import Any, Mapping, Sequence, Type, TypeVar
+from typing import Any, Mapping, Sequence, Set, Type, TypeVar
 
 from absl import app
 from absl import flags
@@ -33,6 +34,7 @@ import requests
 from vanir import detector_common_flags
 from vanir import osv_client
 from vanir import reporter
+from vanir import vulnerability_manager
 
 from vanir.scanners import scanner_base
 
@@ -159,6 +161,19 @@ _HTML_REPORT_TEMPLATE = """
         <td>
         <pre>{% for cve in unpatched_cves %}<nobr>{{ '%-15s' | format(cve) | replace(' ','&nbsp;')}}</nobr>&nbsp;<wbr>{% endfor %}
         </pre>
+        </td>
+      </tr>
+      <tr>
+        <th>Ignored CVEs</th>
+        <td>
+        {{ '<pre><b>Ignored CVEs by OSV ID filter</b></pre>' if ignored_cves['ignored_by_ID_filter']|length > 0 else '' }}
+        <pre>{% for cve in ignored_cves['ignored_by_ID_filter'] %}<nobr>{{ '%-15s' | format(cve) | replace(' ','&nbsp;')}}</nobr>&nbsp;<wbr>{% endfor %}
+        </pre>
+        {{ '<pre><b>Ignored CVEs by path filter</b></pre>' if ignored_cves['ignored_by_path_filter']|length > 0 else '' }}
+        {% for path in ignored_cves['ignored_by_path_filter'] %}
+        <pre><i>{{ path }}</i>&nbsp;<wbr>{% for cve in ignored_cves['ignored_by_path_filter'][path] %}<nobr>{{ '%-15s' | format(cve) | replace(' ','&nbsp;')}}</nobr>&nbsp;<wbr>{% endfor %}
+        </pre>
+        {% endfor %}
         </td>
       </tr>
     </table>
@@ -353,11 +368,20 @@ def _get_public_osv_url(osv_id: str) -> str:
     return 'Not published.'
   return osv_client.get_osv_url(osv_id)
 
+def _get_cves_from_findings(findings: scanner_base.Findings, vuln_manager: vulnerability_manager)-> Set[str]:
+  """Generate CVE ID set based on findings. """
+  signature_ids = [vuln.signature_id for vuln in findings]
+  cve_ids = set()
+  for signature_id in signature_ids:
+    cve_ids.update(vuln_manager.sign_id_to_cve_ids(signature_id))
+  return cve_ids
+
 
 def _generate_json_report(
     report_file_name: str,
     report_book: reporter.ReportBook,
     covered_cves: Sequence[str],
+    ignored_cves: Mapping[str, any],
 ) -> None:
   """Generates a JSON report based on the findings.
 
@@ -365,6 +389,7 @@ def _generate_json_report(
     report_file_name: a JSON report file name to create.
     report_book: a report book instance containing all reports.
     covered_cves: a sequence of CVEs covered by this run.
+    ignored_cves: a mapping of CVEs ignored by this run.
 
   Returns:
     None
@@ -400,6 +425,7 @@ def _generate_json_report(
       details.append(finding_details)
   json_report['options'] = ' '.join(sys.argv[1:])
   json_report['covered_cves'] = covered_cves
+  json_report['ignored_cves'] = ignored_cves
   json_report['missing_patches'] = missing_patches
   with open(report_file_name, 'w', encoding='utf-8') as report_file:
     json.dump(json_report, report_file, indent=4)
@@ -409,6 +435,7 @@ def _generate_html_report(
     report_file_name: str,
     report_book: reporter.ReportBook,
     covered_cves: Sequence[str],
+    ignored_cves: Mapping[str, any],
     stats: scanner_base.ScannedFileStats,
 ) -> None:
   """Generates a HTML file summarizing the report in a human-readable format.
@@ -417,6 +444,7 @@ def _generate_html_report(
     report_file_name: a HTML report file name to create.
     report_book: a report book instance containing all reports.
     covered_cves: a sequence of CVEs covered by this run.
+    ignored_cves: a mapping of CVEs ignored by this run.
     stats: |ScannedFileStats| object with scan result stats.
 
   Returns:
@@ -463,6 +491,7 @@ def _generate_html_report(
   html_report = template.render(
       report_file_name=report_file_name,
       covered_cves=covered_cves,
+      ignored_cves=ignored_cves,
       unpatched_cves=report_book.unpatched_cves,
       target_missing_patches=target_missing_patches,
       non_target_missing_patches=non_target_missing_patches,
@@ -539,9 +568,28 @@ def main(argv: Sequence[str]) -> None:
       [scanner_base.ShortFunctionFilter()]
       + list(detector_common_flags.generate_finding_filters_from_flags())
   )
+
+  # Apply findings filters and collect filtered out CVE IDs
+  ignored_paths = collections.defaultdict(list)
   findings = scanner_base.ShortFunctionFilter().filter(findings)
+  all_findings = copy.copy(findings)
+  all_findings_cve_ids = _get_cves_from_findings(all_findings, vuln_manager)
+
   for finding_filter in finding_filters:
     findings = finding_filter.filter(findings)
+    # Collect CVE IDs for vulnerabilities filtered out by PathPrefixFilter
+    if isinstance(finding_filter, scanner_base.PathPrefixFilter):
+      findings_filtered = finding_filter.filter(all_findings)
+      filtered_cve_ids = _get_cves_from_findings(findings_filtered, vuln_manager)
+      cve_ids_ignored = list(all_findings_cve_ids - filtered_cve_ids)
+      if cve_ids_ignored:
+        excluded_path = finding_filter._prefix
+        for cve_id in cve_ids_ignored:
+          ignored_paths[excluded_path].append(cve_id)
+
+  # sort CVE IDs in ignored paths dict
+  for path in ignored_paths:
+    ignored_paths[path] = sorted(ignored_paths[path])
 
   report_book = reporter.ReportBook(
       reporter.generate_reports(findings), vuln_manager
@@ -555,11 +603,25 @@ def main(argv: Sequence[str]) -> None:
   )
   covered_cves = sorted(set(covered_cves))
 
+  # Collect CVE IDs for vulnerabilities filtered out by OsvIdFilter
+  filtered_vuln_ids = [vuln.id for vuln in vuln_manager.get_vulnerabilities(ignore_filters=False)]
+  unfiltered_vuln_ids = [vuln.id for vuln in vuln_manager.get_vulnerabilities(ignore_filters=True)]
+  ignored_cve_ids = set()
+  for osv_id in detector_common_flags._OSV_ID_IGNORE_LIST.value:
+    if osv_id in unfiltered_vuln_ids and osv_id not in filtered_vuln_ids:
+      ignored_cve_ids.update(vuln_manager.osv_id_to_cve_ids(osv_id))
+
+  ignored_cves = {}
+  if ignored_cve_ids:
+    ignored_cves["ignored_by_ID_filter"] = sorted(ignored_cve_ids)
+  if ignored_paths:
+    ignored_cves["ignored_by_path_filter"] = ignored_paths
+
   # Generate a machine-readable JSON report.
-  _generate_json_report(json_output_file_name, report_book, covered_cves)
+  _generate_json_report(json_output_file_name, report_book, covered_cves, ignored_cves)
 
   # Generate a human-readable HTML report.
-  _generate_html_report(html_output_file_name, report_book, covered_cves, stats)
+  _generate_html_report(html_output_file_name, report_book, covered_cves, ignored_cves, stats)
 
   # Generate a console output.
   scanned_files = stats.analyzed_files + stats.skipped_files

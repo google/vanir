@@ -19,6 +19,7 @@ from typing import Optional, Sequence
 
 from absl import flags
 import dateutil.relativedelta
+from vanir import vulnerability
 from vanir import vulnerability_manager
 from vanir import vulnerability_overwriter
 from vanir.scanners import scanner_base
@@ -163,6 +164,14 @@ _PACKAGE_VERSIONS = flags.DEFINE_multi_string(
     'will be ignored. If not given, no versions-specific signatures will be '
     'used. Note that non-version-specific signatures will always be used '
     '(subjected to other flags). This flag can be specified multiple times.'
+)
+
+_IGNORE_OTHER_PACKAGE_VERSIONS = flags.DEFINE_bool(
+    'ignore_other_package_versions', False,
+    'If True, only signatures for the versions specified under package_version'
+    'are used. This includes all version-specific signatures and signatures'
+    'listed under an affected entry with that version. In case no signatures'
+    'exist for these versions, all signatures are used instead.'
 )
 
 _OVERWRITE_SPECS = flags.DEFINE_string(
@@ -371,6 +380,7 @@ def generate_vuln_manager_from_flags(
 
 
 def generate_finding_filters_from_flags(
+    vulnerabilities: Sequence[vulnerability.Vulnerability]
 ) -> Sequence[scanner_base.FindingsFilter]:
   """Parses flags related to finding filters and return the list of filters."""
   filters = []
@@ -379,5 +389,16 @@ def generate_finding_filters_from_flags(
         scanner_base.PathPrefixFilter(path) for path in _IGNORE_SCAN_PATHS.value
     )
   versions = _PACKAGE_VERSIONS.value if _PACKAGE_VERSIONS.value else []
-  filters.append(scanner_base.PackageVersionSpecificSignatureFilter(versions))
+  if not versions and _IGNORE_OTHER_PACKAGE_VERSIONS.value:
+    raise ValueError(
+        'No versions specified in "package-versions",'
+        'although ignore_other_package_versions is set to true.'
+    )
+  filters.append(
+      scanner_base.PackageVersionSpecificSignatureFilter(
+          versions,
+          _IGNORE_OTHER_PACKAGE_VERSIONS.value,
+          vulnerabilities,
+      )
+  )
   return filters

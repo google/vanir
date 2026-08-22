@@ -136,6 +136,7 @@ class RefinerTest(absltest.TestCase):
         exact_target_file_match_only=False,
         match_only_versions=None,
         truncated_path_level=None,
+        affected_entry_versions=None,
         function_hash=self._hash(_TEST_NORMALIZED_FUNCTION_CODE),
         length=len(_TEST_NORMALIZED_FUNCTION_CODE),
         target_function='test_func1',
@@ -158,6 +159,7 @@ class RefinerTest(absltest.TestCase):
         exact_target_file_match_only=False,
         match_only_versions=None,
         truncated_path_level=None,
+        affected_entry_versions=None,
         line_hashes=test_line_hashes,
         threshold=0.9,
     )

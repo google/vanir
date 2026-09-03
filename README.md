@@ -609,7 +609,7 @@ users to set the range of vulnerability scanning or to filter out known issues.
 For instance, the option `--android_spl=2023-03-05` will have Detector Runner
 filter out CVEs released after May 5, 2023.
 
-The option `--cve_id_ignore_list=CVE-1234-12345,CVE-4567-45678` will make Vanir
+The option `--vuln_id_ignore_list=CVE-1234-12345,CVE-4567-45678` will make Vanir
 explicitly ignore findings from the designated two CVEs. Similarly, the
 option `--sign_target_path_filter=drivers/nvme` will make Vanir ignore
 findings from the NVMe device drivers.

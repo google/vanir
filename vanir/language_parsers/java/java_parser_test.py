@@ -258,7 +258,9 @@ class JavaParserTest(absltest.TestCase):
     )
     # Delete latin-1 from the alternative encoding.
     with mock.patch.object(
-        abstract_language_parser, '_ALTERNATIVE_ENCODINGS', [],
+        abstract_language_parser,
+        'ALTERNATIVE_ENCODINGS',
+        (),
     ):
       with self.assertRaisesRegex(ValueError, 'Failed to decode'):
         java_parser.JavaParser(testfile.full_path).get_chunks()

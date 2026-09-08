@@ -14,4 +14,9 @@ google-api-core
 google-cloud-iam
 protobuf
 jsonpath_ng
+tree-sitter>=0.23.0,<1
+tree-sitter-c>=0.23.0,<1
+tree-sitter-cpp>=0.23.0,<1
+tree-sitter-java>=0.23.0,<1
+tree-sitter-python>=0.23.0,<1
 

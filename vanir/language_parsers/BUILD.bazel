@@ -6,7 +6,7 @@
 
 # Package containing all programming language parsers for Vanir.
 
-load("@rules_python//python:defs.bzl", "py_library")
+load("@rules_python//python:defs.bzl", "py_library", "py_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -32,6 +32,20 @@ py_library(
 )
 
 py_library(
+    name = "tree_sitter_base",
+    srcs = [
+        "tree_sitter_base.py",
+    ],
+    data = ["@pybind11_abseil//pybind11_abseil:status.so"],
+    deps = [
+        ":abstract_language_parser",
+        ":common",
+        "@com_google_absl_py//absl/logging",
+        "@vanir_deps//tree_sitter",
+    ],
+)
+
+py_library(
     name = "language_parsers",
     srcs = ["language_parsers.py"],
     deps = [
@@ -39,5 +53,17 @@ py_library(
         ":common",
         "//vanir/language_parsers/cpp:cpp_parser",
         "//vanir/language_parsers/java:java_parser",
+    ],
+)
+
+py_test(
+    name = "tree_sitter_base_test",
+    size = "small",
+    srcs = ["tree_sitter_base_test.py"],
+    deps = [
+        ":tree_sitter_base",
+        "@com_google_absl_py//absl/testing:absltest",
+        "@vanir_deps//tree_sitter",
+        "@vanir_deps//tree_sitter_python",
     ],
 )

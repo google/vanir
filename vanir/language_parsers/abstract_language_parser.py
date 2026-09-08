@@ -15,7 +15,7 @@ from absl import logging
 
 from vanir.language_parsers import common
 
-_ALTERNATIVE_ENCODINGS = ['LATIN-1']
+ALTERNATIVE_ENCODINGS = ('LATIN-1',)
 
 
 class AbstractLanguageParser(abc.ABC):
@@ -59,22 +59,26 @@ class AbstractLanguageParser(abc.ABC):
     """
 
   @classmethod
-  def _convert_to_utf8(cls, filename) -> str:
-    """Creates a new file with UTF-8 encoding and returns the file name."""
+  def _convert_to_utf8_bytes(cls, filename: str) -> bytes:
+    """Reads a file and converts its content to UTF-8 bytes."""
     logging.info('Converting %s to UTF-8.', filename)
-    for encoding in _ALTERNATIVE_ENCODINGS:
+    for encoding in ALTERNATIVE_ENCODINGS:
       try:
         with open(filename, encoding=encoding, mode='r') as file:
-          new_file = tempfile.NamedTemporaryFile(
-              encoding='UTF-8', mode='w', delete=False,
-          )
-          new_file.write(file.read())
-          new_file.close()
-          return new_file.name
+          return file.read().encode('utf-8')
       except ValueError:  # Try other encodings on decoding failure
         continue
-    alt_encodings_str = ', '.join(_ALTERNATIVE_ENCODINGS)
+    alt_encodings_str = ', '.join(ALTERNATIVE_ENCODINGS)
     raise ValueError(
         f'Failed to decode {filename}. Tried encodings: UTF-8,'
         f' {alt_encodings_str}'
     )
+
+  @classmethod
+  def _convert_to_utf8(cls, filename: str) -> str:
+    """Creates a new file with UTF-8 encoding and returns the file name."""
+    content = cls._convert_to_utf8_bytes(filename)
+    new_file = tempfile.NamedTemporaryFile(mode='wb', delete=False)
+    new_file.write(content)
+    new_file.close()
+    return new_file.name

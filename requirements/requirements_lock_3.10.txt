@@ -4,7 +4,6 @@
 #
 #    bazel run //requirements:requirements_3.10.update
 #
-
 certifi==2026.7.22
     # via requests
 cffi==2.1.0
@@ -93,6 +92,16 @@ requests==2.34.2
 six==1.17.0
     # via python-dateutil
 tenacity==9.1.4
+    # via -r requirements/requirements.txt
+tree-sitter==0.26.0
+    # via -r requirements/requirements.txt
+tree-sitter-c==0.24.2
+    # via -r requirements/requirements.txt
+tree-sitter-cpp==0.23.4
+    # via -r requirements/requirements.txt
+tree-sitter-java==0.23.5
+    # via -r requirements/requirements.txt
+tree-sitter-python==0.25.0
     # via -r requirements/requirements.txt
 typing-extensions==4.16.0
     # via

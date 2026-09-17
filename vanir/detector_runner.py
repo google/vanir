@@ -14,6 +14,7 @@ For example, to scan /test/source against all signatures in /vanir/sigs.json:
       --vulnerability_file_name=/vanir/sigs.json \
       offline_directory_scanner /test/source
 """
+
 import collections
 import datetime
 import functools
@@ -89,7 +90,7 @@ _SCANNER_ARGS = flags.DEFINE_string(
     'argument name and the value is the argument value. This flag can be used '
     'to pass arbitraty arguments to the scanner that are not possible with the '
     'positional-only arguments, as well as to improve readability. See each '
-    'scanner\'s help message for the list of its supported arguments.'
+    "scanner's help message for the list of its supported arguments."
     'Example: --scanner_args=\'{"code_location": "/path/to/source"}\'.',
 )
 
@@ -229,7 +230,8 @@ _HTML_REPORT_TEMPLATE = """
 _CMDLINE_ARGS_TYPES = (
     inspect.Parameter.POSITIONAL_ONLY,
     inspect.Parameter.POSITIONAL_OR_KEYWORD,
-    inspect.Parameter.VAR_POSITIONAL)
+    inspect.Parameter.VAR_POSITIONAL,
+)
 
 
 def _get_all_scanners() -> Mapping[str, Type[ScannerClass]]:
@@ -248,9 +250,12 @@ def _get_all_scanners() -> Mapping[str, Type[ScannerClass]]:
     if inspect.isabstract(scanner):
       continue
     scanner_params = inspect.signature(scanner.__init__).parameters.values()
-    unsupported_params = (arg for arg in scanner_params
-                          if arg.kind is inspect.Parameter.KEYWORD_ONLY
-                          and arg.default is inspect.Parameter.empty)
+    unsupported_params = (
+        arg
+        for arg in scanner_params
+        if arg.kind is inspect.Parameter.KEYWORD_ONLY
+        and arg.default is inspect.Parameter.empty
+    )
     if any(unsupported_params):
       continue
     scanner_name = scanner.name()
@@ -267,8 +272,11 @@ def _get_all_scanners() -> Mapping[str, Type[ScannerClass]]:
 def _get_scanner_usage_str(scanner: Type[ScannerClass]) -> str:
   """Returns commandline usage instruction string for the given scanner."""
   all_args = inspect.signature(scanner.__init__).parameters.values()
-  scanner_args = [arg for arg in all_args if arg.name != 'self'
-                  and arg.kind in _CMDLINE_ARGS_TYPES]
+  scanner_args = [
+      arg
+      for arg in all_args
+      if arg.name != 'self' and arg.kind in _CMDLINE_ARGS_TYPES
+  ]
   arg_strs = []
   for arg in scanner_args:
     if arg.kind is inspect.Parameter.VAR_POSITIONAL:
@@ -282,11 +290,13 @@ def _get_scanner_usage_str(scanner: Type[ScannerClass]) -> str:
       arg_strs.append(f'[{arg.name}]')
   init_doc = (
       textwrap.indent(inspect.cleandoc(scanner.__init__.__doc__), '  ')
-      if scanner.__init__.__doc__ else ''
+      if scanner.__init__.__doc__
+      else ''
   )
   class_doc = (
       textwrap.indent(inspect.cleandoc(scanner.__doc__), '  ')
-      if scanner.__doc__ else ''
+      if scanner.__doc__
+      else ''
   )
   sample_json_args = f'\'{{"{arg_strs[0]}": "some_value..."}}\''
   joined_args = ' '.join(arg_strs)
@@ -308,11 +318,15 @@ def _is_valid_scanner_args(
 ) -> bool:
   """Returns whether the given args pass validity check for the scanner."""
   all_args = inspect.signature(scanner.__init__).parameters.values()
-  scanner_args = [arg for arg in all_args if arg.name != 'self'
-                  and arg.kind in _CMDLINE_ARGS_TYPES]
+  scanner_args = [
+      arg
+      for arg in all_args
+      if arg.name != 'self' and arg.kind in _CMDLINE_ARGS_TYPES
+  ]
   scanner_arg_names = [arg.name for arg in scanner_args]
   required_arg_names = [
-      arg.name for arg in scanner_args
+      arg.name
+      for arg in scanner_args
       if (arg.default is inspect.Parameter.empty)
   ]
   has_vararg = any(
@@ -324,7 +338,7 @@ def _is_valid_scanner_args(
       return False
     args_given_as_positional = set(scanner_arg_names)
   else:
-    args_given_as_positional = set(scanner_arg_names[:len(positional_args)])
+    args_given_as_positional = set(scanner_arg_names[: len(positional_args)])
   # Check to see if any arg is given more than once
   if args_given_as_positional & set(kwargs):
     return False
@@ -424,9 +438,11 @@ def _generate_html_report(
   env = jinja2.Environment()
   template = env.from_string(_HTML_REPORT_TEMPLATE)
   target_missing_patches = collections.defaultdict(
-      lambda: collections.defaultdict(set))
+      lambda: collections.defaultdict(set)
+  )
   non_target_missing_patches = collections.defaultdict(
-      lambda: collections.defaultdict(set))
+      lambda: collections.defaultdict(set)
+  )
 
   for osv_id in report_book.unpatched_vulnerabilities:
     report_groups = report_book.get_report_group(osv_id)  # pyrefly: ignore[bad-argument-type]
@@ -437,7 +453,8 @@ def _generate_html_report(
     non_target_match_summaries = set()
     for report in report_groups.reports:
       summary = report.get_simple_report(
-          include_patch_source=True, use_html_link_for_patch_source=True)
+          include_patch_source=True, use_html_link_for_patch_source=True
+      )
       if report.is_non_target_match:
         non_target_match_summaries.add(summary)
       else:
@@ -449,16 +466,19 @@ def _generate_html_report(
       target_missing_patches[osv_id]['osv_url'] = _get_public_osv_url(osv_id)  # pyrefly: ignore[unsupported-operation]
       target_missing_patches[osv_id]['cve_ids'] = cve_ids if cve_ids else []  # pyrefly: ignore[unsupported-operation]
     if non_target_match_summaries:
-      non_target_missing_patches[osv_id]['summaries'] = (
-          non_target_match_summaries)
+      non_target_missing_patches[osv_id][
+          'summaries'
+      ] = non_target_match_summaries
       non_target_missing_patches[osv_id]['osv_url'] = _get_public_osv_url(  # pyrefly: ignore[unsupported-operation]
-          osv_id)
+          osv_id
+      )
       non_target_missing_patches[osv_id]['cve_ids'] = cve_ids if cve_ids else []  # pyrefly: ignore[unsupported-operation]
 
   metadata = {
       **(stats.scan_metadata or {}),
       'analyzed_files': stats.analyzed_files,
-      'skipped_files': stats.skipped_files}
+      'skipped_files': stats.skipped_files,
+  }
   html_report = template.render(
       report_file_name=report_file_name,
       covered_cves=covered_cves,
@@ -482,7 +502,8 @@ def main(argv: Sequence[str]) -> None:
   )
   if len(argv) <= 0 or (len(argv) <= 1 and not _SCANNER.value):
     raise app.UsageError(
-        f'Scanner is not specified. Known scanners:\n{scanners_list_str}')
+        f'Scanner is not specified. Known scanners:\n{scanners_list_str}'
+    )
   if _SCANNER.value:
     scanner_name = _SCANNER.value
     scanner_args = argv[1:]
@@ -493,7 +514,8 @@ def main(argv: Sequence[str]) -> None:
   if scanner_name not in scanners:
     raise app.UsageError(
         f'{scanner_name} is not a valid scanner. Known scanners:\n'
-        f'{scanners_list_str}')
+        f'{scanners_list_str}'
+    )
   scanner_class = scanners[scanner_name]
   scanner_kwargs = (
       json.loads(_SCANNER_ARGS.value) if _SCANNER_ARGS.value else {}
@@ -538,9 +560,8 @@ def main(argv: Sequence[str]) -> None:
           detector_common_flags.generate_overwrite_specs_from_flags()
       ),
   )
-  finding_filters = (
-      [scanner_base.ShortFunctionFilter()]
-      + list(detector_common_flags.generate_finding_filters_from_flags())
+  finding_filters = [scanner_base.ShortFunctionFilter()] + list(
+      detector_common_flags.generate_finding_filters_from_flags()
   )
   findings = scanner_base.ShortFunctionFilter().filter(findings)
   for finding_filter in finding_filters:
@@ -598,6 +619,7 @@ def main(argv: Sequence[str]) -> None:
       f' - {json_output_file_name}'
   )
   print(message)
+
 
 if __name__ == '__main__':
   app.run(main)

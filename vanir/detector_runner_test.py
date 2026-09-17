@@ -21,6 +21,7 @@ import re
 from typing import Optional, Sequence, Tuple
 from unittest import mock
 import xml.etree.ElementTree as ET
+import zipfile
 
 from absl import app
 from absl.testing import flagsaver
@@ -34,7 +35,6 @@ from vanir.scanners import scanner_base
 from vanir.scanners import target_selection_strategy
 
 from absl.testing import absltest
-
 
 _TEST_TARGET_ROOT = '/foo/bar/baz/kernel'
 _TEST_OSV_ID = 'ASB-A-test-1234'
@@ -69,20 +69,13 @@ _TEST_OSV_SIGNS = [
     },
 ]
 _TEST_VUL = {
-    'id':
-        _TEST_OSV_ID,
-    'modified':
-        '1985-11-11T21:26:24Z',
+    'id': _TEST_OSV_ID,
+    'modified': '1985-11-11T21:26:24Z',
     'aliases': [_TEST_CVE_ID1, _TEST_CVE_ID2],
     'affected': [{
-        'package': {
-            'ecosystem': 'Android',
-            'name': 'Kernel'
-        },
-        'ecosystem_specific': {
-            'vanir_signatures': _TEST_OSV_SIGNS
-        }
-    }]
+        'package': {'ecosystem': 'Android', 'name': 'Kernel'},
+        'ecosystem_specific': {'vanir_signatures': _TEST_OSV_SIGNS},
+    }],
 }
 
 
@@ -111,7 +104,7 @@ class TestScanner(scanner_base.ScannerBase):
       ] = None,
       vulnerability_overwrite_specs: Optional[
           Sequence[vulnerability_overwriter.OverwriteSpec]
-      ] = None
+      ] = None,
   ) -> Tuple[
       scanner_base.Findings,
       scanner_base.ScannedFileStats,
@@ -139,14 +132,17 @@ class InterimTestScanner(scanner_base.ScannerBase):
       ] = None,
       vulnerability_overwrite_specs: Optional[
           Sequence[vulnerability_overwriter.OverwriteSpec]
-      ] = None
+      ] = None,
   ) -> Tuple[
       scanner_base.Findings,
       scanner_base.ScannedFileStats,
       vulnerability_manager.VulnerabilityManager,
   ]:
-    return ({}, scanner_base.ScannedFileStats(0, 0),
-            vulnerability_manager.generate_from_json_string('[]'))
+    return (
+        {},
+        scanner_base.ScannedFileStats(0, 0),
+        vulnerability_manager.generate_from_json_string('[]'),
+    )
 
 
 class TestScanner2(InterimTestScanner):
@@ -156,7 +152,7 @@ class TestScanner2(InterimTestScanner):
       self,
       req_arg: str,
       *req_vararg: str,
-      optional_kw_only: Optional[str] = None
+      optional_kw_only: Optional[str] = None,
   ):
     """TestScanner2 init doc."""
     del req_arg, req_vararg, optional_kw_only
@@ -228,13 +224,15 @@ class DetectorRunnerTest(absltest.TestCase):
         match_only_versions=None,
     )
     mock_line_chunk_base = mock.create_autospec(
-        language_parsers_common.LineChunkBase, instance=True)
+        language_parsers_common.LineChunkBase, instance=True
+    )
     mock_line_chunk_base.name = None
     mock_line_chunk = mock.create_autospec(
         signature.LineChunk,
         instance=True,
         target_file=_TEST_TARGET_FILE,
-        base=mock_line_chunk_base)
+        base=mock_line_chunk_base,
+    )
     mock_func_sign = mock.create_autospec(
         signature.FunctionSignature,
         instance=True,
@@ -245,16 +243,18 @@ class DetectorRunnerTest(absltest.TestCase):
         match_only_versions=None,
     )
     mock_func_chunk_base = mock.create_autospec(
-        language_parsers_common.FunctionChunkBase, instance=True)
+        language_parsers_common.FunctionChunkBase, instance=True
+    )
     mock_func_chunk_base.name = _TEST_TARGET_FUNC
     mock_func_chunk = mock.create_autospec(
         signature.FunctionChunk,
         instance=True,
         target_file=_TEST_NON_TARGET_FILE,
-        base=mock_func_chunk_base)
+        base=mock_func_chunk_base,
+    )
     mock_findings = {
         mock_line_sign: [mock_line_chunk],
-        mock_func_sign: [mock_func_chunk]
+        mock_func_sign: [mock_func_chunk],
     }
     mock_stats = mock.create_autospec(
         scanner_base.ScannedFileStats,
@@ -266,8 +266,12 @@ class DetectorRunnerTest(absltest.TestCase):
     )
     self._mock_scan = self.enter_context(
         mock.patch.object(
-            scanner_base, 'scan', autospec=True,
-            return_value=(mock_findings, mock_stats)))
+            scanner_base,
+            'scan',
+            autospec=True,
+            return_value=(mock_findings, mock_stats),
+        )
+    )
     self._signatures = None
 
     self.mock_vul = {
@@ -322,8 +326,9 @@ class DetectorRunnerTest(absltest.TestCase):
     with flagsaver.flagsaver(
         vulnerability_file_name=[self._test_vul_file.full_path],
     ):
-      detector_runner.main(['', 'test_scanner2',
-                            'req', 'vararg1', 'vararg2', 'vararg3'])
+      detector_runner.main(
+          ['', 'test_scanner2', 'req', 'vararg1', 'vararg2', 'vararg3']
+      )
 
   def test_get_all_scanners(self):
     scanners = detector_runner._get_all_scanners()
@@ -361,7 +366,9 @@ class DetectorRunnerTest(absltest.TestCase):
     )
     self.assertTrue(
         detector_runner._is_valid_scanner_args(
-            TestScanner2, ['req'], {'req_vararg': ['asdf']},
+            TestScanner2,
+            ['req'],
+            {'req_vararg': ['asdf']},
         ),
         'Should pass with required args split between positional and kwargs.',
     )
@@ -373,19 +380,25 @@ class DetectorRunnerTest(absltest.TestCase):
     )
     self.assertTrue(
         detector_runner._is_valid_scanner_args(
-            TestScanner, ['codedir'], {'opt_arg': False},
+            TestScanner,
+            ['codedir'],
+            {'opt_arg': False},
         ),
         'Should pass with all required args and some optional args.',
     )
     self.assertFalse(
         detector_runner._is_valid_scanner_args(
-            TestScanner, ['codedir', 'True', 'extra'], {},
+            TestScanner,
+            ['codedir', 'True', 'extra'],
+            {},
         ),
         'Should fail with extra args.',
     )
     self.assertFalse(
         detector_runner._is_valid_scanner_args(
-            TestScanner, ['codedir', 'True'], {'opt_arg': False},
+            TestScanner,
+            ['codedir', 'True'],
+            {'opt_arg': False},
         ),
         'Should fail with duplicate args.',
     )
@@ -416,8 +429,7 @@ class DetectorRunnerTest(absltest.TestCase):
     )
 
     used_sign_ids = [
-        sign.signature_id
-        for sign in self._mock_scan.call_args.args[1]
+        sign.signature_id for sign in self._mock_scan.call_args.args[1]
     ]
     self.assertCountEqual(used_sign_ids, [_TEST_SIGN_ID_1, _TEST_SIGN_ID_2])
     json_report = json.loads(self._json_report_file.read_text())
@@ -665,9 +677,7 @@ class DetectorRunnerTest(absltest.TestCase):
             },
         ],
     }]
-    self.assertEqual(
-        json_report['missing_patches'], expected_missing_patches
-    )
+    self.assertEqual(json_report['missing_patches'], expected_missing_patches)
 
   def test_main_fails_with_invalid_report_file_name(self):
     invalid_report_file_name_prefix = '/dev/null/foo/bar/report'
@@ -683,8 +693,9 @@ class DetectorRunnerTest(absltest.TestCase):
         vulnerability_file_name=['/never/existing/file.json'],
         report_file_name_prefix=self._report_file_prefix,
     ):
-      with self.assertRaisesRegex(ValueError,
-                                  'Failed to find vulnerability file at .*'):
+      with self.assertRaisesRegex(
+          ValueError, 'Failed to find vulnerability file at .*'
+      ):
         detector_runner.main(['', 'test_scanner', _TEST_TARGET_ROOT])
 
   def test_main_fails_with_non_json_vul_file(self):

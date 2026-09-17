@@ -248,7 +248,7 @@ class MissingPatchDetectionHermeticTest(
       test_src_dir = self.create_tempdir()
       with resources.files('vanir').joinpath(tarball_path).open(mode='rb') as tarball_obj:
         with tarfile.open(fileobj=tarball_obj, mode='r:gz') as f:
-          f.extractall(test_src_dir)
+          f.extractall(test_src_dir, filter='tar')
 
     with self.runtime_reporter('detection'):
       findings, _ = scanner_base.scan(

@@ -202,6 +202,7 @@ py_test(
     deps = [
         ":target_selection_strategy",
         "//:signature",
+        "@com_google_absl_py//absl/logging",
         "@com_google_absl_py//absl/testing:absltest",
     ],
 )

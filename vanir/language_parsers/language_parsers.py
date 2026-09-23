@@ -23,14 +23,25 @@ from vanir.language_parsers import common
 # pylint: disable=unused-import
 from vanir.language_parsers.cpp import cpp_parser
 from vanir.language_parsers.java import java_parser
+from vanir.language_parsers.python import python_parser
 # pylint: enable=unused-import
 
 _P = TypeVar('_P', bound=abstract_language_parser.AbstractLanguageParser)
 
 
+def _all_subclasses(cls):
+  """Recursively collect all concrete (non-abstract) subclasses of cls."""
+  result = []
+  for sub in cls.__subclasses__():
+    if not sub.__abstractmethods__:
+      result.append(sub)
+    result.extend(_all_subclasses(sub))
+  return result
+
+
 def get_parser_class(filename: str) -> Optional[Type[_P]]:
   """Returns the language parser class that handles the given file, or None."""
-  parsers = abstract_language_parser.AbstractLanguageParser.__subclasses__()
+  parsers = _all_subclasses(abstract_language_parser.AbstractLanguageParser)
   ext = os.path.splitext(filename)[1]
   for parser_class in parsers:
     if ext in parser_class.get_supported_extensions():

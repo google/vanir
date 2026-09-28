@@ -1,0 +1,87 @@
+name: Publish Vanir Wheel File
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        type: choice
+        required: true
+        default: patch
+        options:
+          - patch
+          - minor
+          - major
+        description: "Select the type of version bump for the release"
+
+jobs:
+  create_release:
+    runs-on: ubuntu-latest
+    outputs:
+      v-version: ${{ steps.version.outputs.v-version }}
+    steps:
+      - name: Get next version
+        uses: reecetech/version-increment@2024.10.1
+        id: version
+        with:
+          release_branch: main
+          use_api: true
+          increment: ${{ github.event.inputs.bump_type || 'patch' }}
+
+  create_release_assets:
+    needs: [create_release]
+    if: github.repository == 'google/vanir' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-22.04
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    steps:
+      - name: Checkout Vanir at current commit
+        uses: actions/checkout@v6
+
+      - name: Create Wheel file
+        run: |
+          python3 -m pip install --upgrade build
+          SETUPTOOLS_SCM_PRETEND_VERSION=${{ needs.create_release.outputs.v-version }} python3 -m build --wheel .
+
+      - name: Upload whl package as artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: vanir
+          path: dist/*.whl
+          if-no-files-found: error
+
+  publish-to-pypi-and-release:
+    name: Publish Python 🐍 distribution 📦 to PyPI and Make Release
+    if: github.repository == 'google/vanir'  && github.ref == 'refs/heads/main'
+    needs: [create_release, create_release_assets]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/vanir # Replace <package-name> with your PyPI project name
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
+      contents: write  # IMPORTANT: mandatory for creating releases
+
+    steps:
+    - name: Download the Wheel file
+      uses: actions/download-artifact@v7
+      with:
+        name: vanir
+        path: dist/
+
+    - name: Publish distribution 📦 to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        verbose: true
+
+    - name: Upload wheel package to release
+      uses: softprops/action-gh-release@v3
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ needs.create_release.outputs.v-version }}
+        draft: false
+        generate_release_notes: true
+        prerelease: false
+        name: ${{ needs.create_release.outputs.v-version }}
+        files: |
+          dist/*

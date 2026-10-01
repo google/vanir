@@ -201,6 +201,9 @@ class SignGeneratorRunnerTest(absltest.TestCase):
         deprecated_vulns=set(),
         exact_match_only_signatures=set(),
         exact_match_only_patch_urls=set(),
+        version_specific_signatures={},
+        version_specific_vulns={},
+        version_specific_patch_urls={},
         extractor_config=mock.ANY,
     )
     expected_output_file = '/tmp/vanir/signature-20221004101000.json'
@@ -297,6 +300,9 @@ class SignGeneratorRunnerTest(absltest.TestCase):
         deprecated_patch_urls={'patch1', 'patch2'},
         exact_match_only_patch_urls=set(),
         exact_match_only_signatures=set(),
+        version_specific_signatures={},
+        version_specific_vulns={},
+        version_specific_patch_urls={},
         extractor_config=mock.ANY,
     )
 
@@ -323,6 +329,45 @@ class SignGeneratorRunnerTest(absltest.TestCase):
         deprecated_patch_urls=set(),
         exact_match_only_signatures={_TEST_SIGN_ID_2},
         exact_match_only_patch_urls={'patch1', 'patch2'},
+        version_specific_signatures={},
+        version_specific_vulns={},
+        version_specific_patch_urls={},
+        extractor_config=mock.ANY,
+    )
+
+  @flagsaver.flagsaver(
+      signature_file_name=_DESIGNATED_SIGNATURE_FILE_NAME,
+      use_osv_android_kernel_vulns=True,
+      version_specific_signatures=['version_specific_signatures.json'],
+  )
+  def test_main_with_version_specific_signature(self):
+    version_specific_sig_file_mock_open = mock.mock_open(
+        read_data=json.dumps(
+            [
+                {
+                    'reason': 'test',
+                    'versions': ['11'],
+                    'signature_ids': [_TEST_SIGN_ID_1],
+                    'vuln_id': _TEST_OSV_ID,
+                    'patch_urls': ['patch1', 'patch2'],
+                },
+            ],
+        )
+    )
+    with mock.patch.object(
+        builtins, 'open', version_specific_sig_file_mock_open
+    ):
+      sign_generator_runner.main([])
+    self.mock_generate_signatures.assert_called_once_with(
+        generator=mock.ANY,
+        deprecated_signatures=set(),
+        deprecated_vulns=set(),
+        deprecated_patch_urls=set(),
+        exact_match_only_signatures=set(),
+        exact_match_only_patch_urls=set(),
+        version_specific_signatures={_TEST_SIGN_ID_1: ['11']},
+        version_specific_vulns={_TEST_OSV_ID: ['11']},
+        version_specific_patch_urls={'patch1': ['11'], 'patch2': ['11']},
         extractor_config=mock.ANY,
     )
 

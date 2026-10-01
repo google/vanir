@@ -10,7 +10,7 @@ import datetime
 import json
 import os
 import re
-from typing import Sequence
+from typing import Optional, Sequence
 
 from absl import app
 from absl import flags
@@ -87,6 +87,29 @@ _EXACT_MATCH_ONLY_SIGNATURES = flags.DEFINE_multi_string(
     '  "signature_ids": ["ASB-A-789-123456"]}].'
     'Can be specified multiple times.')
 
+_VERSION_SPECIFIC_SIGNATURES = flags.DEFINE_multi_string(
+    'version_specific_signatures', None,
+    'JSON file that contains the list of signatures that should be further '
+    'restricted to specific package versions. '
+    'NOTE: By default, Vanir\'s built-in Refiner automatically handles '
+    'version-specificity by testing generated signatures against patched files '
+    'of other affected versions and the branch tips of unaffected versions, '
+    'marking a signature with `match_only_versions` whenever a cross-version '
+    'collision is detected. This flag is NOT a replacement for Refiner or for '
+    'proper `affected[].versions` metadata in OSV records; rather, it '
+    'furthers what Refiner does by intersecting the manually specified '
+    '`versions` with the version set determined by Refiner (and deprecating '
+    'the signature if the intersection is empty). '
+    'Example: '
+    '[{"reason": "Causes false-positive because Android 14 later introduced a '
+    'different mitigation strategy for this vulnerability", '
+    '  "versions": ["13"], '
+    '  "patch_urls": ["https://android.googlesource.com/platform/art/+/234"]}, '
+    ' {"reason": "Shared affected entry [12, 13] but sig only valid for 13", '
+    '  "versions": ["13"], '
+    '  "signature_ids": ["ASB-A-789-123456"]}]. '
+    'Can be specified multiple times.')
+
 
 _IGNORE_TEST_FILES = flags.DEFINE_bool(
     'ignore_test_files', True,
@@ -135,35 +158,90 @@ def _validate_vuln_source_flags(flags_to_check: dict[str, str]) -> bool:
   return only_one_source and not package_without_ecosystem
 
 
+def _load_deprecated_signatures(
+    file_paths: Optional[Sequence[str]],
+) -> tuple[set[str], set[str], set[str]]:
+  """Loads deprecated signature IDs, patch URLs, and vuln IDs from JSON files."""
+  deprecated_signs = set()
+  deprecated_patches = set()
+  deprecated_vulns = set()
+  if not file_paths:
+    return deprecated_signs, deprecated_patches, deprecated_vulns
+  for file_path in file_paths:
+    with open(file_path, 'rt', encoding='utf-8') as fd:
+      for block in json.load(fd):
+        deprecated_signs.update(block.get('signature_ids', ()))
+        deprecated_patches.update(block.get('patch_urls', ()))
+        if 'vuln_id' in block:
+          deprecated_vulns.add(block['vuln_id'])
+  return deprecated_signs, deprecated_patches, deprecated_vulns
+
+
+def _load_exact_match_only_signatures(
+    file_paths: Optional[Sequence[str]],
+) -> tuple[set[str], set[str]]:
+  """Loads exact-match-only signature IDs and patch URLs from JSON files."""
+  exact_match_only_signs = set()
+  exact_match_only_patches = set()
+  if not file_paths:
+    return exact_match_only_signs, exact_match_only_patches
+  for file_path in file_paths:
+    with open(file_path, 'rt', encoding='utf-8') as fd:
+      for block in json.load(fd):
+        exact_match_only_signs.update(block.get('signature_ids', ()))
+        exact_match_only_patches.update(block.get('patch_urls', ()))
+  return exact_match_only_signs, exact_match_only_patches
+
+
+def _load_version_specific_signatures(
+    file_paths: Optional[Sequence[str]],
+) -> tuple[dict[str, list[str]], dict[str, list[str]], dict[str, list[str]]]:
+  """Loads version-specific signature, patch, and vuln mappings from JSON."""
+  version_specific_signs = {}
+  version_specific_patches = {}
+  version_specific_vulns = {}
+  if not file_paths:
+    return (
+        version_specific_signs,
+        version_specific_patches,
+        version_specific_vulns,
+    )
+  for file_path in file_paths:
+    with open(file_path, 'rt', encoding='utf-8') as fd:
+      for block in json.load(fd):
+        versions = block.get('versions')
+        if not versions:
+          raise ValueError(
+              'version_specific_signatures entry must specify "versions": '
+              f'{block}'
+          )
+        for sig_id in block.get('signature_ids', ()):
+          version_specific_signs[sig_id] = versions
+        for patch_url in block.get('patch_urls', ()):
+          version_specific_patches[patch_url] = versions
+        if 'vuln_id' in block:
+          version_specific_vulns[block['vuln_id']] = versions
+  return (
+      version_specific_signs,
+      version_specific_patches,
+      version_specific_vulns,
+  )
+
+
 def main(argv: Sequence[str]) -> None:
   if len(argv) > 1:
     raise app.UsageError('Too many command-line arguments.')
   logging.use_python_logging()
 
-  deprecated_signs = set()
-  deprecated_patches = set()
-  deprecated_vulns = set()
-  if _DEPRECATED_SIGNATURES.value:
-    for deprecated_signs_file in _DEPRECATED_SIGNATURES.value:
-      with open(deprecated_signs_file, 'rt', encoding='utf-8') as fd:
-        for deprecated_signs_block in json.load(fd):
-          deprecated_signs.update(
-              deprecated_signs_block.get('signature_ids', ()))
-          deprecated_patches.update(
-              deprecated_signs_block.get('patch_urls', ()))
-          if 'vuln_id' in deprecated_signs_block:
-            deprecated_vulns.add(deprecated_signs_block['vuln_id'])
-
-  exact_match_only_signs = set()
-  exact_match_only_patches = set()
-  if _EXACT_MATCH_ONLY_SIGNATURES.value:
-    for exact_match_only_signs_file in _EXACT_MATCH_ONLY_SIGNATURES.value:
-      with open(exact_match_only_signs_file, 'rt', encoding='utf-8') as fd:
-        for exact_match_only_signs_block in json.load(fd):
-          exact_match_only_signs.update(
-              exact_match_only_signs_block.get('signature_ids', ()))
-          exact_match_only_patches.update(
-              exact_match_only_signs_block.get('patch_urls', ()))
+  deprecated_signs, deprecated_patches, deprecated_vulns = (
+      _load_deprecated_signatures(_DEPRECATED_SIGNATURES.value)
+  )
+  exact_match_only_signs, exact_match_only_patches = (
+      _load_exact_match_only_signatures(_EXACT_MATCH_ONLY_SIGNATURES.value)
+  )
+  version_specific_signs, version_specific_patches, version_specific_vulns = (
+      _load_version_specific_signatures(_VERSION_SPECIFIC_SIGNATURES.value)
+  )
 
   output_file = _SIGNATURE_FILE_NAME.value
   if not output_file:
@@ -233,6 +311,9 @@ def main(argv: Sequence[str]) -> None:
       deprecated_patch_urls=deprecated_patches,
       exact_match_only_signatures=exact_match_only_signs,
       exact_match_only_patch_urls=exact_match_only_patches,
+      version_specific_signatures=version_specific_signs,
+      version_specific_vulns=version_specific_vulns,
+      version_specific_patch_urls=version_specific_patches,
       extractor_config=code_extractor_base.ExtractorConfig(
           requests_session=session,
       )

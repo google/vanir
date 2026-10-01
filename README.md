@@ -221,11 +221,33 @@ If provided vulnerability data contains patch information for a single branch
 (e.g., upstream), then it simply uses the revision with the patch commit as
 the ground truth. If vulnerability data contains patch information for multiple
 branches, the refiner tries to test each signature against all different
-branches and classifies them different depending on the result
-(`bad`, `version-specific`, `global`). Since the refiner automatically filters
-out problematic signatures, Vanir signature publishers can easily maintain the
-Vanir signature generation and publication process for their vulnerabilities
-without significant effort to maintain the quality of the published signatures.
+branches (as well as the tips of unaffected branches) and classifies them
+depending on the result (`bad`, `version-specific` via `match_only_versions`,
+or `global`). Since the refiner automatically filters out problematic
+signatures, Vanir signature publishers can easily maintain the Vanir signature
+generation and publication process for their vulnerabilities without significant
+effort to maintain the quality of the published signatures.
+
+For edge cases where automatic refinement cannot observe a cross-version or
+cross-file collision from the canonical ground-truth repositories alone,
+signature publishers can supply manual override lists to `sign_generator_runner`
+(`--deprecated_signatures`, `--exact_target_file_match_only_signatures`, and
+`--version_specific_signatures`). In particular, `--version_specific_signatures`
+is designed to **further what Refiner does**, rather than replace it: Vanir
+still runs full cross-version refinement and then takes the **set intersection**
+between the manually specified `versions` and the versions allowed by `Refiner`
+(automatically deprecating the signature with a warning if the intersection is
+empty).
+
+*   **When to use `--version_specific_signatures`:**
+    *   *Branch divergence not detected by `Refiner`.* For example, a fix
+        created for version `13` matches that of version `14` at the time
+        (so `Refiner` leaves it as version-agnostic), but version `14` later
+        got a different mitigation strategy and the original fix was reverted
+        and triggers false positives.
+    *   *Unavailable ground-truth branch tips:* The code extractor cannot fetch
+        the unaffected branch tips for a package (e.g., non-public branches),
+        preventing `Refiner` from testing against those versions.
 
 **Detector** follows a similar process of that of signature generation -
 it passes possibly affected files from the target system to the parser,

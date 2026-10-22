@@ -73,6 +73,19 @@ class EcosystemAndFileNameFilter(FileFilter):
         and re.fullmatch(self._name_pattern, target_file) is not None)
 
 
+_JAVA_TEST_FILE_FILTER = EcosystemAndFileNameFilter(
+    'Android',
+    r'(^|.*/)(multivalent|java)?[Tt]ests?/.*[^/]Tests?(Base|Case)?\.java',
+)
+_CPP_TEST_FILE_FILTER = EcosystemAndFileNameFilter(
+    'Android', r'(^|.*/)tests?/.*[^/][Tt]ests?\.(cpp|cc)'
+)
+DEFAULT_TEST_FILE_FILTERS: Sequence[FileFilter] = (
+    _JAVA_TEST_FILE_FILTER,
+    _CPP_TEST_FILE_FILTER,
+)
+
+
 class TruncatedPathLevelFinder:
   """Finds Truncated Path Level for signatures.
 

@@ -439,6 +439,7 @@ py_test(
         "//vanir/code_extractors:code_extractor_base",
         "@com_google_absl_py//absl/logging",
         "@com_google_absl_py//absl/testing:absltest",
+        "@com_google_absl_py//absl/testing:parameterized",
     ],
 )
 

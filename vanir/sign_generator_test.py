@@ -18,6 +18,7 @@ from vanir import signature
 from vanir.code_extractors import code_extractor_base
 
 from absl.testing import absltest
+from absl.testing import parameterized
 from pybind11_abseil import status
 
 _TEST_OSV_ID = 'ASB-A-1234'
@@ -38,7 +39,7 @@ _TEST_UNPATCHED_FILES_WITH_TEST = {
 }
 
 
-class SignGeneratorTest(absltest.TestCase):
+class SignGeneratorTest(parameterized.TestCase):
 
   def setUp(self):
     super().setUp()
@@ -213,7 +214,7 @@ class SignGeneratorTest(absltest.TestCase):
     )
 
   def test_sign_generation_ignore_test_file(self):
-    self.mock_commit.unpatched_filess = (
+    self.mock_commit.unpatched_files = (
         _TEST_UNPATCHED_FILES_WITH_TEST
     )
     self.mock_commit.patched_files = (
@@ -228,6 +229,51 @@ class SignGeneratorTest(absltest.TestCase):
         self.mock_default_sign_factory,
     )
     self.assertEqual(signatures, [self.test_sign1, self.test_sign2])
+
+  @parameterized.named_parameters(
+      # Standard Java test cases
+      ('java_test', 'tests/FooTest.java', True),
+      ('java_test_base', 'tests/FooTestBase.java', True),
+      ('java_test_case', 'tests/FooTestCase.java', True),
+      # Ecosystem-specific prefixes (multivalent/java)
+      ('javatests_prefix', 'javatests/com/android/FooTest.java', True),
+      (
+          'multivalenttests_prefix',
+          'multivalenttests/com/android/FooTest.java',
+          True,
+      ),
+      # Case sensitivity and plural checks
+      ('java_capital_and_plural', 'Tests/FooTests.java', True),
+      # Java negative cases (should NOT be filtered)
+      ('java_non_test_dir', 'src/FooTest.java', False),
+      ('java_non_test_file', 'tests/Foo.java', False),
+      # C++ test cases
+      ('cpp_test', 'tests/FooTest.cpp', True),
+      ('cc_plural_test', 'test/FooTests.cc', True),
+      ('cpp_nested_snake_case_test', 'foo/tests/bar_test.cpp', True),
+      # C++ negative cases (should NOT be filtered)
+      ('cpp_non_test_dir', 'src/FooTest.cpp', False),
+      ('cc_non_test_file', 'tests/Foo.cc', False),
+  )
+  def test_sign_generation_default_filters_ignore_test_files(
+      self, file_path, should_be_filtered
+  ):
+    generator = sign_generator.SignGenerator(
+        filters=sign_generator.DEFAULT_TEST_FILE_FILTERS
+    )
+    self.mock_commit.unpatched_files = {
+        file_path: f'/tmp/test/unpatched/{file_path}'
+    }
+    signatures = generator.generate_signatures_for_commit(
+        _TEST_ECOSYSTEM,
+        _TEST_PACKAGE_NAME,
+        self.mock_commit,
+        self.mock_default_sign_factory,
+    )
+    self.assertEqual(
+        signatures,
+        [] if should_be_filtered else [self.test_sign1, self.test_sign2],
+    )
 
   def test_sign_generation_skips_file_when_parser_fails(self):
     self.mock_parser_class.side_effect = status.BuildStatusNotOk(

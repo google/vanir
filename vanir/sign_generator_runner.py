@@ -278,17 +278,6 @@ def main(argv: Sequence[str]) -> None:
   else:
     raise ValueError(_FLAG_ERROR_MESSAGE)
 
-  filters = []
-  if _IGNORE_TEST_FILES.value:
-    java_test_file_filter = sign_generator.EcosystemAndFileNameFilter(
-        'Android',
-        r'(^|.*/)(multivalent|java)?[Tt]ests?/.*[^/]Tests?(Base|Case)?\.java',
-    )
-    cpp_test_file_filter = sign_generator.EcosystemAndFileNameFilter(
-        'Android', r'(^|.*/)tests?/.*[^/][Tt]ests?\.(cpp|cc)'
-    )
-    filters += [java_test_file_filter, cpp_test_file_filter]
-
   ref_file_lists = file_list_manager.get_file_lists(
       source=_REF_FILE_LIST_SOURCE.value
   )
@@ -301,7 +290,11 @@ def main(argv: Sequence[str]) -> None:
       ref_file_lists, conditions
   )
   generator = sign_generator.SignGenerator(
-      filters=filters,
+      filters=(
+          sign_generator.DEFAULT_TEST_FILE_FILTERS
+          if _IGNORE_TEST_FILES.value
+          else ()
+      ),
       truncated_path_level_finder=tp_level_finder,
   )
   vuln_manager.generate_signatures(

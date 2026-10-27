@@ -1,0 +1,38 @@
+# Copyright 2026 Google LLC
+#
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file or at
+# https://developers.google.com/open-source/licenses/bsd
+
+load("@rules_python//python:defs.bzl", "py_library", "py_test")
+
+package(
+    default_applicable_licenses = ["//:license"],
+    default_visibility = ["//visibility:public"],
+)
+
+py_library(
+    name = "python_parser",
+    srcs = ["python_parser.py"],
+    deps = [
+        "//vanir/language_parsers:tree_sitter_base",
+        "@vanir_deps//tree_sitter",
+        "@vanir_deps//tree_sitter_python",
+    ],
+)
+
+py_test(
+    name = "python_parser_test",
+    size = "small",
+    srcs = ["python_parser_test.py"],
+    data = ["@pybind11_abseil//pybind11_abseil:status.so"],
+    deps = [
+        ":python_parser",
+        "//vanir/language_parsers:abstract_language_parser",
+        "//vanir/language_parsers:common",
+        "@com_google_absl_py//absl/logging",
+        "@com_google_absl_py//absl/testing:absltest",
+        "@com_google_absl_py//absl/testing:parameterized",
+        "@vanir_deps//tree_sitter",
+    ],
+)

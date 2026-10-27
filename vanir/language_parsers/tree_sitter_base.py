@@ -35,7 +35,7 @@ def _create_parser(
   return py_tree_sitter.Parser(language)
 
 
-def _advance_cursor(
+def advance_cursor(
     cursor: py_tree_sitter.TreeCursor, descend: bool = True
 ) -> bool:
   """Advances cursor to the next node in pre-order DFS.
@@ -84,7 +84,7 @@ def _collect_errors_cursor(
           else f"Syntax error near '{display}'"
       )
       errors.append(common.ParseError(line, col, display, msg))
-    if not _advance_cursor(cursor):
+    if not advance_cursor(cursor):
       return errors
 
 
@@ -191,7 +191,7 @@ class TreeSitterParserBase(abstract_language_parser.AbstractLanguageParser):
         descend = False
       else:
         descend = True
-      if not _advance_cursor(cursor, descend):
+      if not advance_cursor(cursor, descend):
         return tokens
 
   def line_tokens_cursor(
@@ -214,7 +214,7 @@ class TreeSitterParserBase(abstract_language_parser.AbstractLanguageParser):
         descend = False
       else:
         descend = True
-      if not _advance_cursor(cursor, descend):
+      if not advance_cursor(cursor, descend):
         return tokens_by_line
 
   def get_chunks(
@@ -259,7 +259,7 @@ class TreeSitterParserBase(abstract_language_parser.AbstractLanguageParser):
         )
         if chunk:
           function_chunks.append(chunk)
-      if not _advance_cursor(cursor):
+      if not advance_cursor(cursor):
         break
 
     return common.ParseResults(
@@ -323,7 +323,7 @@ class TreeSitterParserBase(abstract_language_parser.AbstractLanguageParser):
     while True:
       n = cursor.node
       self._visit_body_node(n, details)
-      if not _advance_cursor(cursor):
+      if not advance_cursor(cursor):
         break
 
   @abc.abstractmethod

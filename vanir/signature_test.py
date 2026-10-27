@@ -500,6 +500,49 @@ class SignatureTest(parameterized.TestCase):
     matched_signs = sign_bundle.match(test_line_chunk)
     self.assertEmpty(matched_signs)
 
+  def test_signature_bundle_match_for_line_chunks_with_duplicate_hashes(self):
+    test_target_file = 'foo/bar/test_lib.c'
+    # The signature has 12 hashes but only 9 unique ones, e.g. when the same
+    # n-gram appears in more than one hunk of the patch.
+    unique_hashes = [1111, 2222, 3333, 4444, 5555, 6666, 7777, 8888, 9999]
+    test_signature_line_hashes = unique_hashes + [1111, 2222, 3333]
+    test_osv_sign = {
+        'id': 'ASB-A-12345-TEST-SIGN-ID-12345678-6',
+        'signature_type': 'Line',
+        'signature_version': signature._VANIR_SIGNATURE_VERSION,
+        'source': 'http://android.googlesource.com/test_source',
+        'target': {
+            'file': test_target_file,
+        },
+        'deprecated': False,
+        'digest': {
+            'line_hashes': test_signature_line_hashes,
+            'threshold': 0.9,
+        },
+    }
+    test_signature = signature.Signature.from_osv_dict(test_osv_sign)
+    sign_bundle = signature.SignatureBundle([test_signature])
+
+    # A chunk containing all 9 unique signature hashes should match.
+    full_chunk = signature.LineChunk(
+        mock.Mock(),
+        test_target_file,
+        mock.Mock(),
+        unique_hashes + [1234],
+        mock.Mock(),
+    )
+    self.assertEqual(sign_bundle.match(full_chunk), [test_signature])
+
+    # A chunk missing one unique hash has 8/9 (about 0.89) and should not match.
+    partial_chunk = signature.LineChunk(
+        mock.Mock(),
+        test_target_file,
+        mock.Mock(),
+        unique_hashes[:-1] + [1234],
+        mock.Mock(),
+    )
+    self.assertEmpty(sign_bundle.match(partial_chunk))
+
   def test_signature_bundle_match_fails_with_unknown_chunk_type(self):
     sign_bundle = signature.SignatureBundle([self.test_line_signature])
     with self.assertRaisesRegex(TypeError,

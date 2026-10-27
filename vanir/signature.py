@@ -541,7 +541,7 @@ class SignatureBundle:
     chunk_hashes = set(chunk.line_hashes)
     matched_line_signatures = []
     for line_sign in line_signature_list:
-      signature_hashes = line_sign.digest['line_hashes']
+      signature_hashes = set(line_sign.digest['line_hashes'])
       included_hashes = chunk_hashes.intersection(signature_hashes)
       containment_ratio = float(len(included_hashes)) / len(signature_hashes)
       if containment_ratio < line_sign.digest['threshold']:

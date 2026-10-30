@@ -75,7 +75,7 @@ class EcosystemAndFileNameFilter(FileFilter):
 
 _JAVA_TEST_FILE_FILTER = EcosystemAndFileNameFilter(
     'Android',
-    r'(^|.*/)(multivalent|java)?[Tt]ests?/.*[^/]Tests?(Base|Case)?\.java',
+    r'(^|.*/)(multivalent|java)?[Tt]ests?/.*[^/]Tests?(Base|Case|able)?\.java',
 )
 _CPP_TEST_FILE_FILTER = EcosystemAndFileNameFilter(
     'Android', r'(^|.*/)tests?/.*[^/][Tt]ests?\.(cpp|cc)'

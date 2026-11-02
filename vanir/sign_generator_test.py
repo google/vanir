@@ -236,6 +236,7 @@ class SignGeneratorTest(parameterized.TestCase):
       ('java_test_base', 'tests/FooTestBase.java', True),
       ('java_test_case', 'tests/FooTestCase.java', True),
       ('java_testable', 'tests/FooTestable.java', True),
+      ('java_test_rule', 'tests/FooTestRule.java', True),
       # Ecosystem-specific prefixes (multivalent/java)
       ('javatests_prefix', 'javatests/com/android/FooTest.java', True),
       (
@@ -248,6 +249,7 @@ class SignGeneratorTest(parameterized.TestCase):
       # Java negative cases (should NOT be filtered)
       ('java_non_test_dir', 'src/FooTest.java', False),
       ('java_testable_non_test_dir', 'src/FooTestable.java', False),
+      ('java_test_rule_non_test_dir', 'src/FooTestRule.java', False),
       ('java_non_test_file', 'tests/Foo.java', False),
       # C++ test cases
       ('cpp_test', 'tests/FooTest.cpp', True),

@@ -61,10 +61,12 @@ class JavaParser(abstract_language_parser.AbstractLanguageParser):
           function_chunks_raw, line_chunk_raw, errors_raw = parser.parse(
               affected_line_ranges_for_functions
           )
+        except status.StatusNotOk as retry_e:
+          raise common.LanguageParserError(str(retry_e)) from retry_e
         finally:
           os.remove(temp_filename)
       else:
-        raise e
+        raise common.LanguageParserError(str(e)) from e
 
     function_chunks = []
     for function_chunk_raw in function_chunks_raw:

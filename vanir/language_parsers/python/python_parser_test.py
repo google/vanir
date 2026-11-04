@@ -16,7 +16,6 @@ from vanir.language_parsers.python import python_parser
 
 from absl.testing import absltest
 from absl.testing import parameterized
-from pybind11_abseil import status
 
 
 class PythonParserTest(parameterized.TestCase):
@@ -128,10 +127,6 @@ async def async_func(items):
         ['.py'],
         'Claimed supported extensions do not match.',
     )
-
-  def test_nonexistent_file_failure(self):
-    with self.assertRaisesRegex(status.StatusNotOk, 'Failed to open file:.*'):
-      _ = python_parser.PythonParser('NonExistingFile.py').get_chunks()
 
   def test_parsing_no_line_limit(self):
     results = python_parser.PythonParser(self.testfile.full_path).get_chunks()

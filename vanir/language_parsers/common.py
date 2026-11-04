@@ -55,3 +55,8 @@ class ParseResults:
   function_chunks: Sequence[FunctionChunkBase]
   line_chunk: LineChunkBase
   parse_errors: Sequence[ParseError]
+
+
+class LanguageParserError(Exception):
+  """Raised when a language parser encounters an unexpected error."""
+

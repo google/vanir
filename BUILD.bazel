@@ -61,11 +61,11 @@ py_library(
 py_library(
     name = "refiner",
     srcs = ["vanir/refiner.py"],
-    data = ["@pybind11_abseil//pybind11_abseil:status.so"],
     deps = [
         ":parser",
         ":signature",
         "//vanir/code_extractors:code_extractor_base",
+        "//vanir/language_parsers:common",
         "@com_google_absl_py//absl/logging",
     ],
 )
@@ -127,12 +127,12 @@ py_library(
 py_library(
     name = "sign_generator",
     srcs = ["vanir/sign_generator.py"],
-    data = ["@pybind11_abseil//pybind11_abseil:status.so"],
     deps = [
         ":parser",
         ":signature",
         ":truncated_path",
         "//vanir/code_extractors:code_extractor_base",
+        "//vanir/language_parsers:common",
         "@com_google_absl_py//absl/logging",
     ],
 )
@@ -328,9 +328,9 @@ py_test(
     name = "parser_test",
     size = "small",
     srcs = ["vanir/parser_test.py"],
-    data = ["@pybind11_abseil//pybind11_abseil:status.so"],
     deps = [
         ":parser",
+        "//vanir/language_parsers:common",
         "@com_google_absl_py//absl/testing:absltest",
     ],
 )
@@ -363,12 +363,12 @@ py_test(
     name = "refiner_test",
     size = "small",
     srcs = ["vanir/refiner_test.py"],
-    data = ["@pybind11_abseil//pybind11_abseil:status.so"],
     deps = [
         ":parser",
         ":refiner",
         ":signature",
         "//vanir/code_extractors:code_extractor_base",
+        "//vanir/language_parsers:common",
         "@com_google_absl_py//absl/testing:absltest",
         "@vanir_deps//mmh3",
     ],
@@ -431,12 +431,12 @@ py_test(
     name = "sign_generator_test",
     size = "small",
     srcs = ["vanir/sign_generator_test.py"],
-    data = ["@pybind11_abseil//pybind11_abseil:status.so"],
     deps = [
         ":parser",
         ":sign_generator",
         ":signature",
         "//vanir/code_extractors:code_extractor_base",
+        "//vanir/language_parsers:common",
         "@com_google_absl_py//absl/logging",
         "@com_google_absl_py//absl/testing:absltest",
         "@com_google_absl_py//absl/testing:parameterized",

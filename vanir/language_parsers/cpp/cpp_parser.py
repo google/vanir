@@ -41,10 +41,12 @@ class CppParser(abstract_language_parser.AbstractLanguageParser):
         try:
           self.parser_core = parser_core.ParserCore(temp_filename)
           self.parser_core.init()
+        except status.StatusNotOk as retry_e:
+          raise common.LanguageParserError(str(retry_e)) from retry_e
         finally:
           os.remove(temp_filename)
       else:
-        raise e
+        raise common.LanguageParserError(str(e)) from e
 
   @classmethod
   # pyrefly: ignore[bad-override]

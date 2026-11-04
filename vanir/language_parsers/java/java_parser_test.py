@@ -14,7 +14,6 @@ from vanir.language_parsers import common
 from vanir.language_parsers.java import java_parser
 
 from absl.testing import absltest
-from pybind11_abseil import status
 
 
 class JavaParserTest(absltest.TestCase):
@@ -137,7 +136,9 @@ class JavaParserTest(absltest.TestCase):
 
   def test_nonexistent_file_failure(self):
     filename = 'NonExistingFile.java'
-    with self.assertRaisesRegex(status.StatusNotOk, 'Failed to open:.*'):
+    with self.assertRaisesRegex(
+        common.LanguageParserError, 'Failed to open:.*'
+    ):
       _ = java_parser.JavaParser(filename).get_chunks()
 
   def test_parsing_no_line_limit(self):
@@ -264,6 +265,7 @@ class JavaParserTest(absltest.TestCase):
     ):
       with self.assertRaisesRegex(ValueError, 'Failed to decode'):
         java_parser.JavaParser(testfile.full_path).get_chunks()
+
 
 if __name__ == '__main__':
   absltest.main()

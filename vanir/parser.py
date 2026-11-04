@@ -53,7 +53,7 @@ class Parser:
         processed, i.e. this will still return all line chunks in the file.
 
     Raises:
-      StatusNotOk: if failed to open the file at |file_path|.
+      LanguageParserError: if failed to parse the file at |file_path|.
     """
     if not affected_line_ranges:
       affected_line_ranges = []

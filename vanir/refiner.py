@@ -24,7 +24,7 @@ from absl import logging
 from vanir import parser
 from vanir import signature
 from vanir.code_extractors import code_extractor_base
-from pybind11_abseil import status
+from vanir.language_parsers import common
 
 
 def _identity(x):
@@ -203,7 +203,7 @@ class Refiner:
       except concurrent.futures.process.BrokenProcessPool:
         logging.error('A worker died unexpectedly while refining %s', cache_key)
         continue
-      except status.StatusNotOk as e:
+      except common.LanguageParserError as e:
         logging.exception(
             'Failed to parse %s (error: %s). Skipping. ', cache_key, e
         )

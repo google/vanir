@@ -18,8 +18,6 @@ import tree_sitter as py_tree_sitter
 from vanir.language_parsers import abstract_language_parser
 from vanir.language_parsers import common
 
-from pybind11_abseil import status
-
 
 def _create_parser(
     language: py_tree_sitter.Language,
@@ -232,11 +230,8 @@ class TreeSitterParserBase(abstract_language_parser.AbstractLanguageParser):
       except UnicodeDecodeError:
         source_bytes = self._convert_to_utf8_bytes(self._filename)
     except OSError as e:
-      raise status.StatusNotOk(
-          status.Status(
-              status.StatusCode.UNAVAILABLE,
-              f'Failed to open file: {self._filename}: {e}',
-          )
+      raise common.LanguageParserError(
+          f'Failed to open file: {self._filename}: {e}'
       ) from e
 
     tree = self._parser.parse(source_bytes)

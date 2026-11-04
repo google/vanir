@@ -36,11 +36,9 @@ py_library(
     srcs = [
         "tree_sitter_base.py",
     ],
-    data = ["@pybind11_abseil//pybind11_abseil:status.so"],
     deps = [
         ":abstract_language_parser",
         ":common",
-        "@com_google_absl_py//absl/logging",
         "@vanir_deps//tree_sitter",
     ],
 )
@@ -75,6 +73,7 @@ py_test(
     size = "small",
     srcs = ["tree_sitter_base_test.py"],
     deps = [
+        ":common",
         ":tree_sitter_base",
         "@com_google_absl_py//absl/testing:absltest",
         "@vanir_deps//tree_sitter",

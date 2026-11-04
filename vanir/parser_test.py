@@ -7,9 +7,9 @@
 """Tests for parser."""
 
 from vanir import parser
+from vanir.language_parsers import common
 
 from absl.testing import absltest
-from pybind11_abseil import status
 
 
 class ParserTest(absltest.TestCase):
@@ -139,10 +139,20 @@ class ParserTest(absltest.TestCase):
     self.assertIsNotNone(line_chunk.line_hashes)
     self.assertIsNotNone(line_chunk.used_lines)
 
-  def test_parser_with_init_failure(self):
+  def test_antlr4_parser_with_init_failure(self):
     filename = 'NonExistingFile.c'
     test_target_file = 'foo/bar/testfile.c'
-    with self.assertRaisesRegex(status.StatusNotOk, 'Failed to open file:.*'):
+    with self.assertRaisesRegex(
+        common.LanguageParserError, 'Failed to open file:.*'
+    ):
+      parser.Parser(filename, test_target_file)
+
+  def test_treesitter_parser_with_init_failure(self):
+    filename = 'NonExistingFile.py'
+    test_target_file = 'foo/bar/testfile.py'
+    with self.assertRaisesRegex(
+        common.LanguageParserError, 'Failed to open file:.*'
+    ):
       parser.Parser(filename, test_target_file)
 
 

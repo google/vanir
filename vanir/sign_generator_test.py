@@ -16,10 +16,10 @@ from vanir import parser
 from vanir import sign_generator
 from vanir import signature
 from vanir.code_extractors import code_extractor_base
+from vanir.language_parsers import common
 
 from absl.testing import absltest
 from absl.testing import parameterized
-from pybind11_abseil import status
 
 _TEST_OSV_ID = 'ASB-A-1234'
 _TEST_ECOSYSTEM = 'Android'
@@ -280,8 +280,9 @@ class SignGeneratorTest(parameterized.TestCase):
     )
 
   def test_sign_generation_skips_file_when_parser_fails(self):
-    self.mock_parser_class.side_effect = status.BuildStatusNotOk(
-        status.StatusCode.CANCELLED, 'mock error')
+    self.mock_parser_class.side_effect = (
+        common.LanguageParserError('mock error')
+    )
     generator = sign_generator.SignGenerator()
     with self.assertLogs(level=logging.ERROR) as logs:
       sigs = generator.generate_signatures_for_commit(

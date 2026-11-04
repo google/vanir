@@ -10,10 +10,10 @@ from unittest import mock
 
 from absl import logging
 from vanir.language_parsers import abstract_language_parser
+from vanir.language_parsers import common
 from vanir.language_parsers.cpp import cpp_parser
 
 from absl.testing import absltest
-from pybind11_abseil import status
 
 
 class ParserCoreTest(absltest.TestCase):
@@ -94,7 +94,9 @@ class ParserCoreTest(absltest.TestCase):
 
   def test_cpp_parser_with_nonexistent_file_failure(self):
     filename = 'NonExistingFile.c'
-    with self.assertRaisesRegex(status.StatusNotOk, 'Failed to open file:.*'):
+    with self.assertRaisesRegex(
+        common.LanguageParserError, 'Failed to open file:.*'
+    ):
       _ = cpp_parser.CppParser(filename)
 
   def test_cpp_parser_with_non_utf8_file(self):

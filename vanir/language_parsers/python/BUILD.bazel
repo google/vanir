@@ -25,7 +25,6 @@ py_test(
     name = "python_parser_test",
     size = "small",
     srcs = ["python_parser_test.py"],
-    data = ["@pybind11_abseil//pybind11_abseil:status.so"],
     deps = [
         ":python_parser",
         "//vanir/language_parsers:abstract_language_parser",

@@ -22,9 +22,9 @@ from vanir import parser
 from vanir import refiner
 from vanir import signature
 from vanir.code_extractors import code_extractor_base
+from vanir.language_parsers import common
 
 from absl.testing import absltest
-from pybind11_abseil import status
 
 _TEST_NORMALIZED_FUNCTION_CODE = (
     'DTYPE FUNCNAME ( const unsigned DTYPE PARAM ) { '
@@ -322,9 +322,7 @@ class RefinerTest(absltest.TestCase):
   def test_refinement_skip_when_parser_fails(self):
     with mock.patch.object(
         parser, 'Parser',
-        side_effect=status.BuildStatusNotOk(
-            status.StatusCode.CANCELLED, 'mock error'
-        ),
+        side_effect=common.LanguageParserError('mock error'),
     ):
       refined_signatures = self._refiner.refine_against_patch_series(
           [self._test_function_sig, self._test_line_sig],

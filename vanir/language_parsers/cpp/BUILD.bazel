@@ -49,10 +49,10 @@ py_test(
     name = "cpp_parser_test",
     size = "small",
     srcs = ["cpp_parser_test.py"],
-    data = ["@pybind11_abseil//pybind11_abseil:status.so"],
     deps = [
         ":cpp_parser",
         "//vanir/language_parsers:abstract_language_parser",
+        "//vanir/language_parsers:common",
         "@com_google_absl_py//absl/logging",
         "@com_google_absl_py//absl/testing:absltest",
     ],

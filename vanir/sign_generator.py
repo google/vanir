@@ -21,8 +21,7 @@ from vanir import parser
 from vanir import signature
 from vanir import truncated_path
 from vanir.code_extractors import code_extractor_base
-
-from pybind11_abseil import status
+from vanir.language_parsers import common
 
 _LINE_SIGNATURE_THRESHOLD = 0.9
 
@@ -302,7 +301,7 @@ class SignGenerator:
               target_file, url,
           )
           relevant_target_files.remove(target_file)
-        except status.StatusNotOk as e:
+        except common.LanguageParserError as e:
           logging.exception(
               'Failed to parse file %s in %s (error: %s). Skipping. ',
               target_file, url, e

@@ -6,6 +6,7 @@
 
 import tree_sitter_python
 import tree_sitter as py_tree_sitter
+from vanir.language_parsers import common
 from vanir.language_parsers import tree_sitter_base
 
 from absl.testing import absltest
@@ -117,6 +118,13 @@ class TreeSitterBaseTest(absltest.TestCase):
         affected_line_ranges_for_functions=[(10, 20)]
     )
     self.assertEmpty(results.function_chunks)
+
+  def test_generic_treesitter_parser_nonexistent_file_failure(self):
+    parser = _DummyPythonParser('NonExistingFile.py')
+    with self.assertRaisesRegex(
+        common.LanguageParserError, 'Failed to open file:.*'
+    ):
+      _ = parser.get_chunks()
 
 
 if __name__ == '__main__':

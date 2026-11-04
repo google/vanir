@@ -23,6 +23,7 @@ from vanir.language_parsers import common
 # pylint: disable=unused-import
 from vanir.language_parsers.cpp import cpp_parser
 from vanir.language_parsers.java import java_parser
+from vanir.language_parsers.python import python_parser
 # pylint: enable=unused-import
 
 _P = TypeVar('_P', bound=abstract_language_parser.AbstractLanguageParser)

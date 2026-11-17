@@ -134,8 +134,8 @@ class _ExactPathMatch(_Strategy):
 @functools.cache
 def _get_target_truncated_path_set(
     signature_bundle: signature.SignatureBundle,
-) -> set[truncated_path.TruncatedPath]:
-  """Returns a set of truncated paths from the given signature bundle."""
+) -> frozenset[truncated_path.TruncatedPath]:
+  """Returns a frozenset of truncated paths from the given signature bundle."""
   target_truncated_path_set = set()
   for sign in signature_bundle.signatures:
     level = sign.truncated_path_level
@@ -152,7 +152,7 @@ def _get_target_truncated_path_set(
           f'The signature {sign.signature_id} has invalid Truncated Path Level.'
       ) from error
     target_truncated_path_set.add(tp)
-  return target_truncated_path_set
+  return frozenset(target_truncated_path_set)
 
 
 class _TruncatedPathMatch(_Strategy):

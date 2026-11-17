@@ -152,19 +152,19 @@ def _get_levels(truncated_path_set: FrozenSet[TruncatedPath]) -> Set[int]:
 
 
 def check_inclusion(
-    truncated_path_set: Set[TruncatedPath], file_path: str
+    truncated_path_set: FrozenSet[TruncatedPath], file_path: str
 ) -> bool:
   """Check inclusion of a file path in a set of Truncated Path.
 
   Args:
-    truncated_path_set: a set of truncated path.
+    truncated_path_set: a frozenset of truncated paths.
     file_path: a file path to be checked against the given truncated path set.
 
   Returns:
     Returns True if any level of truncated path of the given file path is
     included the given Truncated Path Set. Returns False, otherwise.
   """
-  levels = _get_levels(frozenset(truncated_path_set))
+  levels = _get_levels(truncated_path_set)
   for level in levels:
     if not TruncatedPath.is_level_ok(file_path, level):
       continue
@@ -180,7 +180,7 @@ def check_inclusion_rate_of_truncated_paths_in_file_list(
   """Check inclusion rate of a list of Truncated Paths in the list of files.
 
   Args:
-    truncated_path_set: a set of truncated path.
+    truncated_path_set: a frozenset of truncated paths.
     file_list: a list of file paths.
 
   Returns:
@@ -188,7 +188,7 @@ def check_inclusion_rate_of_truncated_paths_in_file_list(
     |file_list|.
   """
   file_tps = set()
-  levels = _get_levels(frozenset(truncated_path_set))
+  levels = _get_levels(truncated_path_set)
   for level in levels:
     for file_path in file_list:
       if not TruncatedPath.is_level_ok(file_path, level):

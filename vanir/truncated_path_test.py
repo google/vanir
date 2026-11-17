@@ -29,7 +29,7 @@ class TruncatedPathTest(absltest.TestCase):
     self.assertEqual(str(tp), 'bar/baz')
 
   def test_check_inclusion(self):
-    tp_set = {
+    tp_set = frozenset({
         truncated_path.TruncatedPath(file_path, level)
         for file_path, level in [
             ('foo/bar/baz', 2),
@@ -37,7 +37,7 @@ class TruncatedPathTest(absltest.TestCase):
             ('garply/waldo/fred', 2),
             ('fred/plugh/xyzzy/thud', 3),
         ]
-    }
+    })
     self.assertTrue(truncated_path.check_inclusion(tp_set, 'foo/bar/baz'))
     self.assertTrue(
         truncated_path.check_inclusion(
@@ -47,7 +47,7 @@ class TruncatedPathTest(absltest.TestCase):
     self.assertFalse(truncated_path.check_inclusion(tp_set, 'bar/baz'))
 
   def test_check_inclusion_rate_of_truncated_paths_in_file_list(self):
-    tp_set = {
+    tp_set = frozenset({
         truncated_path.TruncatedPath(file_path, level)
         for file_path, level in [
             ('foo/bar/baz', 2),
@@ -55,7 +55,7 @@ class TruncatedPathTest(absltest.TestCase):
             ('garply/waldo/fred', 2),
             ('fred/plugh/xyzzy/thud', 3),
         ]
-    }
+    })
     file_list = [
         '1/2/3/4/foo/bar/baz',
         '1/2/3/qux/quux/corge',

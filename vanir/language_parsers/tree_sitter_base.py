@@ -268,12 +268,34 @@ class TreeSitterParserBase(abstract_language_parser.AbstractLanguageParser):
         parse_errors=parse_errors,
     )
 
+  @classmethod
+  def is_test_function(cls, function_node: py_tree_sitter.Node) -> bool:
+    """Returns whether the given function is test code.
+
+    A parser whose language marks its test functions, e.g. Rust with its
+    '#[test]' attribute, overrides this hook, so that the test code does not
+    get a signature. The default is False, i.e. every function is signed.
+
+    Args:
+      function_node: the tree-sitter node of the function.
+
+    Returns:
+      True if the function is test code.
+    """
+    del function_node  # unneeded
+    return False
+
   def _extract_function_chunk(
       self,
       func_node: py_tree_sitter.Node,
       affected_line_ranges_for_functions: Sequence[tuple[int, int]] | None,
   ) -> common.FunctionChunkBase | None:
     """Extracts a FunctionChunkBase from a function definition/declaration node."""
+    if self.is_test_function(func_node):
+      # The parser recognizes this function as test code, e.g. a Rust
+      # function marked with the '#[test]' attribute. Test code does not get
+      # a signature.
+      return None
     start_line = func_node.start_point[0] + 1
     end_line = func_node.end_point[0] + 1
     if affected_line_ranges_for_functions:

@@ -143,7 +143,10 @@ _FLAG_ERROR_MESSAGE = (
     ' 4) --use_osv_android_kernel_vulns: generate signatures for the latest '
     'Android kernel vulnerabilities in OSV'
 )
-_DRIVER_FILE_PATTERN = re.compile(r'drivers/.*')
+# The files of the drivers and the files of the Rust code of the kernel,
+# which are in the 'rust' directory of the kernel tree, e.g.
+# 'rust/kernel/irq/request.rs'.
+_DRIVER_FILE_PATTERN = re.compile(r'(drivers|rust)/.*')
 
 
 def _validate_vuln_source_flags(flags_to_check: dict[str, str]) -> bool:

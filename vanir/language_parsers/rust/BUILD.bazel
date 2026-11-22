@@ -1,0 +1,38 @@
+# Copyright 2026 Google LLC
+#
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file or at
+# https://developers.google.com/open-source/licenses/bsd
+
+# Rust parser for Vanir, based on the tree-sitter-rust grammar.
+
+load("@rules_python//python:defs.bzl", "py_library", "py_test")
+
+package(
+    default_applicable_licenses = ["//:license"],
+    default_visibility = ["//visibility:public"],
+)
+
+py_library(
+    name = "rust_parser",
+    srcs = ["rust_parser.py"],
+    deps = [
+        "//vanir/language_parsers:tree_sitter_base",
+        "@vanir_deps//tree_sitter",
+        "@vanir_deps//tree_sitter_rust",
+    ],
+)
+
+py_test(
+    name = "rust_parser_test",
+    size = "small",
+    srcs = ["rust_parser_test.py"],
+    deps = [
+        ":rust_parser",
+        "//vanir/language_parsers:common",
+        "@com_google_absl_py//absl/logging",
+        "@com_google_absl_py//absl/testing:absltest",
+        "@vanir_deps//tree_sitter",
+        "@vanir_deps//tree_sitter_rust",
+    ],
+)

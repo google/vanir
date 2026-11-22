@@ -53,6 +53,7 @@ py_library(
         "//vanir/language_parsers/java:java_parser",
         "//vanir/language_parsers/kotlin:kotlin_parser",
         "//vanir/language_parsers/python:python_parser",
+        "//vanir/language_parsers/rust:rust_parser",
     ],
 )
 
@@ -66,6 +67,7 @@ py_test(
         "//vanir/language_parsers/java:java_parser",
         "//vanir/language_parsers/kotlin:kotlin_parser",
         "//vanir/language_parsers/python:python_parser",
+        "//vanir/language_parsers/rust:rust_parser",
         "@com_google_absl_py//absl/testing:absltest",
     ],
 )

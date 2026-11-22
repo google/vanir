@@ -27,6 +27,7 @@ from vanir.language_parsers.cpp import cpp_parser
 from vanir.language_parsers.java import java_parser
 from vanir.language_parsers.kotlin import kotlin_parser
 from vanir.language_parsers.python import python_parser
+from vanir.language_parsers.rust import rust_parser
 
 # pylint: enable=unused-import
 

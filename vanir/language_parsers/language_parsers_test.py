@@ -9,6 +9,7 @@ from vanir.language_parsers.cpp import cpp_parser
 from vanir.language_parsers.java import java_parser
 from vanir.language_parsers.kotlin import kotlin_parser
 from vanir.language_parsers.python import python_parser
+from vanir.language_parsers.rust import rust_parser
 
 from absl.testing import absltest
 
@@ -28,12 +29,19 @@ class LanguageParsersTest(absltest.TestCase):
     self.assertIs(
         language_parsers.get_parser_class('x.kt'), kotlin_parser.KotlinParser
     )
+    self.assertIs(
+        language_parsers.get_parser_class('x.rs'), rust_parser.RustParser
+    )
     self.assertIsNone(language_parsers.get_parser_class('x.unknown'))
 
   def test_get_parser_class_by_language_id(self) -> None:
     self.assertIs(
         language_parsers.get_parser_class_by_language_id('kotlin'),
         kotlin_parser.KotlinParser,
+    )
+    self.assertIs(
+        language_parsers.get_parser_class_by_language_id('rust'),
+        rust_parser.RustParser,
     )
     self.assertIsNone(
         language_parsers.get_parser_class_by_language_id('cobol'))

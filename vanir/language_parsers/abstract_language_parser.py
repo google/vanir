@@ -58,6 +58,37 @@ class AbstractLanguageParser(abc.ABC):
     Return: A ParseResults object containing all the parsing output.
     """
 
+  # The id of the language of the parser, e.g. 'kotlin'. It is empty for a
+  # parser whose language is not identified yet.
+  language_id: str = ''
+
+  @classmethod
+  def get_language_id(cls) -> str:
+    """Returns the id of the language of the parser, e.g. 'kotlin'.
+
+    Returns:
+      The id of the language, or an empty string.
+    """
+    return cls.language_id
+
+  @classmethod
+  def is_test_file(cls, file_path: str) -> bool:
+    """Returns whether the given file is a test file of this language.
+
+    A parser of a language that knows how its test files are named overrides
+    this hook, so that the generation of the signatures can skip them. The
+    default is False, i.e. a language whose parser does not know its test
+    files signs them.
+
+    Args:
+      file_path: the path of the file relative to the root of the source tree.
+
+    Returns:
+      True if the file is a test file.
+    """
+    del file_path  # unneeded
+    return False
+
   @classmethod
   def _convert_to_utf8_bytes(cls, filename: str) -> bytes:
     """Reads a file and converts its content to UTF-8 bytes."""

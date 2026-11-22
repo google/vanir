@@ -8,7 +8,7 @@
 
 import collections
 import enum
-from typing import Iterator, Mapping, Sequence, Tuple
+from typing import Iterator, Mapping, Optional, Sequence, Tuple
 
 from vanir.language_parsers import common
 
@@ -61,8 +61,18 @@ class _TokenTrie:
     Then, normalized_tokens == ['DTYPE', 'VAR', ';', 'DTYPE', 'unknownvar', ';']
   """
 
-  def __init__(self):
+  def __init__(self, protected_keywords: Optional[frozenset[str]] = None):
+    """Constructs a trie.
+
+    Args:
+      protected_keywords: the keywords that are not abstracted away in the
+        language the trie is used for. It defaults to the keywords of the
+        C-like languages.
+    """
     self._trie = _get_trie()
+    self._protected_keywords = (
+        _PROTECTED_KEYWORDS if protected_keywords is None
+        else protected_keywords)
 
   def insert_entry(self, key_tokens: Sequence[str],
                    abstracted_token: _AbstractedToken):
@@ -90,7 +100,7 @@ class _TokenTrie:
     if subtrie == self._trie:  # No valid token in |key_tokens|.
       return
 
-    protected_keywords_in_datatype = _PROTECTED_KEYWORDS.intersection(
+    protected_keywords_in_datatype = self._protected_keywords.intersection(
         key_tokens)
     if protected_keywords_in_datatype:
       subtrie[_NodeType.LEAF] = ' '.join(
@@ -176,7 +186,7 @@ def normalize_function_chunk(
   Returns:
     The normalized function chunk code string.
   """
-  token_trie = _TokenTrie()
+  token_trie = _TokenTrie(function_chunk_base.protected_keywords)
   token_trie.insert_entry([function_chunk_base.name],
                           _AbstractedToken.FUNCTION_NAME)
   for param in function_chunk_base.parameters:
@@ -189,7 +199,8 @@ def normalize_function_chunk(
     token_trie.insert_entry(data_type, _AbstractedToken.DATA_TYPE)
   # pyrefly: ignore[no-matching-overload]
   token_trie.insert_entry(
-      sum(function_chunk_base.return_types, []), _AbstractedToken.DATA_TYPE  # pyrefly: ignore[no-matching-overload]
+      sum(function_chunk_base.return_types, []),
+      _AbstractedToken.DATA_TYPE,  # pyrefly: ignore[no-matching-overload]
   )
 
   normalized_code = ' '.join(

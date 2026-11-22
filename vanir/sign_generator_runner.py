@@ -143,7 +143,10 @@ _FLAG_ERROR_MESSAGE = (
     ' 4) --use_osv_android_kernel_vulns: generate signatures for the latest '
     'Android kernel vulnerabilities in OSV'
 )
-_DRIVER_FILE_PATTERN = re.compile(r'drivers/.*')
+# The files of the drivers and the files of the Rust code of the kernel,
+# which are in the 'rust' directory of the kernel tree, e.g.
+# 'rust/kernel/irq/request.rs'.
+_DRIVER_FILE_PATTERN = re.compile(r'(drivers|rust)/.*')
 
 
 def _validate_vuln_source_flags(flags_to_check: dict[str, str]) -> bool:
@@ -289,12 +292,13 @@ def main(argv: Sequence[str]) -> None:
   tp_level_finder = sign_generator.TruncatedPathLevelFinder(
       ref_file_lists, conditions
   )
+  filters: list[sign_generator.FileFilter] = []
+  if _IGNORE_TEST_FILES.value:
+    filters = list(sign_generator.DEFAULT_TEST_FILE_FILTERS)
+    filters.append(sign_generator.ParserTestFileFilter())
+
   generator = sign_generator.SignGenerator(
-      filters=(
-          sign_generator.DEFAULT_TEST_FILE_FILTERS
-          if _IGNORE_TEST_FILES.value
-          else ()
-      ),
+      filters=filters,
       truncated_path_level_finder=tp_level_finder,
   )
   vuln_manager.generate_signatures(

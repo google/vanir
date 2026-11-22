@@ -1,0 +1,256 @@
+{
+  "android": {
+    "checkouts": [
+      {
+        "failed_files": [],
+        "files": 110,
+        "files_parsed": 110,
+        "functions": 1167,
+        "seconds": 2.10097253099957,
+        "source_root": "platform/system/security"
+      },
+      {
+        "failed_files": [],
+        "files": 69,
+        "files_parsed": 69,
+        "functions": 656,
+        "seconds": 0.9731978609997896,
+        "source_root": "platform/system/keymint"
+      },
+      {
+        "failed_files": [],
+        "files": 296,
+        "files_parsed": 296,
+        "functions": 2355,
+        "seconds": 3.6231648249995487,
+        "source_root": "platform/packages/modules/Virtualization"
+      },
+      {
+        "failed_files": [
+          {
+            "error_count": 1,
+            "errors": [
+              {
+                "bad_token": "#[allow(unused_mut)]",
+                "column": 4,
+                "line": 3523,
+                "message": "RustParser: syntax error near '#[allow(unused_mut)]'"
+              }
+            ],
+            "exception": null,
+            "path": "src/crosvm/sys/linux.rs"
+          },
+          {
+            "error_count": 3,
+            "errors": [
+              {
+                "bad_token": "VmRequest::Swap(SwapCommand::Disable {",
+                "column": 12,
+                "line": 1960,
+                "message": "RustParser: syntax error near 'VmRequest::Swap(SwapCommand::Disable {'"
+              },
+              {
+                "bad_token": ",",
+                "column": 33,
+                "line": 1962,
+                "message": "RustParser: syntax error near ','"
+              },
+              {
+                "bad_token": "})",
+                "column": 12,
+                "line": 1964,
+                "message": "RustParser: syntax error near '})'"
+              }
+            ],
+            "exception": null,
+            "path": "vm_control/src/lib.rs"
+          }
+        ],
+        "files": 1057,
+        "files_parsed": 1055,
+        "functions": 12461,
+        "seconds": 17.821319410999422,
+        "source_root": "platform/external/crosvm"
+      },
+      {
+        "failed_files": [],
+        "files": 56,
+        "files_parsed": 56,
+        "functions": 553,
+        "seconds": 0.806923405998532,
+        "source_root": "platform/external/rust/crabbyavif"
+      },
+      {
+        "failed_files": [],
+        "files": 201,
+        "files_parsed": 201,
+        "functions": 3258,
+        "seconds": 3.3783817889998318,
+        "source_root": "platform/packages/modules/Bluetooth"
+      }
+    ],
+    "summary": {
+      "checkouts": 6,
+      "error_rate": 0.0011179429849077697,
+      "files": 1789,
+      "files_failed": 2,
+      "files_parsed": 1787,
+      "files_with_errors": 2,
+      "files_with_exceptions": 0,
+      "functions": 20450,
+      "language": "rust",
+      "seconds": 28.703959822996694
+    }
+  },
+  "description": [
+    "The result of the parse sweep of the Rust parser, i.e. the measurement",
+    "that every Rust file of the Android projects that hold Rust code and of",
+    "the Android kernel is parsed with the Vanir Rust parser.",
+    "",
+    "The sweep is reproduced with",
+    "  python -m vanir.parse_sweep --language=rust \\",
+    "      --source_root=<checkout> --output=<file.json>",
+    "The checkouts are the six Android projects of the spec and the checkout",
+    "of android:kernel/common at d271c243392d4c8cd868ac5c23a440971e14201f,",
+    "the revision the committed file list was built from.",
+    "",
+    "The files that did not parse are listed with the errors of the grammar.",
+    "They are the limits of the tree-sitter-rust grammar 0.24.2, not of the",
+    "Vanir parser: the grammar does not accept an attribute between two",
+    "attributes of a struct field, an attribute inside a struct pattern of a",
+    "match arm, the metavariable expressions of a macro_rules definition and",
+    "a where clause that bounds an associated type."
+  ],
+  "kernel": {
+    "checkouts": [
+      {
+        "failed_files": [
+          {
+            "error_count": 2,
+            "errors": [
+              {
+                "bad_token": "$",
+                "column": 45,
+                "line": 1024,
+                "message": "RustParser: syntax error near '$'"
+              },
+              {
+                "bad_token": "$",
+                "column": 49,
+                "line": 1033,
+                "message": "RustParser: syntax error near '$'"
+              }
+            ],
+            "exception": null,
+            "path": "rust/kernel/configfs.rs"
+          },
+          {
+            "error_count": 4,
+            "errors": [
+              {
+                "bad_token": "TokenTree::Literal(crate::Literal {",
+                "column": 8,
+                "line": 107,
+                "message": "RustParser: syntax error near 'TokenTree::Literal(crate::Literal {'"
+              },
+              {
+                "bad_token": "inner: crate::imp::Literal::Fallback(literal),",
+                "column": 16,
+                "line": 109,
+                "message": "RustParser: syntax error near 'inner: crate::imp::Literal::Fallback(literal),'"
+              },
+              {
+                "bad_token": ": literal,",
+                "column": 21,
+                "line": 111,
+                "message": "RustParser: syntax error near ': literal,'"
+              }
+            ],
+            "exception": null,
+            "path": "rust/proc-macro2/fallback.rs"
+          },
+          {
+            "error_count": 3,
+            "errors": [
+              {
+                "bad_token": "$",
+                "column": 18,
+                "line": 250,
+                "message": "RustParser: syntax error near '$'"
+              },
+              {
+                "bad_token": "~",
+                "column": 18,
+                "line": 287,
+                "message": "RustParser: syntax error near '~'"
+              },
+              {
+                "bad_token": "~",
+                "column": 18,
+                "line": 287,
+                "message": "RustParser: syntax error near '~'"
+              }
+            ],
+            "exception": null,
+            "path": "rust/syn/custom_punctuation.rs"
+          },
+          {
+            "error_count": 1,
+            "errors": [
+              {
+                "bad_token": "where\n    Error: Send + Sync",
+                "column": 0,
+                "line": 126,
+                "message": "RustParser: syntax error near 'where\n    Error: Send + Sync'"
+              }
+            ],
+            "exception": null,
+            "path": "rust/syn/error.rs"
+          },
+          {
+            "error_count": 3,
+            "errors": [
+              {
+                "bad_token": "$",
+                "column": 5,
+                "line": 935,
+                "message": "RustParser: syntax error near '$'"
+              },
+              {
+                "bad_token": "~",
+                "column": 5,
+                "line": 972,
+                "message": "RustParser: syntax error near '~'"
+              },
+              {
+                "bad_token": "~",
+                "column": 5,
+                "line": 972,
+                "message": "RustParser: syntax error near '~'"
+              }
+            ],
+            "exception": null,
+            "path": "rust/syn/token.rs"
+          }
+        ],
+        "files": 354,
+        "files_parsed": 349,
+        "functions": 6165,
+        "seconds": 30.504428964002727,
+        "source_root": "android:kernel/common @ d271c243392d4c8cd868ac5c23a440971e14201f"
+      }
+    ],
+    "summary": {
+      "checkouts": 1,
+      "error_rate": 0.014124293785310734,
+      "files": 354,
+      "files_failed": 5,
+      "files_parsed": 349,
+      "files_with_errors": 5,
+      "files_with_exceptions": 0,
+      "functions": 6165,
+      "language": "rust",
+      "seconds": 30.504428964002727
+    }
+  }
+}

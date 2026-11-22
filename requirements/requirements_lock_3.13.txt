@@ -101,7 +101,11 @@ tree-sitter-cpp==0.23.4
     # via -r requirements/requirements.txt
 tree-sitter-java==0.23.5
     # via -r requirements/requirements.txt
+tree-sitter-kotlin==1.1.0
+    # via -r requirements/requirements.txt
 tree-sitter-python==0.25.0
+    # via -r requirements/requirements.txt
+tree-sitter-rust==0.24.2
     # via -r requirements/requirements.txt
 typing-extensions==4.16.0
     # via

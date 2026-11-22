@@ -1,0 +1,54 @@
+# Copyright 2026 Google LLC
+#
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file or at
+# https://developers.google.com/open-source/licenses/bsd
+
+# Kotlin parser for Vanir, based on the tree-sitter-kotlin grammar.
+
+load("@rules_python//python:defs.bzl", "py_library", "py_test")
+
+package(
+    default_applicable_licenses = ["//:license"],
+    default_visibility = ["//visibility:public"],
+)
+
+py_library(
+    name = "kotlin_parser",
+    srcs = ["kotlin_parser.py"],
+    deps = [
+        "//vanir/language_parsers:tree_sitter_base",
+        "@vanir_deps//tree_sitter",
+        "@vanir_deps//tree_sitter_kotlin",
+    ],
+)
+
+py_test(
+    name = "kotlin_parser_test",
+    size = "small",
+    srcs = ["kotlin_parser_test.py"],
+    deps = [
+        ":kotlin_parser",
+        "//vanir/language_parsers:common",
+        "@com_google_absl_py//absl/logging",
+        "@com_google_absl_py//absl/testing:absltest",
+        "@vanir_deps//tree_sitter",
+        "@vanir_deps//tree_sitter_kotlin",
+    ],
+)
+
+py_test(
+    name = "kotlin_golden_test",
+    size = "small",
+    srcs = ["kotlin_golden_test.py"],
+    data = ["//vanir/testdata:kotlin_golden_corpus"],
+    deps = [
+        ":kotlin_parser",
+        "//vanir/language_parsers:common",
+        "//vanir/normalizer",
+        "//vanir:parser",
+        "@com_google_absl_py//absl/testing:absltest",
+        "@vanir_deps//tree_sitter",
+        "@vanir_deps//tree_sitter_kotlin",
+    ],
+)

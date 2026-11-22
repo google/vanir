@@ -160,6 +160,11 @@ class TreeSitterParserBase(abstract_language_parser.AbstractLanguageParser):
 
   CONFIG: TreeSitterLanguageConfig
 
+  # The keywords of the language that the normalizer must not abstract away,
+  # e.g. '?' for the nullable type of Kotlin. None means that the default set
+  # of the normalizer is used, i.e. the set of the C-like languages.
+  PROTECTED_KEYWORDS: frozenset[str] | None = None
+
   def __init__(self, filename: str):
     super().__init__(filename)
     self._filename = filename
@@ -263,12 +268,34 @@ class TreeSitterParserBase(abstract_language_parser.AbstractLanguageParser):
         parse_errors=parse_errors,
     )
 
+  @classmethod
+  def is_test_function(cls, function_node: py_tree_sitter.Node) -> bool:
+    """Returns whether the given function is test code.
+
+    A parser whose language marks its test functions, e.g. Rust with its
+    '#[test]' attribute, overrides this hook, so that the test code does not
+    get a signature. The default is False, i.e. every function is signed.
+
+    Args:
+      function_node: the tree-sitter node of the function.
+
+    Returns:
+      True if the function is test code.
+    """
+    del function_node  # unneeded
+    return False
+
   def _extract_function_chunk(
       self,
       func_node: py_tree_sitter.Node,
       affected_line_ranges_for_functions: Sequence[tuple[int, int]] | None,
   ) -> common.FunctionChunkBase | None:
     """Extracts a FunctionChunkBase from a function definition/declaration node."""
+    if self.is_test_function(func_node):
+      # The parser recognizes this function as test code, e.g. a Rust
+      # function marked with the '#[test]' attribute. Test code does not get
+      # a signature.
+      return None
     start_line = func_node.start_point[0] + 1
     end_line = func_node.end_point[0] + 1
     if affected_line_ranges_for_functions:
@@ -283,7 +310,7 @@ class TreeSitterParserBase(abstract_language_parser.AbstractLanguageParser):
     if not details:
       return None
 
-    body_node = func_node.child_by_field_name('body')
+    body_node = self._get_body_node(func_node)
     if body_node:
       self._extract_body_info(body_node, details)
 
@@ -299,7 +326,31 @@ class TreeSitterParserBase(abstract_language_parser.AbstractLanguageParser):
         local_variables=details.local_variables,
         called_functions=details.called_functions,
         tokens=tokens,
+        protected_keywords=self.PROTECTED_KEYWORDS,
     )
+
+  def _get_body_node(
+      self, func_node: py_tree_sitter.Node
+  ) -> py_tree_sitter.Node | None:
+    """Returns the node that holds the body of the given function node.
+
+    The default implementation looks the body up by the 'body' field, which
+    the grammars of the languages that declare their functions with one
+    provide. A grammar whose function nodes do not have that field, e.g. the
+    Kotlin grammar, overrides this hook.
+
+    The node that is returned is walked to collect the local variables, the
+    called functions and the types of the function, so it has to be the node
+    that holds the whole body of the function.
+
+    Args:
+      func_node: the tree-sitter node of the function definition.
+
+    Returns:
+      The tree-sitter node of the body of the function, or None if the
+      function does not have one.
+    """
+    return func_node.child_by_field_name('body')
 
   @abc.abstractmethod
   def _extract_function_details(

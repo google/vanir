@@ -39,6 +39,11 @@ filegroup(
 )
 
 filegroup(
+    name = "kotlin_golden_corpus",
+    srcs = glob(["kotlin_golden/**"]),
+)
+
+filegroup(
     name = "test_gitiles_data",
     srcs = glob(["gitiles/**"]),
 )

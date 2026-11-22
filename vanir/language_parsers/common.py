@@ -7,7 +7,7 @@
 """Common data types for Vanir language parser."""
 
 import dataclasses
-from typing import Mapping, Sequence
+from typing import Mapping, Optional, Sequence
 
 
 @dataclasses.dataclass(frozen=True)
@@ -24,6 +24,10 @@ class FunctionChunkBase:
     local_variables: sequence of names of all local variables.
     called_functions: sequence of other function names called.
     tokens: sequence of tokens consisting of the function body.
+    protected_keywords: the keywords of the language of the chunk that the
+      normalizer must not abstract away, e.g. '?' for the nullable type of
+      Kotlin. It is None for the languages that use the default set of the
+      normalizer.
   """
   name: str
   return_types: Sequence[Sequence[str]]
@@ -32,6 +36,7 @@ class FunctionChunkBase:
   local_variables: Sequence[str]
   called_functions: Sequence[str]
   tokens: Sequence[str]
+  protected_keywords: Optional[frozenset[str]] = None
 
 
 @dataclasses.dataclass(frozen=True)

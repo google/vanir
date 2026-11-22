@@ -289,12 +289,13 @@ def main(argv: Sequence[str]) -> None:
   tp_level_finder = sign_generator.TruncatedPathLevelFinder(
       ref_file_lists, conditions
   )
+  filters: list[sign_generator.FileFilter] = []
+  if _IGNORE_TEST_FILES.value:
+    filters = list(sign_generator.DEFAULT_TEST_FILE_FILTERS)
+    filters.append(sign_generator.ParserTestFileFilter())
+
   generator = sign_generator.SignGenerator(
-      filters=(
-          sign_generator.DEFAULT_TEST_FILE_FILTERS
-          if _IGNORE_TEST_FILES.value
-          else ()
-      ),
+      filters=filters,
       truncated_path_level_finder=tp_level_finder,
   )
   vuln_manager.generate_signatures(

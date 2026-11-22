@@ -1,0 +1,1080 @@
+{
+  "description": [
+    "The result of the parse sweep of the Kotlin parser, i.e. the measurement",
+    "that every Kotlin file of the eight AOSP projects the spec names is",
+    "parsed with the Vanir Kotlin parser.",
+    "",
+    "The sweep is reproduced with",
+    "  python -m vanir.parse_sweep --language=kotlin \\",
+    "      --source_root=<project> --output=<file.json>",
+    "The eight projects are the ones of the spec Phase 1: SystemUI, Settings,",
+    "PackageInstaller, Launcher3, Permission, IntentResolver, HealthFitness",
+    "and MediaProvider. They are the current main of their repositories at the",
+    "time of the sweep.",
+    "",
+    "The baseline of the spec (134 of 137 files, 2,009 functions) is over the",
+    "FIXED files of the fixes, not over the eight whole projects, so the two",
+    "numbers are NOT comparable.",
+    "",
+    "The files that did not parse are listed with the errors of the grammar.",
+    "They are the limits of the tree-sitter-kotlin grammar 1.1.0, not of the",
+    "Vanir parser. The largest group is an annotated internal constructor,",
+    "e.g. an @Inject or an @AssistedInject in front of an internal",
+    "constructor. The others are suspend used as an identifier, a comment as",
+    "the last expression of a lambda, and a few further constructs the",
+    "grammar does not accept."
+  ],
+  "kotlin": {
+    "checkouts": [
+      {
+        "failed_files": [
+          {
+            "error_count": 2,
+            "errors": [
+              {
+                "bad_token": "private val",
+                "column": 8,
+                "line": 1738,
+                "message": "KotlinParser: syntax error near 'private val'"
+              },
+              {
+                "bad_token": "private val",
+                "column": 8,
+                "line": 1739,
+                "message": "KotlinParser: syntax error near 'private val'"
+              }
+            ],
+            "exception": null,
+            "path": "animation/src/com/android/systemui/animation/ActivityTransitionAnimator.kt"
+          },
+          {
+            "error_count": 7,
+            "errors": [
+              {
+                "bad_token": "companion object {\n        internal const val DEBUG = false\n        private val ...",
+                "column": 4,
+                "line": 63,
+                "message": "KotlinParser: syntax error near 'companion object {\n        internal const val DEBUG = false\n        private val ...'"
+              },
+              {
+                "bad_token": "val",
+                "column": 31,
+                "line": 367,
+                "message": "KotlinParser: syntax error near 'val'"
+              },
+              {
+                "bad_token": "val",
+                "column": 31,
+                "line": 368,
+                "message": "KotlinParser: syntax error near 'val'"
+              }
+            ],
+            "exception": null,
+            "path": "animation/src/com/android/systemui/animation/TransitionAnimator.kt"
+          },
+          {
+            "error_count": 4,
+            "errors": [
+              {
+                "bad_token": "internal abstract fun toContent(currentScene: SceneKey): ContentKey\n\n    data cl...",
+                "column": 4,
+                "line": 606,
+                "message": "KotlinParser: syntax error near 'internal abstract fun toContent(currentScene: SceneKey): ContentKey\n\n    data cl...'"
+              },
+              {
+                "bad_token": "val",
+                "column": 8,
+                "line": 611,
+                "message": "KotlinParser: syntax error near 'val'"
+              },
+              {
+                "bad_token": "override val",
+                "column": 8,
+                "line": 612,
+                "message": "KotlinParser: syntax error near 'override val'"
+              }
+            ],
+            "exception": null,
+            "path": "compose/scene/src/com/android/compose/animation/scene/SceneTransitionLayout.kt"
+          },
+          {
+            "error_count": 3,
+            "errors": [
+              {
+                "bad_token": "",
+                "column": 66,
+                "line": 291,
+                "message": "KotlinParser: syntax error near ''"
+              },
+              {
+                "bad_token": "overlaysToRemove.remove",
+                "column": 20,
+                "line": 294,
+                "message": "KotlinParser: syntax error near 'overlaysToRemove.remove'"
+              },
+              {
+                "bad_token": "overlays.remove(it)",
+                "column": 35,
+                "line": 325,
+                "message": "KotlinParser: syntax error near 'overlays.remove(it)'"
+              }
+            ],
+            "exception": null,
+            "path": "compose/scene/src/com/android/compose/animation/scene/SceneTransitionLayoutImpl.kt"
+          },
+          {
+            "error_count": 1,
+            "errors": [
+              {
+                "bad_token": "class SceneTransitions\ninternal constructor(\n    internal val defaultSwipeSpec: ...",
+                "column": 0,
+                "line": 35,
+                "message": "KotlinParser: syntax error near 'class SceneTransitions\ninternal constructor(\n    internal val defaultSwipeSpec: ...'"
+              }
+            ],
+            "exception": null,
+            "path": "compose/scene/src/com/android/compose/animation/scene/SceneTransitions.kt"
+          },
+          {
+            "error_count": 2,
+            "errors": [
+              {
+                "bad_token": "",
+                "column": 75,
+                "line": 144,
+                "message": "KotlinParser: syntax error near ''"
+              },
+              {
+                "bad_token": "",
+                "column": 82,
+                "line": 153,
+                "message": "KotlinParser: syntax error near ''"
+              }
+            ],
+            "exception": null,
+            "path": "compose/scene/src/com/android/compose/animation/scene/content/Content.kt"
+          },
+          {
+            "error_count": 2,
+            "errors": [
+              {
+                "bad_token": "/*\n * Copyright (C) 2023 The Android Open Source Project\n *\n * Licensed under th...",
+                "column": 0,
+                "line": 1,
+                "message": "KotlinParser: syntax error near '/*\n * Copyright (C) 2023 The Android Open Source Project\n *\n * Licensed under th...'"
+              },
+              {
+                "bad_token": "= suspend { assertButtonsVisible(negative = true) }\n\n        showTemporaryErrors...",
+                "column": 23,
+                "line": 938,
+                "message": "KotlinParser: syntax error near '= suspend { assertButtonsVisible(negative = true) }\n\n        showTemporaryErrors...'"
+              }
+            ],
+            "exception": null,
+            "path": "multivalentTests/src/com/android/systemui/biometrics/ui/viewmodel/PromptViewModelTest.kt"
+          },
+          {
+            "error_count": 1,
+            "errors": [
+              {
+                "bad_token": "private val context: Context = mock()\n    private val userManager: UserManager =...",
+                "column": 4,
+                "line": 50,
+                "message": "KotlinParser: syntax error near 'private val context: Context = mock()\n    private val userManager: UserManager =...'"
+              }
+            ],
+            "exception": null,
+            "path": "multivalentTests/src/com/android/systemui/keyguard/WorkLockActivityTest.kt"
+          },
+          {
+            "error_count": 2,
+            "errors": [
+              {
+                "bad_token": "class FakeCondition\n    constructor(\n        scope: CoroutineScope,\n        init...",
+                "column": 4,
+                "line": 38,
+                "message": "KotlinParser: syntax error near 'class FakeCondition\n    constructor(\n        scope: CoroutineScope,\n        init...'"
+              },
+              {
+                "bad_token": "private val",
+                "column": 23,
+                "line": 43,
+                "message": "KotlinParser: syntax error near 'private val'"
+              }
+            ],
+            "exception": null,
+            "path": "multivalentTests/src/com/android/systemui/shared/condition/CombinedConditionTest.kt"
+          },
+          {
+            "error_count": 7,
+            "errors": [
+              {
+                "bad_token": "{\n\n    private val kosmos = testKosmos()\n\n    private lateinit var underTest: Vo...",
+                "column": 58,
+                "line": 47,
+                "message": "KotlinParser: syntax error near '{\n\n    private val kosmos = testKosmos()\n\n    private lateinit var underTest: Vo...'"
+              },
+              {
+                "bad_token": "private val kosmos = testKosmos()\n\n    private lateinit var underTest: VolumeDia...",
+                "column": 4,
+                "line": 49,
+                "message": "KotlinParser: syntax error near 'private val kosmos = testKosmos()\n\n    private lateinit var underTest: VolumeDia...'"
+              },
+              {
+                "bad_token": "(AUDIO_SHARING_STREAM, buildStreamState { dynamic",
+                "column": 30,
+                "line": 95,
+                "message": "KotlinParser: syntax error near '(AUDIO_SHARING_STREAM, buildStreamState { dynamic'"
+              }
+            ],
+            "exception": null,
+            "path": "multivalentTests/src/com/android/systemui/volume/dialog/sliders/domain/interactor/VolumeDialogSlidersInteractorTest.kt"
+          },
+          {
+            "error_count": 12,
+            "errors": [
+              {
+                "bad_token": "@AssistedInject\ninternal",
+                "column": 0,
+                "line": 60,
+                "message": "KotlinParser: syntax error near '@AssistedInject\ninternal'"
+              },
+              {
+                "bad_token": "(\n    @Assisted private val initialUiProperties: BluetoothTileDialogViewModel",
+                "column": 20,
+                "line": 61,
+                "message": "KotlinParser: syntax error near '(\n    @Assisted private val initialUiProperties: BluetoothTileDialogViewModel'"
+              },
+              {
+                "bad_token": ",",
+                "column": 88,
+                "line": 62,
+                "message": "KotlinParser: syntax error near ','"
+              }
+            ],
+            "exception": null,
+            "path": "src/com/android/systemui/bluetooth/qsdialog/BluetoothTileDialogDelegate.kt"
+          },
+          {
+            "error_count": 3,
+            "errors": [
+              {
+                "bad_token": "{\n\n    private var currentTransitionId: UUID? = null\n    private var progressJob...",
+                "column": 72,
+                "line": 70,
+                "message": "KotlinParser: syntax error near '{\n\n    private var currentTransitionId: UUID? = null\n    private var progressJob...'"
+              },
+              {
+                "bad_token": "->",
+                "column": 36,
+                "line": 115,
+                "message": "KotlinParser: syntax error near '->'"
+              },
+              {
+                "bad_token": "override ?: nextState\n            }\n            .stateIn(\n                scope ...",
+                "column": 16,
+                "line": 116,
+                "message": "KotlinParser: syntax error near 'override ?: nextState\n            }\n            .stateIn(\n                scope ...'"
+              }
+            ],
+            "exception": null,
+            "path": "src/com/android/systemui/communal/domain/interactor/CommunalSceneTransitionInteractor.kt"
+          },
+          {
+            "error_count": 6,
+            "errors": [
+              {
+                "bad_token": "@VisibleForTesting\ninternal",
+                "column": 0,
+                "line": 39,
+                "message": "KotlinParser: syntax error near '@VisibleForTesting\ninternal'"
+              },
+              {
+                "bad_token": "(wrapper: ControlsFavoritePersistenceWrapper)",
+                "column": 20,
+                "line": 40,
+                "message": "KotlinParser: syntax error near '(wrapper: ControlsFavoritePersistenceWrapper)'"
+              },
+              {
+                "bad_token": "(\n        file: File,",
+                "column": 15,
+                "line": 42,
+                "message": "KotlinParser: syntax error near '(\n        file: File,'"
+              }
+            ],
+            "exception": null,
+            "path": "src/com/android/systemui/controls/controller/AuxiliaryPersistenceWrapper.kt"
+          },
+          {
+            "error_count": 7,
+            "errors": [
+              {
+                "bad_token": "@VisibleForTesting\ninternal",
+                "column": 0,
+                "line": 82,
+                "message": "KotlinParser: syntax error near '@VisibleForTesting\ninternal'"
+              },
+              {
+                "bad_token": "(\n    private val secureSettings: SecureSettings,",
+                "column": 20,
+                "line": 83,
+                "message": "KotlinParser: syntax error near '(\n    private val secureSettings: SecureSettings,'"
+              },
+              {
+                "bad_token": ",",
+                "column": 48,
+                "line": 85,
+                "message": "KotlinParser: syntax error near ','"
+              }
+            ],
+            "exception": null,
+            "path": "src/com/android/systemui/controls/settings/ControlsSettingsDialogManager.kt"
+          },
+          {
+            "error_count": 32,
+            "errors": [
+              {
+                "bad_token": "(\n    @Application private val context: Context,",
+                "column": 11,
+                "line": 123,
+                "message": "KotlinParser: syntax error near '(\n    @Application private val context: Context,'"
+              },
+              {
+                "bad_token": ": CoroutineScope,",
+                "column": 33,
+                "line": 125,
+                "message": "KotlinParser: syntax error near ': CoroutineScope,'"
+              },
+              {
+                "bad_token": ",",
+                "column": 57,
+                "line": 126,
+                "message": "KotlinParser: syntax error near ','"
+              }
+            ],
+            "exception": null,
+            "path": "src/com/android/systemui/keyguard/ui/preview/KeyguardPreviewRenderer.kt"
+          },
+          {
+            "error_count": 1,
+            "errors": [
+              {
+                "bad_token": "@Inject\ninternal constructor(private val ddmHandleMotionTool: DdmHandleMotionToo...",
+                "column": 0,
+                "line": 26,
+                "message": "KotlinParser: syntax error near '@Inject\ninternal constructor(private val ddmHandleMotionTool: DdmHandleMotionToo...'"
+              }
+            ],
+            "exception": null,
+            "path": "src/com/android/systemui/motiontool/MotionToolStartable.kt"
+          },
+          {
+            "error_count": 5,
+            "errors": [
+              {
+                "bad_token": "{\n\n    @AssistedFactory\n    interface Factory {\n        fun create(context: Cont...",
+                "column": 92,
+                "line": 96,
+                "message": "KotlinParser: syntax error near '{\n\n    @AssistedFactory\n    interface Factory {\n        fun create(context: Cont...'"
+              },
+              {
+                "bad_token": "@AssistedFactory\n    interface Factory {\n        fun create(context: Context, ha...",
+                "column": 4,
+                "line": 98,
+                "message": "KotlinParser: syntax error near '@AssistedFactory\n    interface Factory {\n        fun create(context: Context, ha...'"
+              },
+              {
+                "bad_token": "private val",
+                "column": 8,
+                "line": 188,
+                "message": "KotlinParser: syntax error near 'private val'"
+              }
+            ],
+            "exception": null,
+            "path": "src/com/android/systemui/navigationbar/gestural/BackPanelController.kt"
+          },
+          {
+            "error_count": 6,
+            "errors": [
+              {
+                "bad_token": "@SysUISingleton\nclass PrivacyItemController @Inject constructor(\n    @Main uiExe...",
+                "column": 0,
+                "line": 36,
+                "message": "KotlinParser: syntax error near '@SysUISingleton\nclass PrivacyItemController @Inject constructor(\n    @Main uiExe...'"
+              },
+              {
+                "bad_token": "@Synchronized set",
+                "column": 8,
+                "line": 56,
+                "message": "KotlinParser: syntax error near '@Synchronized set'"
+              },
+              {
+                "bad_token": "Synchronized",
+                "column": 9,
+                "line": 56,
+                "message": "KotlinParser: syntax error near 'Synchronized'"
+              }
+            ],
+            "exception": null,
+            "path": "src/com/android/systemui/privacy/PrivacyItemController.kt"
+          },
+          {
+            "error_count": 1,
+            "errors": [
+              {
+                "bad_token": "@SysUISingleton\nclass ReduceBrightColorsAutoAddable\n@Inject\nconstructor(\n    con...",
+                "column": 0,
+                "line": 36,
+                "message": "KotlinParser: syntax error near '@SysUISingleton\nclass ReduceBrightColorsAutoAddable\n@Inject\nconstructor(\n    con...'"
+              }
+            ],
+            "exception": null,
+            "path": "src/com/android/systemui/qs/pipeline/domain/autoaddable/ReduceBrightColorsAutoAddable.kt"
+          },
+          {
+            "error_count": 3,
+            "errors": [
+              {
+                "bad_token": "{\n\n    /** Represents a spec that couldn't be parsed into a valid type of tile. ...",
+                "column": 65,
+                "line": 31,
+                "message": "KotlinParser: syntax error near '{\n\n    /** Represents a spec that couldn't be parsed into a valid type of tile. ...'"
+              },
+              {
+                "bad_token": "})",
+                "column": 60,
+                "line": 52,
+                "message": "KotlinParser: syntax error near '})'"
+              },
+              {
+                "bad_token": ")",
+                "column": 34,
+                "line": 81,
+                "message": "KotlinParser: syntax error near ')'"
+              }
+            ],
+            "exception": null,
+            "path": "src/com/android/systemui/qs/pipeline/shared/TileSpec.kt"
+          },
+          {
+            "error_count": 7,
+            "errors": [
+              {
+                "bad_token": "@Inject\ninternal",
+                "column": 0,
+                "line": 42,
+                "message": "KotlinParser: syntax error near '@Inject\ninternal'"
+              },
+              {
+                "bad_token": "(\n    private val context: Context,",
+                "column": 20,
+                "line": 43,
+                "message": "KotlinParser: syntax error near '(\n    private val context: Context,'"
+              },
+              {
+                "bad_token": ",",
+                "column": 54,
+                "line": 45,
+                "message": "KotlinParser: syntax error near ','"
+              }
+            ],
+            "exception": null,
+            "path": "src/com/android/systemui/reardisplay/RearDisplayCoreStartable.kt"
+          },
+          {
+            "error_count": 1,
+            "errors": [
+              {
+                "bad_token": "@AssistedInject\ninternal constructor(\n    private val systemUIDialogFactory: Sys...",
+                "column": 0,
+                "line": 34,
+                "message": "KotlinParser: syntax error near '@AssistedInject\ninternal constructor(\n    private val systemUIDialogFactory: Sys...'"
+              }
+            ],
+            "exception": null,
+            "path": "src/com/android/systemui/reardisplay/RearDisplayInnerDialogDelegate.kt"
+          },
+          {
+            "error_count": 2,
+            "errors": [
+              {
+                "bad_token": "@AssistedInject\ninternal constructor(\n    appContext: Context,\n    screenshotWin...",
+                "column": 0,
+                "line": 67,
+                "message": "KotlinParser: syntax error near '@AssistedInject\ninternal constructor(\n    appContext: Context,\n    screenshotWin...'"
+              },
+              {
+                "bad_token": "(\n    appContext: Context,\n    screenshotWindowFactory: ScreenshotWindow.Factory...",
+                "column": 20,
+                "line": 68,
+                "message": "KotlinParser: syntax error near '(\n    appContext: Context,\n    screenshotWindowFactory: ScreenshotWindow.Factory...'"
+              }
+            ],
+            "exception": null,
+            "path": "src/com/android/systemui/screenshot/ScreenshotController.kt"
+          },
+          {
+            "error_count": 1,
+            "errors": [
+              {
+                "bad_token": "@AssistedInject\ninternal constructor(\n    @Assisted private val displayId: Int,\n...",
+                "column": 0,
+                "line": 35,
+                "message": "KotlinParser: syntax error near '@AssistedInject\ninternal constructor(\n    @Assisted private val displayId: Int,\n...'"
+              }
+            ],
+            "exception": null,
+            "path": "src/com/android/systemui/screenshot/ScreenshotNotificationsController.kt"
+          },
+          {
+            "error_count": 4,
+            "errors": [
+              {
+                "bad_token": "(\n    @Background scope: CoroutineScope,",
+                "column": 11,
+                "line": 40,
+                "message": "KotlinParser: syntax error near '(\n    @Background scope: CoroutineScope,'"
+              },
+              {
+                "bad_token": ": ShadeAnimationRepository,",
+                "column": 28,
+                "line": 42,
+                "message": "KotlinParser: syntax error near ': ShadeAnimationRepository,'"
+              },
+              {
+                "bad_token": ": SceneInteractor,",
+                "column": 19,
+                "line": 43,
+                "message": "KotlinParser: syntax error near ': SceneInteractor,'"
+              }
+            ],
+            "exception": null,
+            "path": "src/com/android/systemui/shade/domain/interactor/ShadeAnimationInteractorSceneContainerImpl.kt"
+          },
+          {
+            "error_count": 7,
+            "errors": [
+              {
+                "bad_token": "@Inject\ninternal",
+                "column": 0,
+                "line": 30,
+                "message": "KotlinParser: syntax error near '@Inject\ninternal'"
+              },
+              {
+                "bad_token": "(\n    @ShadeDisplayAware configurationController: ConfigurationController,",
+                "column": 20,
+                "line": 31,
+                "message": "KotlinParser: syntax error near '(\n    @ShadeDisplayAware configurationController: ConfigurationController,'"
+              },
+              {
+                "bad_token": ",",
+                "column": 51,
+                "line": 33,
+                "message": "KotlinParser: syntax error near ','"
+              }
+            ],
+            "exception": null,
+            "path": "src/com/android/systemui/shade/transition/LargeScreenShadeInterpolatorImpl.kt"
+          },
+          {
+            "error_count": 1,
+            "errors": [
+              {
+                "bad_token": "@Inject\ninternal constructor(private val notifLiveDataStoreImpl: NotifLiveDataSt...",
+                "column": 0,
+                "line": 35,
+                "message": "KotlinParser: syntax error near '@Inject\ninternal constructor(private val notifLiveDataStoreImpl: NotifLiveDataSt...'"
+              }
+            ],
+            "exception": null,
+            "path": "src/com/android/systemui/statusbar/notification/collection/coordinator/DataStoreCoordinator.kt"
+          },
+          {
+            "error_count": 5,
+            "errors": [
+              {
+                "bad_token": "@Inject\ninternal",
+                "column": 0,
+                "line": 37,
+                "message": "KotlinParser: syntax error near '@Inject\ninternal'"
+              },
+              {
+                "bad_token": "(\n    @ShadeDisplayAware context: Context,",
+                "column": 20,
+                "line": 38,
+                "message": "KotlinParser: syntax error near '(\n    @ShadeDisplayAware context: Context,'"
+              },
+              {
+                "bad_token": ",",
+                "column": 73,
+                "line": 40,
+                "message": "KotlinParser: syntax error near ','"
+              }
+            ],
+            "exception": null,
+            "path": "src/com/android/systemui/statusbar/notification/collection/coordinator/RowAppearanceCoordinator.kt"
+          },
+          {
+            "error_count": 5,
+            "errors": [
+              {
+                "bad_token": "@Inject\ninternal",
+                "column": 0,
+                "line": 41,
+                "message": "KotlinParser: syntax error near '@Inject\ninternal'"
+              },
+              {
+                "bad_token": "(\n    private val groupExpansionManagerImpl: GroupExpansionManagerImpl,\n    priv...",
+                "column": 20,
+                "line": 42,
+                "message": "KotlinParser: syntax error near '(\n    private val groupExpansionManagerImpl: GroupExpansionManagerImpl,\n    priv...'"
+              },
+              {
+                "bad_token": "",
+                "column": 89,
+                "line": 76,
+                "message": "KotlinParser: syntax error near ''"
+              }
+            ],
+            "exception": null,
+            "path": "src/com/android/systemui/statusbar/notification/collection/coordinator/StackCoordinator.kt"
+          },
+          {
+            "error_count": 1,
+            "errors": [
+              {
+                "bad_token": "@Inject\ninternal constructor(\n    @ShadeDisplayAware private val mConfigurationC...",
+                "column": 0,
+                "line": 43,
+                "message": "KotlinParser: syntax error near '@Inject\ninternal constructor(\n    @ShadeDisplayAware private val mConfigurationC...'"
+              }
+            ],
+            "exception": null,
+            "path": "src/com/android/systemui/statusbar/notification/collection/coordinator/ViewConfigCoordinator.kt"
+          },
+          {
+            "error_count": 1,
+            "errors": [
+              {
+                "bad_token": "{\n\n    init {\n        check(!VisualInterruptionRefactor.isUnexpectedlyInLegacyMo...",
+                "column": 39,
+                "line": 79,
+                "message": "KotlinParser: syntax error near '{\n\n    init {\n        check(!VisualInterruptionRefactor.isUnexpectedlyInLegacyMo...'"
+              }
+            ],
+            "exception": null,
+            "path": "src/com/android/systemui/statusbar/notification/interruption/VisualInterruptionDecisionProviderImpl.kt"
+          },
+          {
+            "error_count": 3,
+            "errors": [
+              {
+                "bad_token": "@SysUISingleton\n@VisibleForTesting(visibility = VisibleForTesting.Visibility.PAC...",
+                "column": 0,
+                "line": 89,
+                "message": "KotlinParser: syntax error near '@SysUISingleton\n@VisibleForTesting(visibility = VisibleForTesting.Visibility.PAC...'"
+              },
+              {
+                "bad_token": "NewRemoteViews {\n            contracted?.let {\n                it.layoutInflater...",
+                "column": 11,
+                "line": 850,
+                "message": "KotlinParser: syntax error near 'NewRemoteViews {\n            contracted?.let {\n                it.layoutInflater...'"
+              },
+              {
+                "bad_token": "{\n            contracted?.let {\n                it.layoutInflaterFactory = provi...",
+                "column": 26,
+                "line": 850,
+                "message": "KotlinParser: syntax error near '{\n            contracted?.let {\n                it.layoutInflaterFactory = provi...'"
+              }
+            ],
+            "exception": null,
+            "path": "src/com/android/systemui/statusbar/notification/row/NotificationRowContentBinderImpl.kt"
+          },
+          {
+            "error_count": 2,
+            "errors": [
+              {
+                "bad_token": "@Inject\ninternal constructor(\n    @ShadeDisplayAware private val configurationCo...",
+                "column": 0,
+                "line": 50,
+                "message": "KotlinParser: syntax error near '@Inject\ninternal constructor(\n    @ShadeDisplayAware private val configurationCo...'"
+              },
+              {
+                "bad_token": "(\n    @ShadeDisplayAware private val configurationController: ConfigurationContr...",
+                "column": 20,
+                "line": 51,
+                "message": "KotlinParser: syntax error near '(\n    @ShadeDisplayAware private val configurationController: ConfigurationContr...'"
+              }
+            ],
+            "exception": null,
+            "path": "src/com/android/systemui/statusbar/notification/stack/NotificationSectionsManager.kt"
+          },
+          {
+            "error_count": 5,
+            "errors": [
+              {
+                "bad_token": "sealed class WifiNetworkModel : Diffable<WifiNetworkModel> {\n\n    // TODO(b/2384...",
+                "column": 0,
+                "line": 35,
+                "message": "KotlinParser: syntax error near 'sealed class WifiNetworkModel : Diffable<WifiNetworkModel> {\n\n    // TODO(b/2384...'"
+              },
+              {
+                "bad_token": "object Unavailable : WifiNetworkModel() {\n        override fun toString() = \"Wif...",
+                "column": 4,
+                "line": 45,
+                "message": "KotlinParser: syntax error near 'object Unavailable : WifiNetworkModel() {\n        override fun toString() = \"Wif...'"
+              },
+              {
+                "bad_token": "val",
+                "column": 8,
+                "line": 144,
+                "message": "KotlinParser: syntax error near 'val'"
+              }
+            ],
+            "exception": null,
+            "path": "src/com/android/systemui/statusbar/pipeline/wifi/shared/model/WifiNetworkModel.kt"
+          },
+          {
+            "error_count": 2,
+            "errors": [
+              {
+                "bad_token": "/*\n * Copyright (C) 2020 The Android Open Source Project\n *\n * Licensed under th...",
+                "column": 0,
+                "line": 1,
+                "message": "KotlinParser: syntax error near '/*\n * Copyright (C) 2020 The Android Open Source Project\n *\n * Licensed under th...'"
+              },
+              {
+                "bad_token": "{ it.actionIntent != null }\n                    .mapIndexed { index, action ->\n ...",
+                "column": 28,
+                "line": 174,
+                "message": "KotlinParser: syntax error near '{ it.actionIntent != null }\n                    .mapIndexed { index, action ->\n ...'"
+              }
+            ],
+            "exception": null,
+            "path": "src/com/android/systemui/statusbar/policy/SmartReplyStateInflater.kt"
+          },
+          {
+            "error_count": 1,
+            "errors": [
+              {
+                "bad_token": "val",
+                "column": 8,
+                "line": 129,
+                "message": "KotlinParser: syntax error near 'val'"
+              }
+            ],
+            "exception": null,
+            "path": "src/com/android/systemui/util/BinderLogger.kt"
+          },
+          {
+            "error_count": 1,
+            "errors": [
+              {
+                "bad_token": "",
+                "column": 20,
+                "line": 20,
+                "message": "KotlinParser: syntax error near ''"
+              }
+            ],
+            "exception": null,
+            "path": "tests/utils/src/com/android/systemui/statusbar/notification/data/FakeStatusBarNotificationsDataLayerModule.kt"
+          },
+          {
+            "error_count": 1,
+            "errors": [
+              {
+                "bad_token": "@AssistedInject\ninternal constructor(@UnfoldTransitionATracePrefix tracePrefix: ...",
+                "column": 0,
+                "line": 31,
+                "message": "KotlinParser: syntax error near '@AssistedInject\ninternal constructor(@UnfoldTransitionATracePrefix tracePrefix: ...'"
+              }
+            ],
+            "exception": null,
+            "path": "unfold/src/com/android/systemui/unfold/util/ATraceLoggerTransitionProgressListener.kt"
+          }
+        ],
+        "files": 6204,
+        "files_parsed": 6166,
+        "functions": 37950,
+        "seconds": 34.415021534001426,
+        "source_root": "platform/frameworks/base/packages/SystemUI"
+      },
+      {
+        "failed_files": [
+          {
+            "error_count": 1,
+            "errors": [
+              {
+                "bad_token": "override",
+                "column": 8,
+                "line": 33,
+                "message": "KotlinParser: syntax error near 'override'"
+              }
+            ],
+            "exception": null,
+            "path": "tests/robotests/testutils/com/android/settings/testutils/SystemProperty.kt"
+          }
+        ],
+        "files": 753,
+        "files_parsed": 752,
+        "functions": 4430,
+        "seconds": 6.567272366999532,
+        "source_root": "platform/packages/apps/Settings"
+      },
+      {
+        "failed_files": [],
+        "files": 90,
+        "files_parsed": 90,
+        "functions": 535,
+        "seconds": 0.44333077400006005,
+        "source_root": "platform/packages/apps/PackageInstaller"
+      },
+      {
+        "failed_files": [
+          {
+            "error_count": 4,
+            "errors": [
+              {
+                "bad_token": ":\n    LoggableTaskbarController {\n\n    var canShowRunningApps =\n        DesktopM...",
+                "column": 92,
+                "line": 39,
+                "message": "KotlinParser: syntax error near ':\n    LoggableTaskbarController {\n\n    var canShowRunningApps =\n        DesktopM...'"
+              },
+              {
+                "bad_token": "VisibleForTesting",
+                "column": 9,
+                "line": 45,
+                "message": "KotlinParser: syntax error near 'VisibleForTesting'"
+              },
+              {
+                "bad_token": "emptyList<Int>()",
+                "column": 40,
+                "line": 72,
+                "message": "KotlinParser: syntax error near 'emptyList<Int>()'"
+              }
+            ],
+            "exception": null,
+            "path": "quickstep/src/com/android/launcher3/taskbar/TaskbarRecentAppsController.kt"
+          },
+          {
+            "error_count": 2,
+            "errors": [
+              {
+                "bad_token": "suspend",
+                "column": 59,
+                "line": 48,
+                "message": "KotlinParser: syntax error near 'suspend'"
+              },
+              {
+                "bad_token": "= suspend",
+                "column": 50,
+                "line": 49,
+                "message": "KotlinParser: syntax error near '= suspend'"
+              }
+            ],
+            "exception": null,
+            "path": "quickstep/tests/multivalentTests/src/com/android/launcher3/taskbar/TaskbarAutohideSuspendControllerTest.kt"
+          },
+          {
+            "error_count": 1,
+            "errors": [
+              {
+                "bad_token": "(\n    private val mViewGroup: ViewGroup,\n    private val mDelegateFactory: Funct...",
+                "column": 0,
+                "line": 36,
+                "message": "KotlinParser: syntax error near '(\n    private val mViewGroup: ViewGroup,\n    private val mDelegateFactory: Funct...'"
+              }
+            ],
+            "exception": null,
+            "path": "src/com/android/launcher3/accessibility/AccessibleDragListenerAdapter.kt"
+          }
+        ],
+        "files": 460,
+        "files_parsed": 457,
+        "functions": 3874,
+        "seconds": 2.849792870998499,
+        "source_root": "platform/packages/apps/Launcher3"
+      },
+      {
+        "failed_files": [
+          {
+            "error_count": 2,
+            "errors": [
+              {
+                "bad_token": "data class LightAppPermGroup(\n    val packageInfo: LightPackageInfo,\n    val per...",
+                "column": 0,
+                "line": 39,
+                "message": "KotlinParser: syntax error near 'data class LightAppPermGroup(\n    val packageInfo: LightPackageInfo,\n    val per...'"
+              },
+              {
+                "bad_token": "private",
+                "column": 8,
+                "line": 173,
+                "message": "KotlinParser: syntax error near 'private'"
+              }
+            ],
+            "exception": null,
+            "path": "PermissionController/src/com/android/permissioncontroller/permission/model/livedatatypes/LightAppPermGroup.kt"
+          }
+        ],
+        "files": 605,
+        "files_parsed": 604,
+        "functions": 5451,
+        "seconds": 4.806358822002949,
+        "source_root": "platform/packages/modules/Permission"
+      },
+      {
+        "failed_files": [
+          {
+            "error_count": 10,
+            "errors": [
+              {
+                "bad_token": "val",
+                "column": 8,
+                "line": 284,
+                "message": "KotlinParser: syntax error near 'val'"
+              },
+              {
+                "bad_token": "val",
+                "column": 8,
+                "line": 285,
+                "message": "KotlinParser: syntax error near 'val'"
+              },
+              {
+                "bad_token": "val",
+                "column": 8,
+                "line": 286,
+                "message": "KotlinParser: syntax error near 'val'"
+              }
+            ],
+            "exception": null,
+            "path": "java/src/com/android/intentresolver/widget/ScrollableImagePreviewView.kt"
+          }
+        ],
+        "files": 255,
+        "files_parsed": 254,
+        "functions": 1418,
+        "seconds": 1.051763415998721,
+        "source_root": "platform/packages/modules/IntentResolver"
+      },
+      {
+        "failed_files": [
+          {
+            "error_count": 5,
+            "errors": [
+              {
+                "bad_token": "",
+                "column": 32,
+                "line": 40,
+                "message": "KotlinParser: syntax error near ''"
+              },
+              {
+                "bad_token": "SystemUtil.runShellCommandOrThrow",
+                "column": 8,
+                "line": 70,
+                "message": "KotlinParser: syntax error near 'SystemUtil.runShellCommandOrThrow'"
+              },
+              {
+                "bad_token": "SystemUtil.runShellCommandOrThrow",
+                "column": 27,
+                "line": 71,
+                "message": "KotlinParser: syntax error near 'SystemUtil.runShellCommandOrThrow'"
+              }
+            ],
+            "exception": null,
+            "path": "tests/cts/hostsidetests/healthconnect/HealthConnectTestHelper/src/android/healthconnect/cts/testhelper/HealthConnectUiTestHelper.kt"
+          }
+        ],
+        "files": 757,
+        "files_parsed": 756,
+        "functions": 5417,
+        "seconds": 5.590855634000036,
+        "source_root": "platform/packages/modules/HealthFitness"
+      },
+      {
+        "failed_files": [
+          {
+            "error_count": 3,
+            "errors": [
+              {
+                "bad_token": "true",
+                "column": 52,
+                "line": 414,
+                "message": "KotlinParser: syntax error near 'true'"
+              },
+              {
+                "bad_token": "true",
+                "column": 52,
+                "line": 420,
+                "message": "KotlinParser: syntax error near 'true'"
+              },
+              {
+                "bad_token": "true",
+                "column": 52,
+                "line": 622,
+                "message": "KotlinParser: syntax error near 'true'"
+              }
+            ],
+            "exception": null,
+            "path": "photopicker/src/com/android/photopicker/core/components/mediagrid/MediaGrid.kt"
+          },
+          {
+            "error_count": 1,
+            "errors": [
+              {
+                "bad_token": "/*\n * Copyright 2024 The Android Open Source Project\n *\n * Licensed under the Ap...",
+                "column": 0,
+                "line": 1,
+                "message": "KotlinParser: syntax error near '/*\n * Copyright 2024 The Android Open Source Project\n *\n * Licensed under the Ap...'"
+              }
+            ],
+            "exception": null,
+            "path": "photopicker/src/com/android/photopicker/data/DataServiceImpl.kt"
+          },
+          {
+            "error_count": 7,
+            "errors": [
+              {
+                "bad_token": "sealed interface Media : GlideLoadable, Grantable, Parcelable, Selectable {\n    ...",
+                "column": 0,
+                "line": 31,
+                "message": "KotlinParser: syntax error near 'sealed interface Media : GlideLoadable, Grantable, Parcelable, Selectable {\n    ...'"
+              },
+              {
+                "bad_token": "override val",
+                "column": 8,
+                "line": 111,
+                "message": "KotlinParser: syntax error near 'override val'"
+              },
+              {
+                "bad_token": "override val",
+                "column": 8,
+                "line": 112,
+                "message": "KotlinParser: syntax error near 'override val'"
+              }
+            ],
+            "exception": null,
+            "path": "photopicker/src/com/android/photopicker/data/model/Media.kt"
+          }
+        ],
+        "files": 282,
+        "files_parsed": 279,
+        "functions": 1411,
+        "seconds": 1.7768170179988374,
+        "source_root": "platform/packages/providers/MediaProvider"
+      }
+    ],
+    "summary": {
+      "checkouts": 8,
+      "error_rate": 0.005103125664469487,
+      "files": 9406,
+      "files_failed": 48,
+      "files_parsed": 9358,
+      "files_with_errors": 48,
+      "files_with_exceptions": 0,
+      "functions": 60486,
+      "language": "kotlin",
+      "seconds": 57.50121243600006
+    }
+  }
+}

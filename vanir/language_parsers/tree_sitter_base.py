@@ -160,6 +160,11 @@ class TreeSitterParserBase(abstract_language_parser.AbstractLanguageParser):
 
   CONFIG: TreeSitterLanguageConfig
 
+  # The keywords of the language that the normalizer must not abstract away,
+  # e.g. '?' for the nullable type of Kotlin. None means that the default set
+  # of the normalizer is used, i.e. the set of the C-like languages.
+  PROTECTED_KEYWORDS: frozenset[str] | None = None
+
   def __init__(self, filename: str):
     super().__init__(filename)
     self._filename = filename
@@ -283,7 +288,7 @@ class TreeSitterParserBase(abstract_language_parser.AbstractLanguageParser):
     if not details:
       return None
 
-    body_node = func_node.child_by_field_name('body')
+    body_node = self._get_body_node(func_node)
     if body_node:
       self._extract_body_info(body_node, details)
 
@@ -299,7 +304,31 @@ class TreeSitterParserBase(abstract_language_parser.AbstractLanguageParser):
         local_variables=details.local_variables,
         called_functions=details.called_functions,
         tokens=tokens,
+        protected_keywords=self.PROTECTED_KEYWORDS,
     )
+
+  def _get_body_node(
+      self, func_node: py_tree_sitter.Node
+  ) -> py_tree_sitter.Node | None:
+    """Returns the node that holds the body of the given function node.
+
+    The default implementation looks the body up by the 'body' field, which
+    the grammars of the languages that declare their functions with one
+    provide. A grammar whose function nodes do not have that field, e.g. the
+    Kotlin grammar, overrides this hook.
+
+    The node that is returned is walked to collect the local variables, the
+    called functions and the types of the function, so it has to be the node
+    that holds the whole body of the function.
+
+    Args:
+      func_node: the tree-sitter node of the function definition.
+
+    Returns:
+      The tree-sitter node of the body of the function, or None if the
+      function does not have one.
+    """
+    return func_node.child_by_field_name('body')
 
   @abc.abstractmethod
   def _extract_function_details(

@@ -25,6 +25,7 @@ from vanir.language_parsers import common
 # pylint: disable=unused-import
 from vanir.language_parsers.cpp import cpp_parser
 from vanir.language_parsers.java import java_parser
+from vanir.language_parsers.kotlin import kotlin_parser
 from vanir.language_parsers.python import python_parser
 
 # pylint: enable=unused-import
@@ -50,6 +51,26 @@ def get_parser_class(filename: str) -> type[_P] | None:
     if inspect.isabstract(parser_class):
       continue
     if ext in parser_class.get_supported_extensions():
+      return parser_class  # pyrefly: ignore[bad-return]
+  return None
+
+
+def get_parser_class_by_language_id(language_id: str) -> type[_P] | None:
+  """Returns the language parser class of the given language, or None.
+
+  Args:
+    language_id: the id of the language, e.g. 'kotlin'.
+
+  Returns:
+    The parser class of the language, or None if no registered parser
+    handles it.
+  """
+  for parser_class in _get_all_subclasses(
+      abstract_language_parser.AbstractLanguageParser
+  ):
+    if inspect.isabstract(parser_class):
+      continue
+    if parser_class.get_language_id() == language_id:
       return parser_class  # pyrefly: ignore[bad-return]
   return None
 

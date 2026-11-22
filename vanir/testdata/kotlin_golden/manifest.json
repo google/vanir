@@ -1,0 +1,132 @@
+{
+  "manifest_version": 1,
+  "description": [
+    "The unpatched and the patched revision of the Kotlin files that",
+    "three real Android fixes touched. The unpatched file is the",
+    "version of the file at the parent of the fix commit, the patched",
+    "file is the version at the fix commit itself."
+  ],
+  "pairs": [
+    {
+      "id": "001",
+      "osv_id": "ASB-A-272025416",
+      "cve_ids": [
+        "CVE-2023-40124"
+      ],
+      "project": "platform/frameworks/base",
+      "fix_commit_url": "https://android.googlesource.com/platform/frameworks/base/+/0c32739fabc2b49104fb6aacd9c3ce76183aed14",
+      "fix_commit_sha": "0c32739fabc2b49104fb6aacd9c3ce76183aed14",
+      "parent_commit_sha": "3620213c626b2f415d913e13803cd822cd887997",
+      "original_path": "packages/SystemUI/src/com/android/systemui/controls/management/ControlAdapter.kt",
+      "extension": ".kt",
+      "language": "kotlin",
+      "unpatched_file": "fixes/001_unpatched.kt",
+      "patched_file": "fixes/001_patched.kt",
+      "function_digests_differ": true,
+      "differing_functions": [
+        "applyRenderInfo",
+        "onCreateViewHolder"
+      ]
+    },
+    {
+      "id": "001_2",
+      "osv_id": "ASB-A-272025416",
+      "cve_ids": [
+        "CVE-2023-40124"
+      ],
+      "project": "platform/frameworks/base",
+      "fix_commit_url": "https://android.googlesource.com/platform/frameworks/base/+/0c32739fabc2b49104fb6aacd9c3ce76183aed14",
+      "fix_commit_sha": "0c32739fabc2b49104fb6aacd9c3ce76183aed14",
+      "parent_commit_sha": "3620213c626b2f415d913e13803cd822cd887997",
+      "original_path": "packages/SystemUI/src/com/android/systemui/controls/management/StructureAdapter.kt",
+      "extension": ".kt",
+      "language": "kotlin",
+      "unpatched_file": "fixes/001_2_unpatched.kt",
+      "patched_file": "fixes/001_2_patched.kt",
+      "function_digests_differ": true,
+      "differing_functions": [
+        "StructureHolder.init",
+        "onCreateViewHolder"
+      ]
+    },
+    {
+      "id": "002",
+      "osv_id": "ASB-A-223907044",
+      "cve_ids": [
+        "CVE-2022-20218"
+      ],
+      "project": "platform/packages/modules/Permission",
+      "fix_commit_url": "https://android.googlesource.com/platform/packages/modules/Permission/+/465c818d852b574b3cdfea6b9f38ce67920207a3",
+      "fix_commit_sha": "465c818d852b574b3cdfea6b9f38ce67920207a3",
+      "parent_commit_sha": "a3ebb5370ddbaa8b06e1f9defe7c21874911bc6b",
+      "original_path": "PermissionController/src/com/android/permissioncontroller/permission/model/livedatatypes/LightAppPermGroup.kt",
+      "extension": ".kt",
+      "language": "kotlin",
+      "unpatched_file": "fixes/002_unpatched.kt",
+      "patched_file": "fixes/002_patched.kt",
+      "function_digests_differ": false,
+      "differing_functions": []
+    },
+    {
+      "id": "002_2",
+      "osv_id": "ASB-A-223907044",
+      "cve_ids": [
+        "CVE-2022-20218"
+      ],
+      "project": "platform/packages/modules/Permission",
+      "fix_commit_url": "https://android.googlesource.com/platform/packages/modules/Permission/+/465c818d852b574b3cdfea6b9f38ce67920207a3",
+      "fix_commit_sha": "465c818d852b574b3cdfea6b9f38ce67920207a3",
+      "parent_commit_sha": "a3ebb5370ddbaa8b06e1f9defe7c21874911bc6b",
+      "original_path": "PermissionController/src/com/android/permissioncontroller/permission/model/livedatatypes/LightPermission.kt",
+      "extension": ".kt",
+      "language": "kotlin",
+      "unpatched_file": "fixes/002_2_unpatched.kt",
+      "patched_file": "fixes/002_2_patched.kt",
+      "function_digests_differ": true,
+      "differing_functions": [
+        "toString"
+      ]
+    },
+    {
+      "id": "003",
+      "osv_id": "ASB-A-153879813",
+      "cve_ids": [
+        "CVE-2020-0418"
+      ],
+      "project": "platform/packages/apps/PackageInstaller",
+      "fix_commit_url": "https://android.googlesource.com/platform/packages/apps/PackageInstaller/+/7e9c62996eb7009d677fee99f3b1dcad8bf49326",
+      "fix_commit_sha": "7e9c62996eb7009d677fee99f3b1dcad8bf49326",
+      "parent_commit_sha": "7f86e149badd48532b64dfc9cf1a87d1cfe593ee",
+      "original_path": "src/com/android/packageinstaller/permission/data/AppPermissionGroupLiveData.kt",
+      "extension": ".kt",
+      "language": "kotlin",
+      "unpatched_file": "fixes/003_unpatched.kt",
+      "patched_file": "fixes/003_patched.kt",
+      "function_digests_differ": true,
+      "differing_functions": [
+        "AppPermissionGroupLiveData.init"
+      ]
+    },
+    {
+      "id": "003_2",
+      "osv_id": "ASB-A-153879813",
+      "cve_ids": [
+        "CVE-2020-0418"
+      ],
+      "project": "platform/packages/apps/PackageInstaller",
+      "fix_commit_url": "https://android.googlesource.com/platform/packages/apps/PackageInstaller/+/7e9c62996eb7009d677fee99f3b1dcad8bf49326",
+      "fix_commit_sha": "7e9c62996eb7009d677fee99f3b1dcad8bf49326",
+      "parent_commit_sha": "7f86e149badd48532b64dfc9cf1a87d1cfe593ee",
+      "original_path": "src/com/android/packageinstaller/permission/data/PackageInfoLiveData.kt",
+      "extension": ".kt",
+      "language": "kotlin",
+      "unpatched_file": "fixes/003_2_unpatched.kt",
+      "patched_file": "fixes/003_2_patched.kt",
+      "function_digests_differ": true,
+      "differing_functions": [
+        "onActive",
+        "onInactive"
+      ]
+    }
+  ]
+}

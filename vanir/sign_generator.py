@@ -14,14 +14,16 @@ import dataclasses
 import multiprocessing
 import os
 import re
-from typing import Mapping, Optional, Sequence, Tuple
+from typing import Mapping, Optional, Sequence, Tuple, Type
 
 from absl import logging
 from vanir import parser
 from vanir import signature
 from vanir import truncated_path
 from vanir.code_extractors import code_extractor_base
+from vanir.language_parsers import abstract_language_parser
 from vanir.language_parsers import common
+from vanir.language_parsers import language_parsers
 
 _LINE_SIGNATURE_THRESHOLD = 0.9
 
@@ -86,6 +88,46 @@ DEFAULT_TEST_FILE_FILTERS: Sequence[FileFilter] = (
     _JAVA_TEST_FILE_FILTER,
     _CPP_TEST_FILE_FILTER,
 )
+
+
+class ParserTestFileFilter(FileFilter):
+  """A filter that excludes the test files that the parser recognizes.
+
+  Every language parser knows how the test files of its language are named,
+  see AbstractLanguageParser.is_test_file(). This filter asks the parser that
+  handles the given file whether the file is a test file, which keeps the
+  knowledge about the test files in the parsers instead of in the caller.
+
+  A file of a language that has no parser registered is never filtered out.
+  """
+
+  def should_filter_out(
+      self,
+      ecosystem: str,
+      package_name: str,
+      commit: code_extractor_base.Commit,
+      target_file: str,
+      unpatched_file_content_path: str
+  ) -> bool:
+    """Returns whether the given file has to be filtered out.
+
+    Args:
+      ecosystem: the ecosystem of the package.
+      package_name: the name of the package.
+      commit: the commit that holds the file.
+      target_file: the path of the file relative to the root of the tree.
+      unpatched_file_content_path: the path of the unpatched file.
+
+    Returns:
+      True if the file is a test file of its language.
+    """
+    del ecosystem, package_name, commit, unpatched_file_content_path  # unneeded
+    parser_class: Optional[
+        Type[abstract_language_parser.AbstractLanguageParser]
+    ] = language_parsers.get_parser_class(target_file)
+    if parser_class is None:
+      return False
+    return parser_class.is_test_file(target_file)
 
 
 class TruncatedPathLevelFinder:

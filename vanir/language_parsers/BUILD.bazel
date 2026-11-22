@@ -51,6 +51,7 @@ py_library(
         ":common",
         "//vanir/language_parsers/cpp:cpp_parser",
         "//vanir/language_parsers/java:java_parser",
+        "//vanir/language_parsers/kotlin:kotlin_parser",
         "//vanir/language_parsers/python:python_parser",
     ],
 )
@@ -63,6 +64,7 @@ py_test(
         ":language_parsers",
         "//vanir/language_parsers/cpp:cpp_parser",
         "//vanir/language_parsers/java:java_parser",
+        "//vanir/language_parsers/kotlin:kotlin_parser",
         "//vanir/language_parsers/python:python_parser",
         "@com_google_absl_py//absl/testing:absltest",
     ],

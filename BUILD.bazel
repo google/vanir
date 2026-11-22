@@ -205,6 +205,23 @@ py_library(
     deps = ["@vanir_deps//jsonpath_ng"],
 )
 
+py_binary(
+    name = "parse_sweep",
+    srcs = ["vanir/parse_sweep.py"],
+    deps = [
+        "//vanir/language_parsers:language_parsers",
+    ],
+)
+
+py_test(
+    name = "parse_sweep_test",
+    srcs = ["vanir/parse_sweep_test.py"],
+    deps = [
+        ":parse_sweep",
+        "@com_google_absl_py//absl/testing:absltest",
+    ],
+)
+
 py_test(
     name = "vulnerability_overwriter_test",
     srcs = ["vanir/vulnerability_overwriter_test.py"],
